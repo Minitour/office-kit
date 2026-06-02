@@ -6,7 +6,7 @@ These are your instructions when creating and iterating on documents and present
 
 ## Guiding Principles
 
-- **Single brand, zero duplication**: `_brand.yml` at the workspace root is the sole source of brand identity (colors, fonts, logos). Never duplicate brand values into `config.toml` or hardcode them in project files. Quarto discovers `_brand.yml` automatically; for Slidev, map the same values into the deck's headmatter or theme config.
+- **Single brand, zero duplication**: `_brand.yml` at the workspace root is the sole source of brand identity (colors, fonts, logos). Never duplicate brand values into `config.toml` or hardcode them in project files. For Quarto, the project `_quarto.yml` must explicitly reference it via `brand: ../../_brand.yml` (the template already does this). For Slidev, map the same values into the deck's headmatter or theme config.
 - **Configuration-first**: Read both `_brand.yml` and `config.toml` at the start of every workflow. `config.toml` provides operational defaults — output formats, page size, slide aspect ratio, preview ports, and template names. Use these values as defaults unless the user overrides them.
 - **Iterative and incremental**: Propose an outline, get the user's review, and implement only after approval. Show previews early and often.
 - **Top-down construction**: Establish purpose, audience, and structure before writing content or building slides.
@@ -35,7 +35,7 @@ When the user's intent is ambiguous, ask which format they need. A single projec
 
 ### Quarto documents
 
-Quarto auto-discovers `_brand.yml` when it sits alongside `_quarto.yml` or in a parent directory. Brand colors, fonts, and logo are applied to HTML, Typst-PDF, and RevealJS output automatically. For Word `.docx`, brand colors and fonts are applied through a reference document (see the officekit-documents skill for details).
+Quarto does **NOT** auto-discover `_brand.yml` from parent directories for projects nested under `projects/`. Every project's `_quarto.yml` must explicitly reference the brand file with `brand: ../../_brand.yml`. The default template already includes this — do not remove it. Brand colors, fonts, and logo are then applied to HTML and Typst-PDF output automatically. For Word `.docx`, brand colors and fonts are applied through a reference document (see the officekit-documents skill for details).
 
 ### Slidev presentations
 
@@ -45,7 +45,7 @@ Slidev does not consume `_brand.yml` natively. The agent reads `_brand.yml` at p
 2. **`styles/brand.css`** — generated CSS that sets `--slidev-theme-primary`, `--slidev-theme-background`, font stacks, etc.
 3. **`global-bottom.vue`** — renders the brand logo in the slide footer (if a logo path is configured).
 
-Whenever `_brand.yml` is updated, re-run the brand mapping for any existing Slidev project that needs to stay in sync. Quarto document projects pick up changes automatically on the next render.
+Whenever `_brand.yml` is updated, re-run the brand mapping for any existing Slidev project that needs to stay in sync. Quarto document projects pick up changes on the next render (the `brand:` reference in `_quarto.yml` always points to the root file).
 
 ---
 
@@ -208,7 +208,23 @@ cp -r .templates/presentation projects/<name>
 
 Create `projects/<name>/plan/` and move `PLAN.md` there if not already present.
 
-**5c. For Slidev presentations — wire up npm workspace:**
+**5c. Start live preview immediately:**
+
+Start the preview server right after scaffolding, BEFORE writing any content. Keep it running throughout the session so the user sees every change live in the browser.
+
+```bash
+# Document
+cd projects/<name>
+quarto preview --port 4200
+
+# Presentation
+cd projects/<name>
+npx slidev --port 3030
+```
+
+The user must have a live browser preview open from this point forward. Do not skip this step.
+
+**5d. For Slidev presentations — wire up npm workspace:**
 
 Ensure the root `package.json` has `"workspaces"` that covers `"projects/*"`. Then:
 
@@ -232,7 +248,7 @@ Read `_brand.yml` and generate `styles/brand.css` and `global-bottom.vue` in the
 
 ### Step 6 — Content Authoring
 
-Build content incrementally, following the approved plan.
+Build content incrementally, following the approved plan. The live preview from Step 5c must already be running — the user should see changes in the browser as you write.
 
 **Before writing any engine-specific code**, load the relevant skill:
 - **Quarto**: Read the **quarto-authoring** skill for syntax/features, and the **officekit-documents** skill for project conventions.
@@ -240,17 +256,17 @@ Build content incrementally, following the approved plan.
 
 **For documents:**
 1. Write each section in the `.qmd` file(s), one at a time.
-2. After each section, preview with `quarto preview` to verify rendering.
+2. The live preview auto-reloads — verify brand colors/fonts render correctly after each section.
 3. Add figures, tables, and cross-references as you go.
-4. Verify brand colors/fonts render correctly in the browser preview.
+4. Confirm with the user after each major section before moving on.
 
 **For presentations:**
 1. Write slides in `slides.md`, one logical group at a time.
-2. After each group, preview with `npx slidev` to verify rendering.
+2. The live preview auto-reloads — verify brand colors/fonts/logo after each group.
 3. Add components, layouts, and animations as needed.
-4. Verify brand colors/fonts/logo render correctly.
+4. Confirm with the user after each slide group before moving on.
 
-After each major section or slide group, confirm with the user before continuing.
+**Do NOT render to final output formats (PDF, Word, PPTX) during authoring.** The live preview is for iterating. Only export when the user explicitly asks for deliverables in Step 8.
 
 ### Step 7 — Preview and Refinement
 
@@ -279,15 +295,15 @@ Report issues to the user with specific locations. Fix approved issues before ex
 
 ### Step 8 — Export
 
-Render to the configured output formats.
+**Only export when the user explicitly asks for final output files.** Do not proactively render all formats. Ask the user which format(s) they want, then render only those.
 
 **Quarto document:**
 ```bash
 cd projects/<name>
-quarto render                              # All formats from _quarto.yml
-quarto render --to html                    # Single format
-quarto render --to pdf                     # PDF via Typst
+quarto render --to html                    # HTML
+quarto render --to typst                   # PDF via Typst (modern, branded)
 quarto render --to docx                    # Word
+quarto render                              # All formats — only if user asks for all
 ```
 
 **Slidev presentation:**
@@ -336,9 +352,9 @@ cd projects/<name> && quarto preview --port 4200
 cd projects/<name> && npx slidev --port 3030
 ```
 
-### Render a document (all formats)
+### Render a document to PDF (Typst)
 ```bash
-cd projects/<name> && quarto render
+cd projects/<name> && quarto render --to typst
 ```
 
 ### Export a presentation

@@ -1,9 +1,9 @@
 project:
   type: default
   output-dir: _output
+  render:
+    - index.qmd
 
-# Brand — Quarto does NOT auto-discover _brand.yml from parent directories
-# for projects nested under projects/. We must reference it explicitly.
 brand: ../../_brand.yml
 
 format:

@@ -31,6 +31,22 @@ skills:
         OfficeKit-specific document conventions — template scaffolding,
         _brand.yml integration for Word reference docs, config.toml usage, and
         project structure
+  - id: create-docs
+    type: local
+    def:
+      path: skills/create-docs
+      description: >-
+        The /create-docs command — slim entry point for the OfficeKit document
+        authoring workflow (concept → outline → plan → scaffold → author →
+        render) for reports, proposals, memos, and articles
+  - id: create-slides
+    type: local
+    def:
+      path: skills/create-slides
+      description: >-
+        The /create-slides command — slim entry point for the OfficeKit
+        presentation authoring workflow (concept → outline → plan → scaffold →
+        author → export) for pitch decks, lectures, and talks
   - id: logo-creator
     type: github
     def:
@@ -43,6 +59,10 @@ skills:
     type: github
     def:
       repo: rknall/claude-skills@svg-logo-designer
+  - id: skill-creator
+    type: github
+    def:
+      repo: anthropics/skills@skill-creator
 servers: []
 tools: []
 plugins: []

@@ -11,10 +11,10 @@
 
 :root {
   /* Colors — from _brand.yml color section */
-  --slidev-theme-primary: #3B82F6;        /* color.primary */
+  --slidev-theme-primary: #7C3AED;        /* color.primary (violet) */
   --slidev-theme-background: #FFFFFF;      /* color.background */
   --ok-foreground: #111827;                /* color.foreground */
-  --ok-secondary: #64748B;                 /* color.secondary */
+  --ok-secondary: #4338CA;                 /* color.secondary (indigo) */
 
   /* Typography — from _brand.yml typography section */
   --slidev-font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;

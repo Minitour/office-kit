@@ -1,18 +1,3 @@
-options:
-  toolExposure: none
-  requiresCommands:
-    - cli: quarto
-      description: >-
-        Quarto is a scientific and technical publishing system.
-        Install from https://quarto.org/docs/get-started/
-    - cli: node
-      description: >-
-        Node.js is required for Slidev presentations.
-        Install from https://nodejs.org/en/download/
-    - cli: npm
-      description: >-
-        npm is the Node.js package manager, bundled with Node.js.
-
 skills:
   - id: capabilities-manager
     type: github
@@ -28,7 +13,9 @@ skills:
     type: github
     def:
       repo: posit-dev/skills@brand-yml
-      description: Create and use brand.yml files for consistent branding across Quarto documents
+      description: >-
+        Create and use brand.yml files for consistent branding across Quarto
+        documents
   - id: quarto-authoring
     type: github
     def:
@@ -41,9 +28,37 @@ skills:
     def:
       path: skills/officekit-documents
       description: >-
-        OfficeKit-specific document conventions — template scaffolding, _brand.yml
-        integration for Word reference docs, config.toml usage, and project structure
-
+        OfficeKit-specific document conventions — template scaffolding,
+        _brand.yml integration for Word reference docs, config.toml usage, and
+        project structure
+  - id: logo-creator
+    type: github
+    def:
+      repo: resciencelab/opc-skills@logo-creator
+  - id: create-readme
+    type: github
+    def:
+      repo: github/awesome-copilot@create-readme
+  - id: svg-logo-designer
+    type: github
+    def:
+      repo: rknall/claude-skills@svg-logo-designer
+servers: []
+tools: []
+plugins: []
+options:
+  toolExposure: none
+  requiresCommands:
+    - cli: quarto
+      description: >-
+        Quarto is a scientific and technical publishing system. Install from
+        https://quarto.org/docs/get-started/
+    - cli: node
+      description: >-
+        Node.js is required for Slidev presentations. Install from
+        https://nodejs.org/en/download/
+    - cli: npm
+      description: npm is the Node.js package manager, bundled with Node.js.
 agents:
   base:
     type: local
@@ -54,6 +69,6 @@ agents:
       content: >-
         After learning a new skill, call the `setup_tools` tool to activate it,
         then use `call_tool` to invoke the relevant tool.
-
-servers: []
-tools: []
+subagents: []
+rules: []
+hooks: []

@@ -25,11 +25,13 @@ color:
     white: "#FFFFFF"
     black: "#111827"
     slate: "#64748B"
-    blue: "#3B82F6"
+    violet: "#7C3AED"
+    indigo: "#4338CA"
+    lavender: "#C4B5FD"
   foreground: black
   background: white
-  primary: blue
-  secondary: slate
+  primary: violet
+  secondary: indigo
 
 typography:
   fonts:

@@ -1,17 +1,24 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
-  <!-- Document page (light variant for dark backgrounds) -->
-  <path d="M128 48h176l80 80v336c0 17.7-14.3 32-32 32H128c-17.7 0-32-14.3-32-32V80c0-17.7 14.3-32 32-32z" fill="#FFFFFF"/>
-  <!-- Folded corner -->
-  <path d="M304 48v48c0 17.7 14.3 32 32 32h48L304 48z" fill="#DBEAFE"/>
-  <!-- Text lines on page -->
-  <rect x="136" y="192" width="176" height="12" rx="6" fill="#3B82F6"/>
-  <rect x="136" y="224" width="144" height="12" rx="6" fill="#3B82F6"/>
-  <rect x="136" y="256" width="160" height="12" rx="6" fill="#3B82F6"/>
-  <rect x="136" y="288" width="120" height="12" rx="6" fill="#3B82F6"/>
-  <!-- Pen nib -->
-  <g transform="translate(296, 280) rotate(-45)">
-    <rect x="0" y="0" width="24" height="140" rx="4" fill="#FFFFFF"/>
-    <polygon points="4,140 20,140 12,164" fill="#FFFFFF"/>
-    <rect x="0" y="0" width="24" height="28" rx="4" fill="#DBEAFE"/>
-  </g>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="ok-title-light">
+  <title id="ok-title-light">OfficeKit Logo (light variant)</title>
+
+  <!-- Back layer: landscape rectangle (presentation) — rotated -8° -->
+  <rect
+    x="88" y="128" width="336" height="240" rx="24"
+    fill="#C4B5FD"
+    transform="rotate(-8, 256, 256)"
+  />
+
+  <!-- Front layer: portrait rectangle (document) — rotated +6° -->
+  <rect
+    x="152" y="80" width="224" height="320" rx="24"
+    fill="#FFFFFF"
+    transform="rotate(6, 256, 256)"
+  />
+
+  <!-- Accent diamond at the intersection center -->
+  <rect
+    x="232" y="216" width="48" height="48" rx="8"
+    fill="#7C3AED"
+    transform="rotate(45, 256, 240)"
+  />
 </svg>

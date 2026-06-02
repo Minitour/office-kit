@@ -1,5 +1,5 @@
 options:
-  toolExposure: on-demand
+  toolExposure: none
   requiresCommands:
     - cli: quarto
       description: >-
@@ -32,7 +32,7 @@ skills:
   - id: quarto-authoring
     type: github
     def:
-      repo: posit-dev/skills@authoring
+      repo: posit-dev/skills@quarto-authoring
       description: >-
         Quarto document authoring best practices — syntax, cross-references,
         callouts, YAML config, extensions, and R Markdown migration

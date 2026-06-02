@@ -3,7 +3,10 @@ node_modules/
 
 # Capa
 .cursor/
+.claude/
 capabilities.lock
+AGENTS.md
+CLAUDE.md
 
 # Quarto
 .quarto/

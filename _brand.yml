@@ -9,16 +9,16 @@
 # ──────────────────────────────────────────────────────────────
 
 meta:
-  name: ""                        # Your brand or organization name
+  name: "OfficeKit"               # Your brand or organization name
   link: ""                        # Website URL
 
 logo:
   small:
-    light: ""                     # Path to small logo (light bg)
-    dark: ""                      # Path to small logo (dark bg)
+    light: assets/logo.svg        # Logo for light backgrounds
+    dark: assets/logo-light.svg   # Logo for dark backgrounds
   medium:
-    light: ""                     # Path to medium logo (light bg)
-    dark: ""                      # Path to medium logo (dark bg)
+    light: assets/logo.svg        # Logo for light backgrounds
+    dark: assets/logo-light.svg   # Logo for dark backgrounds
 
 color:
   palette:

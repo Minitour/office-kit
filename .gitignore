@@ -1,6 +1,10 @@
 # Dependencies
 node_modules/
 
+# Capa
+.cursor/
+capabilities.lock
+
 # Quarto
 .quarto/
 _output/

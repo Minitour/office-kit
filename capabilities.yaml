@@ -1,0 +1,52 @@
+options:
+  toolExposure: on-demand
+  requiresCommands:
+    - cli: quarto
+      description: >-
+        Quarto is a scientific and technical publishing system.
+        Install from https://quarto.org/docs/get-started/
+    - cli: node
+      description: >-
+        Node.js is required for Slidev presentations.
+        Install from https://nodejs.org/en/download/
+    - cli: npm
+      description: >-
+        npm is the Node.js package manager, bundled with Node.js.
+
+skills:
+  - id: capabilities-manager
+    type: github
+    def:
+      repo: infragate/capa@capabilities-manager
+      description: Guide for managing capabilities with capa CLI
+  - id: slidev
+    type: github
+    def:
+      repo: marcoshaber99/slidev-skills@slidev
+      description: Best practices for Slidev — presentation slides for developers
+  - id: brand-yml
+    type: github
+    def:
+      repo: posit-dev/skills@brand-yml
+      description: Create and use brand.yml files for consistent branding across Quarto documents
+  - id: quarto-documents
+    type: local
+    def:
+      path: skills/quarto-documents
+      description: >-
+        Quarto document authoring — project setup, _quarto.yml, multi-format output
+        (HTML/PDF/Word), reference-doc for Word, browser preview, and _brand.yml usage
+
+agents:
+  base:
+    type: local
+    path: ./WORKFLOW.md
+  additional:
+    - type: inline
+      id: capa_tool_usage
+      content: >-
+        After learning a new skill, call the `setup_tools` tool to activate it,
+        then use `call_tool` to invoke the relevant tool.
+
+servers: []
+tools: []

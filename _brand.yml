@@ -1,0 +1,57 @@
+# ──────────────────────────────────────────────────────────────
+# Brand Identity
+# ──────────────────────────────────────────────────────────────
+# This is the SINGLE source of truth for all brand styling.
+# Quarto auto-discovers this file; the agent maps the same
+# values into Slidev themes. Edit once, applied everywhere.
+#
+# Spec: https://posit-dev.github.io/brand-yml
+# ──────────────────────────────────────────────────────────────
+
+meta:
+  name: ""                        # Your brand or organization name
+  link: ""                        # Website URL
+
+logo:
+  small:
+    light: ""                     # Path to small logo (light bg)
+    dark: ""                      # Path to small logo (dark bg)
+  medium:
+    light: ""                     # Path to medium logo (light bg)
+    dark: ""                      # Path to medium logo (dark bg)
+
+color:
+  palette:
+    white: "#FFFFFF"
+    black: "#111827"
+    slate: "#64748B"
+    blue: "#3B82F6"
+  foreground: black
+  background: white
+  primary: blue
+  secondary: slate
+
+typography:
+  fonts:
+    - family: Inter
+      source: google
+      weight: [300, 400, 500, 600, 700]
+      style: [normal, italic]
+    - family: JetBrains Mono
+      source: google
+      weight: [400, 500, 700]
+
+  base:
+    family: Inter
+    size: 1rem
+    weight: 400
+    line-height: 1.6
+
+  headings:
+    family: Inter
+    weight: 600
+    line-height: 1.25
+
+  monospace:
+    family: JetBrains Mono
+    size: 0.875em

@@ -1,0 +1,44 @@
+---
+title: "Document Title"
+subtitle: "Subtitle goes here"
+author: "Author Name"
+date: today
+abstract: |
+  Replace this with a brief summary of the document.
+---
+
+## Introduction
+
+Start writing your document here. This template inherits brand styling
+from the workspace root `_brand.yml` automatically for HTML and PDF output.
+
+## Section Heading
+
+Add your content, using standard Markdown syntax.
+
+### Subsection
+
+You can include:
+
+- **Bold** and *italic* text
+- [Links](https://example.com)
+- Images from the `assets/` folder
+
+![Placeholder](assets/.gitkeep){#fig-placeholder}
+
+### Tables
+
+| Column A | Column B | Column C |
+|----------|----------|----------|
+| Value 1  | Value 2  | Value 3  |
+
+: Example table {#tbl-example}
+
+## Conclusion
+
+Summarize your findings or key points here.
+
+## References {.unnumbered}
+
+::: {#refs}
+:::

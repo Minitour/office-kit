@@ -1,0 +1,14 @@
+version: 1
+generator: capa@1.9.6
+generatedAt: '2026-06-02T17:37:49.108Z'
+skills:
+  - id: capabilities-manager
+    source: github
+    repo: infragate/capa
+    skillName: capabilities-manager
+    requestedVersion: null
+    requestedRef: null
+    resolvedRef: 43bd5990ed610c575e312252a15db76fac0baf91
+    resolvedVersion: v1.9.1
+plugins: []
+hooks: []

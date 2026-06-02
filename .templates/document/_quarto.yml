@@ -1,0 +1,26 @@
+project:
+  type: default
+  output-dir: _output
+
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    number-sections: false
+    theme: default
+    embed-resources: false
+
+  pdf:
+    documentclass: article
+    papersize: a4
+    margin-left: 2.5cm
+    margin-right: 2.5cm
+    margin-top: 2.5cm
+    margin-bottom: 2.5cm
+    toc: true
+    number-sections: false
+
+  docx:
+    reference-doc: _reference.docx
+    toc: true
+    number-sections: false

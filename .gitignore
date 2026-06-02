@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+
+# Quarto
+.quarto/
+_output/
+
+# Slidev
+dist/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+*.swp
+*.swo
+*~
+
+# Environment
+.env
+.env.local

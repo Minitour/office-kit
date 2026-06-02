@@ -1,0 +1,44 @@
+/*
+ * Brand-mapped CSS variables for Slidev.
+ *
+ * These values are derived from the workspace root _brand.yml.
+ * When _brand.yml changes, regenerate this file to keep the
+ * presentation in sync with the brand.
+ *
+ * The agent generates this file during project scaffolding
+ * (Step 5d in the workflow).
+ */
+
+:root {
+  /* Colors — from _brand.yml color section */
+  --slidev-theme-primary: #3B82F6;        /* color.primary */
+  --slidev-theme-background: #FFFFFF;      /* color.background */
+  --ok-foreground: #111827;                /* color.foreground */
+  --ok-secondary: #64748B;                 /* color.secondary */
+
+  /* Typography — from _brand.yml typography section */
+  --slidev-font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --slidev-font-mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+/* Body text color */
+.slidev-layout {
+  color: var(--ok-foreground);
+}
+
+/* Heading color */
+.slidev-layout h1,
+.slidev-layout h2,
+.slidev-layout h3 {
+  color: var(--ok-foreground);
+}
+
+/* Link color */
+.slidev-layout a {
+  color: var(--slidev-theme-primary);
+}
+
+/* Code block styling */
+.slidev-layout pre {
+  font-family: var(--slidev-font-mono);
+}

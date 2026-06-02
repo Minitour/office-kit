@@ -1,0 +1,45 @@
+# ──────────────────────────────────────────────────────────────
+# OfficeKit — Operational Defaults
+# ──────────────────────────────────────────────────────────────
+# This file stores non-brand operational settings. Brand
+# identity (colors, fonts, logos) lives in _brand.yml — the
+# single source of truth consumed by both Quarto and Slidev.
+#
+# The agent reads this file at the start of every workflow and
+# uses it to choose output formats, page dimensions, templates,
+# and preview settings.
+# ──────────────────────────────────────────────────────────────
+
+# ── Document Defaults (Quarto) ───────────────────────────────
+[document]
+formats = ["html", "pdf", "docx"]           # Output formats to render
+template = "document"                        # Template name under .templates/
+
+[document.page]
+size = "A4"                                  # A4 | letter | legal
+margin = "2.5cm"                             # Uniform margin (or use .top/.right/.bottom/.left)
+
+[document.output]
+toc = true                                   # Include table of contents
+number-sections = false                      # Number section headings
+
+# ── Presentation Defaults (Slidev) ──────────────────────────
+[presentation]
+template = "presentation"                    # Template name under .templates/
+theme = "default"                            # Slidev theme (npm package or local path)
+aspectRatio = "16/9"                         # 16/9 | 4/3
+canvasWidth = 980                            # Slidev canvas width in px
+
+[presentation.export]
+format = "pdf"                               # pdf | pptx | png
+withClicks = true                            # Export click animations as separate pages/slides
+dark = false                                 # Export in dark mode
+
+# ── Preview ──────────────────────────────────────────────────
+[preview]
+document_port = 4200                         # quarto preview port
+presentation_port = 3030                     # slidev dev server port
+
+# ── Misc ─────────────────────────────────────────────────────
+[style]
+watermark = false                            # Overlay brand logo as watermark on output

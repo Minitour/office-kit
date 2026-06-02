@@ -1,0 +1,13 @@
+{
+  "name": "@office-kit/presentation-template",
+  "private": true,
+  "scripts": {
+    "dev": "slidev --port 3030",
+    "build": "slidev build",
+    "export": "slidev export --output dist/slides.pdf"
+  },
+  "dependencies": {
+    "@slidev/cli": "^51.0.0",
+    "@slidev/theme-default": "latest"
+  }
+}

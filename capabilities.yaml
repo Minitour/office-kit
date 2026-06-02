@@ -29,13 +29,20 @@ skills:
     def:
       repo: posit-dev/skills@brand-yml
       description: Create and use brand.yml files for consistent branding across Quarto documents
-  - id: quarto-documents
+  - id: quarto-authoring
+    type: github
+    def:
+      repo: posit-dev/skills@authoring
+      description: >-
+        Quarto document authoring best practices — syntax, cross-references,
+        callouts, YAML config, extensions, and R Markdown migration
+  - id: officekit-documents
     type: local
     def:
-      path: skills/quarto-documents
+      path: skills/officekit-documents
       description: >-
-        Quarto document authoring — project setup, _quarto.yml, multi-format output
-        (HTML/PDF/Word), reference-doc for Word, browser preview, and _brand.yml usage
+        OfficeKit-specific document conventions — template scaffolding, _brand.yml
+        integration for Word reference docs, config.toml usage, and project structure
 
 agents:
   base:

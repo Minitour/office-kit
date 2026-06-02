@@ -10,7 +10,7 @@ These are your instructions when creating and iterating on documents and present
 - **Configuration-first**: Read both `_brand.yml` and `config.toml` at the start of every workflow. `config.toml` provides operational defaults — output formats, page size, slide aspect ratio, preview ports, and template names. Use these values as defaults unless the user overrides them.
 - **Iterative and incremental**: Propose an outline, get the user's review, and implement only after approval. Show previews early and often.
 - **Top-down construction**: Establish purpose, audience, and structure before writing content or building slides.
-- **Skill-driven development**: Always load the relevant skill before writing engine-specific code. Read the **quarto-documents** skill before authoring Quarto projects. Read the **slidev** skill before authoring Slidev decks. Read the **brand-yml** skill when creating or modifying `_brand.yml`.
+- **Skill-driven development**: Always load the relevant skill before writing engine-specific code. Read the **quarto-authoring** skill for Quarto syntax and features, and the **officekit-documents** skill for OfficeKit project conventions (scaffolding, brand-to-Word pipeline, config.toml usage). Read the **slidev** skill before authoring Slidev decks. Read the **brand-yml** skill when creating or modifying `_brand.yml`.
 - **Template-first scaffolding**: Every new project starts by copying from `.templates/`. Never scaffold from scratch when a template exists. The templates already wire up `_brand.yml`, output formats, and baseline structure.
 - **Shared workspace environments**: All projects share a single root `node_modules` managed by npm workspaces (declared in the root `package.json`). Never create per-project `node_modules` or run `npm install` from inside a project directory. Add project-specific deps via `npm install -w projects/<name>` from the workspace root.
 - **Project isolation** (source): Each deliverable lives in its own directory under `projects/`. Projects are independent — never share content across project boundaries.
@@ -35,7 +35,7 @@ When the user's intent is ambiguous, ask which format they need. A single projec
 
 ### Quarto documents
 
-Quarto auto-discovers `_brand.yml` when it sits alongside `_quarto.yml` or in a parent directory. Brand colors, fonts, and logo are applied to HTML, Typst-PDF, and RevealJS output automatically. For Word `.docx`, brand colors and fonts are applied through a reference document (see the quarto-documents skill for details).
+Quarto auto-discovers `_brand.yml` when it sits alongside `_quarto.yml` or in a parent directory. Brand colors, fonts, and logo are applied to HTML, Typst-PDF, and RevealJS output automatically. For Word `.docx`, brand colors and fonts are applied through a reference document (see the officekit-documents skill for details).
 
 ### Slidev presentations
 
@@ -45,7 +45,7 @@ Slidev does not consume `_brand.yml` natively. The agent reads `_brand.yml` at p
 2. **`styles/brand.css`** — generated CSS that sets `--slidev-theme-primary`, `--slidev-theme-background`, font stacks, etc.
 3. **`global-bottom.vue`** — renders the brand logo in the slide footer (if a logo path is configured).
 
-Whenever `_brand.yml` is updated, re-run the brand mapping for any existing Slidev project that needs to stay in sync. The quarto-documents projects pick up changes automatically on the next render.
+Whenever `_brand.yml` is updated, re-run the brand mapping for any existing Slidev project that needs to stay in sync. Quarto document projects pick up changes automatically on the next render.
 
 ---
 
@@ -235,7 +235,7 @@ Read `_brand.yml` and generate `styles/brand.css` and `global-bottom.vue` in the
 Build content incrementally, following the approved plan.
 
 **Before writing any engine-specific code**, load the relevant skill:
-- **Quarto**: Read `skills/quarto-documents/SKILL.md`.
+- **Quarto**: Read the **quarto-authoring** skill for syntax/features, and the **officekit-documents** skill for project conventions.
 - **Slidev**: Read `skills/slidev/SKILL.md`.
 
 **For documents:**

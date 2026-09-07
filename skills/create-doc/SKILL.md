@@ -84,13 +84,18 @@ sections, and no leftover placeholders. Read its output and fix what it
 reports.
 
 Do not start a server, do not drive a headless browser, and do not screenshot
-a document to check layout. The template's layout, sticky-contents offset,
+a document to check layout. The template's layout, contents rail,
 responsiveness, and print rules are already settled; trust them.
 
 **When a defect is generic, fix `.templates/document-html/document.html`, not
-the project.** A layout or accessibility bug fixed in the template is fixed for
-every future document. A bug fixed only in one project will be rebuilt from
-scratch next week.
+the project.** The template owns two spans of every document: the shell CSS
+between `/* officekit:brand:end */` and `/* officekit:styles:start */`, and the
+script between `/* officekit:script:start */` and `/* officekit:script:end */`.
+`doc.py refresh` re-applies both, so a template fix reaches documents that
+already exist as well as future ones, while their content and their
+`officekit:styles` region are left untouched. `check` says when a document is
+running an older shell. A bug fixed only in one project is a bug you fix again
+next week.
 
 ## Asking, and not asking
 

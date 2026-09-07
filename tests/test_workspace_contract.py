@@ -102,14 +102,34 @@ class DocumentPipelineContractTests(unittest.TestCase):
     def test_template_keeps_the_settled_layout_rules(self) -> None:
         """These were each paid for by a review cycle; they must not regress."""
         template = read(DOC_TEMPLATE)
-        # A sticky contents panel that hides the heading it jumped to.
+        # A heading landing flush against the top of the viewport.
         self.assertIn("scroll-padding-top", template)
-        # An unbounded panel that swallows the first screen.
-        self.assertIn("max-height: min(40vh, 18rem)", template)
         # Baseline accessibility and print behaviour.
         self.assertIn("skip-link", template)
         self.assertIn("prefers-reduced-motion", template)
         self.assertIn("@media print", template)
+
+    def test_contents_are_a_side_rail_not_a_band_across_the_document(self) -> None:
+        """A panel stuck to the top of the viewport costs the reader a screen."""
+        template = read(DOC_TEMPLATE)
+        self.assertIn("@media (min-width: 64rem)", template)
+        self.assertIn("grid-template-columns: var(--doc-rail)", template)
+        # The rail scrolls inside itself rather than capping at a slice of the
+        # viewport, which is what the old top band did.
+        self.assertIn("max-height: 100vh", template)
+        self.assertNotIn("max-height: min(40vh, 18rem)", template)
+        # Dropped when the rail arrived; a leftover would mean dead measuring JS.
+        self.assertNotIn("--doc-toc-height", template)
+
+    def test_the_template_owns_refreshable_regions(self) -> None:
+        """A self-contained document can only take a template fix through these."""
+        template = read(DOC_TEMPLATE)
+        for marker in (
+            "/* officekit:styles:start */",
+            "/* officekit:script:start */",
+            "/* officekit:script:end */",
+        ):
+            self.assertIn(marker, template)
 
     def test_document_skill_is_direct_and_serverless(self) -> None:
         skill = read(DOC_SKILL)

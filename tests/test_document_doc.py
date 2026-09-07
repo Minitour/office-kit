@@ -375,5 +375,98 @@ class RefreshTests(DocumentPipelineTestCase):
         self.assertIn("name at least one document", output)
 
 
+class ShellTests(DocumentPipelineTestCase):
+    """A one-file document is self-contained, not frozen.
+
+    Every rule a document needs was copied into it at scaffold time, so a fix
+    made to the template afterwards would otherwise never reach it. These cover
+    the two spans the template owns, and the boundary that keeps a refresh from
+    touching anything else.
+    """
+
+    def edit_template(self, old: str, new: str) -> None:
+        path = self.root / ".templates" / "document-html" / "document.html"
+        text = path.read_text(encoding="utf-8")
+        self.assertIn(old, text)
+        path.write_text(text.replace(old, new), encoding="utf-8")
+
+    def test_a_style_fix_reaches_a_document_that_already_exists(self) -> None:
+        path = self.complete()
+        self.edit_template("--doc-rail: 14rem;", "--doc-rail: 18rem;")
+
+        # Out of date is advisory: the document still renders, so check passes
+        # while saying what it is missing.
+        code, output = self.check(path)
+        self.assertEqual(code, 0, output)
+        self.assertIn("shared styles block is older", output)
+
+        code, output = run("refresh", str(path))
+        self.assertEqual(code, 0, output)
+        self.assertIn("shared styles", output)
+        self.assertIn("--doc-rail: 18rem;", path.read_text(encoding="utf-8"))
+        self.assertNotIn("is older", self.check(path)[1])
+
+    def test_a_script_fix_reaches_a_document_that_already_exists(self) -> None:
+        path = self.complete()
+        self.edit_template('"use strict";', '"use strict";\n        const fixed = 1;')
+
+        code, output = self.check(path)
+        self.assertEqual(code, 0, output)
+        self.assertIn("shared script block is older", output)
+
+        code, output = run("refresh", str(path))
+        self.assertEqual(code, 0, output)
+        self.assertIn("shared script", output)
+        self.assertIn("const fixed = 1;", path.read_text(encoding="utf-8"))
+
+    def test_a_refresh_leaves_the_document_s_own_work_alone(self) -> None:
+        path = self.complete()
+        own_css = ".doc-body table { font-variant-numeric: tabular-nums; }"
+        path.write_text(
+            path.read_text(encoding="utf-8").replace(
+                document_doc.STYLES_START,
+                f"{document_doc.STYLES_START}\n      {own_css}",
+            ),
+            encoding="utf-8",
+        )
+        self.edit_template("--doc-rail: 14rem;", "--doc-rail: 18rem;")
+
+        self.assertEqual(run("refresh", str(path))[0], 0)
+        text = path.read_text(encoding="utf-8")
+        self.assertIn(own_css, text)
+        self.assertIn("--doc-rail: 18rem;", text)
+        self.assertIn("Findings", text)
+        self.assertEqual(self.check(path)[0], 0)
+
+    def test_a_document_without_the_markers_is_reported_not_rewritten(self) -> None:
+        """A hand-migrated file: its own code and the template's are the same
+        text, so guessing the boundary would risk eating the author's work."""
+        path = self.complete()
+        path.write_text(
+            path.read_text(encoding="utf-8").replace(document_doc.SCRIPT_START, ""),
+            encoding="utf-8",
+        )
+        self.edit_template('"use strict";', '"use strict";\n        const fixed = 1;')
+
+        code, output = run("refresh", str(path))
+        self.assertEqual(code, 0, output)
+        self.assertIn("no shared script markers", output)
+        self.assertNotIn("const fixed = 1;", path.read_text(encoding="utf-8"))
+
+    def test_a_missing_template_does_not_stop_a_brand_refresh(self) -> None:
+        path = self.complete()
+        (self.root / ".templates" / "document-html" / "document.html").unlink()
+        tokens = self.root / "brand" / "tokens.css"
+        tokens.write_text(
+            tokens.read_text(encoding="utf-8").replace("#7C3AED", "#0F766E"),
+            encoding="utf-8",
+        )
+
+        code, output = run("refresh", str(path))
+        self.assertEqual(code, 0, output)
+        self.assertIn("refreshing the brand only", output)
+        self.assertIn("#0F766E", path.read_text(encoding="utf-8"))
+
+
 if __name__ == "__main__":
     unittest.main()

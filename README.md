@@ -67,7 +67,7 @@ Change identity by updating `brand.json` (via `init-brand` / `brand-agent`) and 
 
 Two consumers hold *generated copies* rather than reading `brand/` live, and both must be refreshed after an identity change:
 
-- **Documents** embed the token sheet and the marks so the file stands alone. Run `python scripts/document/doc.py refresh --all`; `doc.py check` fails on a document whose brand region has drifted, so staleness cannot pass silently.
+- **Documents** embed the token sheet and the marks so the file stands alone. Run `python scripts/document/doc.py refresh --all`; `doc.py check` fails on a document whose brand region has drifted, so staleness cannot pass silently. The same command re-applies the template's shell CSS and script, which is how a fix to `.templates/document-html/document.html` reaches documents that already exist — `check` reports an older shell as a warning.
 - **Video** projects need a project-local snapshot because HyperFrames cannot serve files above a project root. Scaffolding copies the files listed in `[video.brand_snapshot]` into the project's `brand/` directory.
 
 Operational defaults (templates, canvas size, preview ports, TTS flags, export dirs) live in `config.toml`. A project's plan may override those values for that project only.

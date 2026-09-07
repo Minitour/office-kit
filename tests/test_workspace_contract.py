@@ -180,5 +180,21 @@ class DocumentPipelineContractTests(unittest.TestCase):
         self.assertNotIn("document", preview)
 
 
+class SkillInvocationContractTests(unittest.TestCase):
+    """Skills run Python through the workspace uv env, never a bare interpreter."""
+
+    _BARE_PYTHON = re.compile(r"(?<!uv run )(?<!/)python(?:3)?\s")
+
+    def test_skills_invoke_python_through_uv(self) -> None:
+        for path in sorted((ROOT / "skills").glob("*/SKILL.md")):
+            hits = [
+                line.strip()
+                for line in read(path).splitlines()
+                if self._BARE_PYTHON.search(line)
+                and not line.lstrip().startswith("#!")
+            ]
+            self.assertEqual(hits, [], f"{path.relative_to(ROOT)} still calls python directly")
+
+
 if __name__ == "__main__":
     unittest.main()

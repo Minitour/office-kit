@@ -25,7 +25,7 @@ browser — and let them decide. Never improvise another pipeline.
 ## The pass
 
 ```bash
-python scripts/document/doc.py new <slug> --title "…" [--subtitle "…"] [--footer "…"]
+uv run python scripts/document/doc.py new <slug> --title "…" [--subtitle "…"] [--footer "…"]
 ```
 
 Then make one edit replacing the `<!-- officekit:content -->` marker in
@@ -41,9 +41,9 @@ Then make one edit replacing the `<!-- officekit:content -->` marker in
 Then finish:
 
 ```bash
-python scripts/document/doc.py toc   projects/<slug>/<slug>.html   # contents list
-python scripts/document/doc.py check projects/<slug>/<slug>.html   # must pass
-open projects/<slug>/<slug>.html                                   # hand it over
+uv run python scripts/document/doc.py toc   projects/<slug>/<slug>.html   # contents list
+uv run python scripts/document/doc.py check projects/<slug>/<slug>.html   # must pass
+open projects/<slug>/<slug>.html                                          # hand it over
 ```
 
 Write `projects/<slug>/NOTES.md` in the same pass — 20 lines at most: the
@@ -69,10 +69,10 @@ Never hand-pick a colour, font, or logo path, and never hand-edit between
 `/* officekit:brand:start */` and `/* officekit:brand:end */` — `doc.py` fills
 that region from `brand/tokens.css` and `brand/brand.json`, and `check` fails
 when it drifts. Route any brand change to `init-brand`, then run
-`doc.py refresh`.
+`uv run python scripts/document/doc.py refresh`.
 
 If the document needs a supplied image, reference it relatively and run
-`doc.py embed` to pull it in as a data URI. Never modify, rename, or re-encode
+`uv run python scripts/document/doc.py embed` to pull it in as a data URI. Never modify, rename, or re-encode
 a file the user gave you.
 
 ## Verification
@@ -91,7 +91,7 @@ responsiveness, and print rules are already settled; trust them.
 the project.** The template owns two spans of every document: the shell CSS
 between `/* officekit:brand:end */` and `/* officekit:styles:start */`, and the
 script between `/* officekit:script:start */` and `/* officekit:script:end */`.
-`doc.py refresh` re-applies both, so a template fix reaches documents that
+`uv run python scripts/document/doc.py refresh` re-applies both, so a template fix reaches documents that
 already exist as well as future ones, while their content and their
 `officekit:styles` region are left untouched. `check` says when a document is
 running an older shell. A bug fixed only in one project is a bug you fix again

@@ -40,9 +40,10 @@ owns every change to the canonical and generated brand files:
    user approval** before writing anything. Relay that proposal and the
    approval.
 2. After approval, `brand-agent` preserves assets, writes `brand/brand.json`,
-   regenerates `brand/BRAND.md`, `brand/tokens.css`, and `brand/frame.md`, then
-   propagates the change to the consumers that hold generated copies: existing
-   standalone documents via `python scripts/document/doc.py refresh --all`, and
+   and regenerates `brand/BRAND.md`, `brand/tokens.css`, and `brand/frame.md`
+   with `uv run python scripts/brand/generate.py`. It then propagates the
+   change to the consumers that hold generated copies: existing standalone
+   documents via `uv run python scripts/document/doc.py refresh --all`, and
    any video project's `brand/` snapshot. Relay what it touched.
 3. `review-agent` checks canonical/generated parity, contrast, typography, asset
    provenance, and cross-media usability. Route fixes to `brand-agent`, then

@@ -1,0 +1,12 @@
+{
+  "private": true,
+  "scripts": {
+    "preview": "npx --yes hyperframes@0.8.30 preview --port 3002",
+    "lint": "npx --yes hyperframes@0.8.30 lint",
+    "check": "npx --yes hyperframes@0.8.30 check",
+    "render": "npx --yes hyperframes@0.8.30 render --output renders/video.mp4"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

@@ -5,11 +5,13 @@ info: |
   Replace with a brief description of this presentation.
 author: Author Name
 transition: slide-left
+# aspectRatio and canvasWidth default from config.toml [presentation].
 aspectRatio: "16/9"
 canvasWidth: 980
-fonts:
-  sans: Inter
-  mono: JetBrains Mono
+# Colours, fonts, and the logo all come from the shared token sheet, imported
+# by style.css. Do not add a `fonts:` block here: tokens.css already loads the
+# brand webfonts, and restating a family in the headmatter hardcodes a brand
+# value and double-loads the font.
 ---
 
 # Presentation Title
@@ -47,7 +49,7 @@ Content for the second topic.
 Use standard Markdown syntax plus Slidev features:
 
 ```ts
-const greeting = 'Hello, OfficeKit!'
+const greeting = 'Hello, world!'
 console.log(greeting)
 ```
 

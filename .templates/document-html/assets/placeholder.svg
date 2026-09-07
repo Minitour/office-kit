@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Neutral figure placeholder. Uses currentColor only, no brand values.
+  Replace with the real asset and update the alt text in index.html.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" width="960" height="540" role="img" aria-label="Placeholder figure">
+  <rect x="1" y="1" width="958" height="538" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="8 8" opacity="0.4" />
+  <text x="480" y="278" fill="currentColor" opacity="0.5" font-family="system-ui, sans-serif" font-size="28" text-anchor="middle">960 x 540 placeholder</text>
+</svg>

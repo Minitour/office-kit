@@ -1,45 +1,94 @@
 # ──────────────────────────────────────────────────────────────
 # OfficeKit — Operational Defaults
 # ──────────────────────────────────────────────────────────────
-# This file stores non-brand operational settings. Brand
-# identity (colors, fonts, logos) lives in _brand.yml — the
-# single source of truth consumed by both Quarto and Slidev.
+# Non-brand settings only. Canonical brand identity lives in
+# brand/brand.json and reaches projects through generated files
+# under brand/ — never through this file.
 #
-# The agent reads this file at the start of every workflow and
-# uses it to choose output formats, page dimensions, templates,
-# and preview settings.
+# The agent reads this at the start of every workflow to pick a
+# template, canvas size, render settings, and preview port. A
+# project's plan may override any value for that project alone;
+# this file is not edited per-project.
 # ──────────────────────────────────────────────────────────────
 
-# ── Document Defaults (Quarto) ───────────────────────────────
+# ── Documents (standalone HTML) ──────────────────────────────
 [document]
-formats = ["html", "pdf", "docx"]           # Output formats to render
-template = "document"                        # Template name under .templates/
-
-[document.page]
-size = "A4"                                  # A4 | letter | legal
-margin = "2.5cm"                             # Uniform margin (or use .top/.right/.bottom/.left)
+template = "document-html"     # Directory under .templates/
+format = "html"                # The only document output
+standalone = true              # Self-contained artifact: no build step, no bundler
+output_dir = "dist"            # Where the packaged single-file artifact is written
 
 [document.output]
-toc = true                                   # Include table of contents
-number-sections = false                      # Number section headings
+toc = true                     # Render the in-page table of contents
+number_sections = false        # Prefix headings with section numbers
 
-# ── Presentation Defaults (Slidev) ──────────────────────────
+# ── Presentations (Slidev) ───────────────────────────────────
 [presentation]
-template = "presentation"                    # Template name under .templates/
-theme = "default"                            # Slidev theme (npm package or local path)
-aspectRatio = "16/9"                         # 16/9 | 4/3
-canvasWidth = 980                            # Slidev canvas width in px
+template = "presentation"      # Directory under .templates/
+theme = "default"              # → slides.md headmatter `theme`
+aspect_ratio = "16/9"          # → headmatter `aspectRatio`
+canvas_width = 980             # → headmatter `canvasWidth`, in px
 
 [presentation.export]
-format = "pdf"                               # pdf | pptx | png
-withClicks = true                            # Export click animations as separate pages/slides
-dark = false                                 # Export in dark mode
+format = "pdf"                 # pdf | pptx | png
+with_clicks = true             # → `slidev export --with-clicks`
+dark = false                   # → `slidev export --dark`
+output_dir = "dist"
 
-# ── Preview ──────────────────────────────────────────────────
+# ── Video (HyperFrames) ──────────────────────────────────────
+[video]
+template = "video"             # Directory under .templates/
+composition = "index.html"     # → `hyperframes render --composition`
+width = 1920                   # → root `data-width`
+height = 1080                  # → root `data-height`
+fps = 30                       # → root `data-fps` / `render --fps`, 1–240
+format = "mp4"                 # mp4 | webm | mov | gif | png-sequence
+quality = "standard"           # draft | standard | high
+output_dir = "renders"         # → `render --output <dir>/<name>.<ext>`
+
+# HyperFrames rejects runtime paths outside the video project root. Immediately
+# after scaffolding, copy these generated workspace brand derivatives into the
+# project-local target directory, preserving the assets/ subtree. The untouched
+# template has neutral fallbacks and validates before this snapshot exists.
+[video.brand_snapshot]
+source_dir = "brand"
+target_dir = "brand"
+files = ["tokens.css", "frame.md"]
+directories = ["assets"]
+
+# ── Audio (offline narration) ────────────────────────────────
+# Narration is synthesised locally by the text-to-speech skill,
+# which runs Kokoro from the Hugging Face cache. Nothing leaves the
+# machine and no API key is involved. Keys below map onto that
+# skill's flags.
+[audio]
+provider = "huggingface"       # Local inference only — no hosted TTS
+model = "hexgrad/Kokoro-82M"
+offline = true                 # → `--offline`; valid only once weights are cached
+voice = "af_heart"             # → `--voice`, overridable per segment
+speed = 1.0                    # → `--speed`, must be positive
+lang_code = "a"                # → `--lang-code`, Kokoro pipeline language
+padding = 0.25                 # → `--padding`, seconds after each non-final clip
+format = "wav"                 # One clip per segment, lossless for mixing
+manifest = "manifest.json"     # Measured durations and timeline offsets
+
+# Mix targets for placing that audio in a composition, in LUFS
+# unless noted. Measure and apply with `hyperframes normalize-audio`,
+# which writes the matched gain onto an <audio> `data-volume`.
+[audio.levels]
+narration_lufs = -16.0         # Speech target
+music_bed_lufs = -26.0         # Music under speech
+peak_ceiling_dbtp = -1.0       # True-peak ceiling
+duck_db = -9.0                 # Bed attenuation while speech plays
+
+# ── Preview ports ────────────────────────────────────────────
 [preview]
-document_port = 4200                         # quarto preview port
-presentation_port = 3030                     # slidev dev server port
+document_port = 4200           # Static server for the HTML document
+presentation_port = 3030       # `slidev --port`
+video_port = 3002              # `hyperframes preview --port`
 
-# ── Misc ─────────────────────────────────────────────────────
-[style]
-watermark = false                            # Overlay brand logo as watermark on output
+# Documents import brand/tokens.css from two levels up, which is above the
+# project directory. Serve documents from the workspace root and open
+# /projects/<name>/index.html — a server rooted at the project directory
+# cannot reach the shared token sheet and the document renders unbranded.
+document_root = "."            # Relative to the workspace root

@@ -1,44 +1,65 @@
 /*
- * Brand-mapped CSS variables for Slidev.
+ * Brand mapping for Slidev.
  *
- * These values are derived from the workspace root _brand.yml.
- * When _brand.yml changes, regenerate this file to keep the
- * presentation in sync with the brand.
+ * This file holds NO brand values and no shared paths — style.css owns both.
+ * It is only the adapter between the shared token sheet and the selectors
+ * Slidev renders. Editing brand/brand.json and regenerating tokens.css
+ * restyles every deck; nothing here needs to change.
  *
- * The agent generates this file during project scaffolding
- * (Step 5d in the workflow).
+ * tokens.css already aliases --slidev-theme-primary, --slidev-theme-background,
+ * --slidev-font-sans, and --slidev-font-mono, so those are deliberately not
+ * redefined here. Fallbacks below are CSS system colours and system font
+ * stacks, so a missing token sheet degrades to an unbranded but legible deck.
+ *
+ * Rules are scoped to .slidev-layout: global CSS in a deck also applies to the
+ * presenter UI, and unscoped selectors leak into it.
  */
 
 :root {
-  /* Colors — from _brand.yml color section */
-  --slidev-theme-primary: #7C3AED;        /* color.primary (violet) */
-  --slidev-theme-background: #FFFFFF;      /* color.background */
-  --ok-foreground: #111827;                /* color.foreground */
-  --ok-secondary: #4338CA;                 /* color.secondary (indigo) */
+  --ok-foreground: var(--color-foreground, CanvasText);
+  --ok-background: var(--color-background, Canvas);
+  --ok-primary: var(--color-primary, LinkText);
+  --ok-secondary: var(--color-secondary, var(--ok-primary));
+  --ok-muted: var(--color-muted, GrayText);
 
-  /* Typography — from _brand.yml typography section */
-  --slidev-font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
-  --slidev-font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --ok-font-sans: var(--font-sans, ui-sans-serif, system-ui, sans-serif);
+  --ok-font-heading: var(--font-heading, var(--ok-font-sans));
+  --ok-font-mono: var(--font-mono, ui-monospace, SFMono-Regular, monospace);
+  --ok-heading-weight: var(--font-weight-heading, 600);
+  --ok-heading-line-height: var(--line-height-heading, 1.25);
 }
 
-/* Body text color */
 .slidev-layout {
+  background: var(--ok-background);
   color: var(--ok-foreground);
+  font-family: var(--ok-font-sans);
+  line-height: var(--line-height-base, 1.6);
 }
 
-/* Heading color */
 .slidev-layout h1,
 .slidev-layout h2,
-.slidev-layout h3 {
+.slidev-layout h3,
+.slidev-layout h4 {
+  font-family: var(--ok-font-heading);
+  font-weight: var(--ok-heading-weight);
+  line-height: var(--ok-heading-line-height);
   color: var(--ok-foreground);
 }
 
-/* Link color */
 .slidev-layout a {
-  color: var(--slidev-theme-primary);
+  color: var(--ok-primary);
 }
 
-/* Code block styling */
+.slidev-layout blockquote {
+  border-left-color: var(--ok-secondary);
+  color: var(--ok-muted);
+}
+
+.slidev-layout code,
 .slidev-layout pre {
-  font-family: var(--slidev-font-mono);
+  font-family: var(--ok-font-mono);
+}
+
+.slidev-layout th {
+  border-bottom-color: var(--ok-secondary);
 }

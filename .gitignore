@@ -1,19 +1,47 @@
-# Dependencies
+# Node
 node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
 
-# Capa
+# Python (root shared environment and caches)
+# Keep uv.lock — it is the committed resolver pin.
+.venv/
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# CAPA install outputs
 .cursor/
 .claude/
 capabilities.lock
 AGENTS.md
 CLAUDE.md
 
-# Quarto
-.quarto/
-_output/
+# Packaged / rendered artifacts
+dist/
+renders/
+
+# HyperFrames caches and local output
+snapshots/
+.hyperframes/
+.hyperframes-cache/
+hyperframes-extract-cache*/
 
 # Slidev
-dist/
+.slidev/
+
+# Environment
+.env
+.env.*
+!.env.example
 
 # OS
 .DS_Store
@@ -23,7 +51,4 @@ Thumbs.db
 *.swp
 *.swo
 *~
-
-# Environment
-.env
-.env.local
+.idea/

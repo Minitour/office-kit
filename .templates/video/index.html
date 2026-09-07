@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <title>Video Title</title>
+
+    <!--
+      This template is intentionally self-contained and neutral so
+      `hyperframes check` passes before project setup. At scaffold time, follow
+      frame.md to create the project-local brand snapshot and activate it here.
+    -->
+
+    <style>
+      /*
+       * Neutral defaults make the untouched template valid offline. Once the
+       * local brand snapshot exists, its tokens override these variables.
+       * No current OfficeKit brand value is hardcoded here.
+       */
+      :root {
+        --v-foreground: var(--color-foreground, CanvasText);
+        --v-background: var(--color-background, Canvas);
+        --v-primary: var(--color-primary, LinkText);
+        --v-secondary: var(--color-secondary, var(--v-primary));
+        --v-muted: var(--color-muted, GrayText);
+        --v-font-base: var(--font-sans, ui-sans-serif, system-ui, sans-serif);
+        --v-font-headings: var(--font-heading, var(--v-font-base));
+        --v-font-mono: var(--font-mono, ui-monospace, SFMono-Regular, monospace);
+        --v-heading-weight: var(--font-weight-heading, 600);
+      }
+
+      body {
+        margin: 0;
+        background: var(--v-background);
+      }
+
+      /*
+       * The composition root is a real, explicitly sized box. It also sets
+       * `container-type: size` because brand/frame.md's container law requires
+       * display type to be sized in `cqw` against the frame, never `vw`.
+       */
+      #root {
+        position: relative;
+        container-type: size;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: var(--v-background);
+        color: var(--v-foreground);
+        font-family: var(--v-font-base);
+        line-height: var(--line-height-base, 1.6);
+      }
+
+      /* Shared full-frame box for every timed DOM element. */
+      .clip {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        padding: 5cqw; /* frame.md safe area */
+        text-align: center;
+      }
+
+      /* h1 scale from frame.md: 4.2cqw, heading weight, ink not accent. */
+      #title {
+        margin: 0;
+        font-family: var(--v-font-headings);
+        font-weight: var(--v-heading-weight);
+        font-size: 4.2cqw;
+        line-height: var(--line-height-heading, 1.25);
+      }
+
+      /* frame.md accent-rule: 60x4, above the cover title, one per frame. */
+      #accent {
+        width: 60px;
+        height: 4px;
+        margin: 0 auto 1.4cqw;
+        background: var(--v-primary);
+      }
+
+    </style>
+  </head>
+
+  <body>
+    <div
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="5"
+      data-width="1920"
+      data-height="1080"
+      data-fps="30"
+      data-no-timeline
+    >
+      <section id="title-card" class="clip" data-start="0" data-duration="5" data-track-index="1">
+        <div>
+          <div id="accent"></div>
+          <h1 id="title">Video Title</h1>
+        </div>
+      </section>
+    </div>
+
+    <!--
+      Add media only after the file exists inside this project. Do not leave
+      missing src values in real or commented media markup: HyperFrames parses
+      both. Add a finite, seekable runtime timeline only when motion is needed;
+      until then data-no-timeline keeps this static composition deterministic.
+    -->
+  </body>
+</html>

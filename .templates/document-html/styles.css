@@ -1,0 +1,342 @@
+/*
+ * Document styles — layout, type scale, and accessibility baseline.
+ *
+ * This file contains NO brand values. Every colour, font, and the logo come
+ * from the shared token sheet loaded ahead of it in index.html:
+ *
+ *     ../../brand/tokens.css   (generated from brand/brand.json)
+ *
+ * The block below is the only place that names a brand token or a shared path.
+ * It maps them onto the local `--doc-*` variables the rest of the file uses, so
+ * a change in the token sheet is a one-line change here. Fallbacks are CSS
+ * system colours and system font stacks — deliberately neutral, so a missing
+ * token sheet degrades to a readable unbranded document, never a broken one.
+ */
+
+:root {
+  /* Semantic colour, from the token sheet */
+  --doc-foreground: var(--color-foreground, CanvasText);
+  --doc-background: var(--color-background, Canvas);
+  --doc-primary: var(--color-primary, LinkText);
+  --doc-secondary: var(--color-secondary, var(--doc-primary));
+  --doc-muted: var(--color-muted, GrayText);
+  --doc-accent-soft: var(--color-accent-soft, var(--doc-primary));
+
+  /* Typography, from the token sheet (which also loads the webfonts) */
+  --doc-font-base: var(--font-sans, ui-sans-serif, system-ui, sans-serif);
+  --doc-font-headings: var(--font-heading, var(--doc-font-base));
+  --doc-font-mono: var(--font-mono, ui-monospace, SFMono-Regular, monospace);
+  --doc-font-size: var(--font-size-base, 1rem);
+  --doc-line-height: var(--line-height-base, 1.6);
+  --doc-heading-weight: var(--font-weight-heading, 600);
+  --doc-heading-line-height: var(--line-height-heading, 1.25);
+  --doc-mono-size: var(--font-size-mono, 0.9em);
+
+  /*
+   * Shared logo. The token sheet exposes the mark as a file, not a variable,
+   * so this is the one path in the project that points at the brand directory.
+   * Use logo-light.svg instead on a dark ground.
+   */
+  --doc-logo: url("../../brand/assets/logo.svg");
+
+  /* Layout — operational, not brand. */
+  --doc-measure: 68ch;
+  --doc-gutter: clamp(1rem, 4vw, 3rem);
+  --doc-rule: color-mix(in srgb, var(--doc-foreground) 15%, transparent);
+}
+
+/* ── Reset ─────────────────────────────────────────────────── */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0 var(--doc-gutter) 4rem;
+  background: var(--doc-background);
+  color: var(--doc-foreground);
+  font-family: var(--doc-font-base);
+  font-size: var(--doc-font-size);
+  line-height: var(--doc-line-height);
+  text-underline-offset: 0.15em;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* ── Accessibility ─────────────────────────────────────────── */
+
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  padding: 0.5rem 1rem;
+  background: var(--doc-background);
+  color: var(--doc-primary);
+  z-index: 10;
+}
+
+.skip-link:focus {
+  left: var(--doc-gutter);
+}
+
+:focus-visible {
+  outline: 3px solid var(--doc-primary);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ── Structure ─────────────────────────────────────────────── */
+
+.doc-header,
+.doc-toc,
+.doc-body,
+.doc-footer {
+  max-width: var(--doc-measure);
+  margin-inline: auto;
+}
+
+.doc-header {
+  padding-block: clamp(2rem, 8vh, 5rem) 1.5rem;
+  border-bottom: 1px solid var(--doc-rule);
+}
+
+/*
+ * The brand mark is painted as a background image from --doc-logo, so a
+ * missing or unreachable file renders as nothing rather than a broken-image
+ * icon. Set --doc-logo to `none` above to drop the mark from the header;
+ * script.js then removes the element so it leaves no empty gap.
+ */
+.brand-mark {
+  height: 2rem;
+  margin: 0 0 1.5rem;
+  background-image: var(--doc-logo);
+  background-repeat: no-repeat;
+  background-position: left center;
+  background-size: contain;
+}
+
+.doc-header h1 {
+  margin: 0;
+  font-size: clamp(1.9rem, 5vw, 2.75rem);
+}
+
+.subtitle {
+  margin: 0.5rem 0 0;
+  font-size: 1.125rem;
+  color: var(--doc-muted);
+}
+
+.byline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin: 1.25rem 0 0;
+  font-size: 0.9rem;
+  color: var(--doc-muted);
+}
+
+/* ── Table of contents ─────────────────────────────────────── */
+
+.doc-toc {
+  padding-block: 1.5rem;
+  border-bottom: 1px solid var(--doc-rule);
+}
+
+.doc-toc h2 {
+  margin: 0 0 0.5rem;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--doc-muted);
+}
+
+.doc-toc ol {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.doc-toc li + li {
+  margin-top: 0.25rem;
+}
+
+/* Set by script.js on the section currently in view. */
+.doc-toc a[aria-current] {
+  font-weight: 600;
+}
+
+/* ── Body copy ─────────────────────────────────────────────── */
+
+.doc-body > section + section {
+  margin-top: 3rem;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--doc-font-headings);
+  font-weight: var(--doc-heading-weight);
+  line-height: var(--doc-heading-line-height);
+  text-wrap: balance;
+}
+
+h2 {
+  margin-top: 0;
+  font-size: 1.6rem;
+}
+
+h3 {
+  font-size: 1.25rem;
+}
+
+p,
+li {
+  text-wrap: pretty;
+}
+
+a {
+  color: var(--doc-primary);
+}
+
+code,
+pre,
+kbd,
+samp {
+  font-family: var(--doc-font-mono);
+  font-size: var(--doc-mono-size);
+}
+
+pre {
+  padding: 1rem;
+  overflow-x: auto;
+  border: 1px solid var(--doc-rule);
+  border-radius: 6px;
+}
+
+/* ── Figures, tables, callouts ─────────────────────────────── */
+
+figure {
+  margin: 2rem 0;
+}
+
+img,
+svg,
+video {
+  max-width: 100%;
+  height: auto;
+}
+
+figcaption {
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--doc-muted);
+}
+
+table {
+  width: 100%;
+  margin: 2rem 0;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+caption {
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  text-align: left;
+  color: var(--doc-muted);
+}
+
+th,
+td {
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid var(--doc-rule);
+}
+
+thead th {
+  border-bottom-width: 2px;
+}
+
+blockquote {
+  margin: 2rem 0;
+  padding-left: 1.25rem;
+  border-left: 3px solid var(--doc-secondary);
+  color: var(--doc-muted);
+}
+
+.callout {
+  margin: 2rem 0;
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--doc-rule);
+  border-left: 3px solid var(--doc-primary);
+  border-radius: 6px;
+}
+
+.callout h4 {
+  margin: 0 0 0.5rem;
+  font-size: 0.95rem;
+}
+
+.callout > :last-child {
+  margin-bottom: 0;
+}
+
+/* ── Footer ────────────────────────────────────────────────── */
+
+.doc-footer {
+  margin-top: 4rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--doc-rule);
+  font-size: 0.875rem;
+  color: var(--doc-muted);
+}
+
+/* ── Print ─────────────────────────────────────────────────── */
+
+@media print {
+  body {
+    padding: 0;
+    font-size: 11pt;
+  }
+
+  .skip-link,
+  .doc-toc {
+    display: none;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: underline;
+  }
+
+  a[href^="http"]::after {
+    content: " (" attr(href) ")";
+    font-size: 0.85em;
+    word-break: break-all;
+  }
+
+  h2,
+  h3 {
+    break-after: avoid;
+  }
+
+  figure,
+  table,
+  blockquote {
+    break-inside: avoid;
+  }
+}

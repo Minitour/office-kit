@@ -11,12 +11,156 @@ import re
 import sys
 import wave
 from dataclasses import dataclass
+from functools import lru_cache
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any, Mapping, Sequence
 
 ID_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
 VOICE_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._+-]{0,127}$")
+LANG_CODE_PATTERN = re.compile(r"^[A-Za-z][A-Za-z0-9_-]{0,15}$")
 MAX_TEXT_LENGTH = 100_000
+VOICES_PATH = Path(__file__).resolve().parents[1] / "voices.json"
+
+
+@dataclass(frozen=True)
+class VoiceInfo:
+    id: str
+    lang_code: str
+    locale: str
+    label: str
+    gender: str
+
+
+def _gender_from_voice_id(voice_id: str) -> str:
+    if len(voice_id) >= 2 and voice_id[1] in {"f", "m"}:
+        return "female" if voice_id[1] == "f" else "male"
+    return "unknown"
+
+
+@lru_cache(maxsize=1)
+def load_voice_catalog(path: Path | None = None) -> dict[str, VoiceInfo]:
+    """Load bundled Kokoro-82M voice ids and their pipeline language codes."""
+    catalog_path = path or VOICES_PATH
+    try:
+        data = json.loads(catalog_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ManifestError(f"could not read voice catalog {catalog_path}: {exc}") from exc
+
+    catalog: dict[str, VoiceInfo] = {}
+    languages = data.get("languages") if isinstance(data, dict) else None
+    if not isinstance(languages, list):
+        raise ManifestError(f"voice catalog is missing a languages list: {catalog_path}")
+
+    for group in languages:
+        if not isinstance(group, dict):
+            raise ManifestError("voice catalog language entry must be an object")
+        lang_code = group.get("lang_code")
+        locale = group.get("locale")
+        label = group.get("label")
+        voices = group.get("voices")
+        if not isinstance(lang_code, str) or not LANG_CODE_PATTERN.fullmatch(lang_code):
+            raise ManifestError(f"voice catalog has an invalid lang_code: {lang_code!r}")
+        if not isinstance(locale, str) or not locale.strip():
+            raise ManifestError(f"voice catalog language {lang_code!r} is missing a locale")
+        if not isinstance(label, str) or not label.strip():
+            raise ManifestError(f"voice catalog language {lang_code!r} is missing a label")
+        if not isinstance(voices, list) or not voices:
+            raise ManifestError(f"voice catalog language {lang_code!r} has no voices")
+        for voice_id in voices:
+            if not isinstance(voice_id, str) or not VOICE_PATTERN.fullmatch(voice_id):
+                raise ManifestError(f"voice catalog has an invalid voice id: {voice_id!r}")
+            if voice_id in catalog:
+                raise ManifestError(f"voice catalog has a duplicate voice id: {voice_id!r}")
+            catalog[voice_id] = VoiceInfo(
+                id=voice_id,
+                lang_code=lang_code,
+                locale=locale,
+                label=label,
+                gender=_gender_from_voice_id(voice_id),
+            )
+    if not catalog:
+        raise ManifestError(f"voice catalog contains no voices: {catalog_path}")
+    return catalog
+
+
+def known_voices() -> tuple[str, ...]:
+    return tuple(sorted(load_voice_catalog()))
+
+
+def format_voice_list(catalog: Mapping[str, VoiceInfo] | None = None) -> str:
+    """Human-readable inventory grouped by language."""
+    catalog = catalog or load_voice_catalog()
+    groups: dict[tuple[str, str, str], list[VoiceInfo]] = {}
+    for info in catalog.values():
+        groups.setdefault((info.lang_code, info.locale, info.label), []).append(info)
+
+    lines = [f"Kokoro voices ({len(catalog)}) — pass these ids to --voice or segment.voice:"]
+    for lang_code, locale, label in sorted(groups, key=lambda item: item[0]):
+        lines.append(f"\n{label} (lang_code={lang_code}, {locale})")
+        for info in sorted(groups[(lang_code, locale, label)], key=lambda item: item.id):
+            lines.append(f"  {info.id:<16} {info.gender}")
+    lines.append(
+        "\nLanguage is derived from the voice id unless --lang-code is set. "
+        "American and British English can be mixed in one job; that opens one "
+        "pipeline per language."
+    )
+    return "\n".join(lines) + "\n"
+
+
+def _suggest_voices(voice: str, catalog: Mapping[str, VoiceInfo]) -> str:
+    lowered = voice.lower()
+    matches = [name for name in catalog if name.startswith(lowered[:2])]
+    if not matches:
+        matches = [name for name in catalog if lowered[:3] in name]
+    preview = ", ".join(sorted(matches)[:8]) or ", ".join(known_voices()[:8])
+    return f" Known voices include: {preview}."
+
+
+def lang_code_for_voice(
+    voice: str,
+    *,
+    override: str | None = None,
+    catalog: Mapping[str, VoiceInfo] | None = None,
+) -> str:
+    """Return the Kokoro pipeline language for a voice id."""
+    if not isinstance(voice, str) or not VOICE_PATTERN.fullmatch(voice):
+        raise ManifestError(f"voice must match {VOICE_PATTERN.pattern!r}; got {voice!r}")
+    if override is not None:
+        if not LANG_CODE_PATTERN.fullmatch(override):
+            raise ManifestError(
+                f"language code must match {LANG_CODE_PATTERN.pattern!r}; got {override!r}"
+            )
+        return override
+
+    catalog = catalog or load_voice_catalog()
+    info = catalog.get(voice)
+    if info is not None:
+        return info.lang_code
+    return voice[0].lower()
+
+
+def resolve_voice(
+    voice: str,
+    *,
+    override_lang_code: str | None = None,
+    allow_unknown: bool = True,
+    catalog: Mapping[str, VoiceInfo] | None = None,
+) -> tuple[str, str, VoiceInfo | None]:
+    """Validate a voice id and return (voice, lang_code, catalog entry or None)."""
+    if not isinstance(voice, str) or not VOICE_PATTERN.fullmatch(voice):
+        raise ManifestError(f"voice must match {VOICE_PATTERN.pattern!r}; got {voice!r}")
+
+    catalog = catalog or load_voice_catalog()
+    info = catalog.get(voice)
+    if info is None and not allow_unknown:
+        raise ManifestError(
+            f"unknown Kokoro voice {voice!r}.{_suggest_voices(voice, catalog)} "
+            "Run synthesize.py --list-voices for the full inventory."
+        )
+    lang_code = lang_code_for_voice(
+        voice, override=override_lang_code, catalog=catalog
+    )
+    return voice, lang_code, info
 
 
 class ManifestError(ValueError):
@@ -166,12 +310,15 @@ def build_manifest(
                 f"cannot express WAV path relative to manifest: {wav_path}"
             ) from exc
 
+        voice = segment.voice or default_voice
+        lang_code = lang_code_for_voice(voice) if voice else None
         entries.append(
             {
                 "sequence": index + 1,
                 "id": segment.id,
                 "text": segment.text,
-                "voice": segment.voice or default_voice,
+                "voice": voice,
+                "lang_code": lang_code,
                 "file": Path(relative_file).as_posix(),
                 "start_seconds": _seconds(cursor),
                 "audio_duration_seconds": _seconds(duration),

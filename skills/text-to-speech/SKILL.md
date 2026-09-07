@@ -45,7 +45,22 @@ Pass either a JSON list or an object with a `segments` list:
 ```
 
 `id` must be a safe filename stem and unique. `text` must be non-empty. `voice`
-is optional and falls back to `--voice`.
+is optional and falls back to `--voice`. Any bundled Kokoro-82M voice works;
+set a different id per segment to mix speakers. Language is derived from the
+voice prefix (`af_`/`am_` → American English, `bf_`/`bm_` → British English)
+unless you pass `--lang-code`.
+
+List the inventory without loading the model:
+
+```bash
+uv run python skills/text-to-speech/scripts/synthesize.py --list-voices
+```
+
+The same ids live in `skills/text-to-speech/voices.json`. Common English
+choices: `af_heart`, `af_bella`, `am_michael`, `bf_emma`, `bm_george`. Japanese,
+Mandarin, Spanish, French, Hindi, Italian, and Brazilian Portuguese voices are
+listed there too; those languages need matching phonemizer extras (`espeak-ng`,
+and `misaki[ja]` / `misaki[zh]` for Japanese and Chinese).
 
 ## Synthesize clips
 
@@ -66,7 +81,10 @@ segments and is not baked into each clip. Existing outputs are protected unless
 
 Useful options:
 
-- `--lang-code a`: Kokoro pipeline language code.
+- `--lang-code a`: force one G2P language for every segment. Omit this flag to
+  derive language from each voice so a job can mix `af_*` and `bf_*`.
+- `--list-voices`: print the bundled Kokoro-82M catalog and exit.
+- `--allow-unknown-voice`: accept a voice id that is not in `voices.json`.
 - `--model hexgrad/Kokoro-82M`: cached Hugging Face model repository.
 - `--speed 1.0`: speech rate; must be positive.
 - `--padding 0.25`: timeline gap after each non-final clip, in seconds.

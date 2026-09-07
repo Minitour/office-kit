@@ -12,30 +12,49 @@ from pathlib import Path
 from typing import Any, Sequence
 
 from tts_manifest import (
+    LANG_CODE_PATTERN,
     ManifestError,
-    VOICE_PATTERN,
     build_manifest,
+    format_voice_list,
     load_segments,
+    resolve_voice,
     write_manifest,
 )
 
 KOKORO_SAMPLE_RATE = 24_000
-LANG_CODE_PATTERN = re.compile(r"^[A-Za-z][A-Za-z0-9_-]{0,15}$")
 
 
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Generate per-segment WAV narration with local Kokoro inference."
     )
-    parser.add_argument("segments", type=Path, help="JSON segment list")
-    parser.add_argument("output_dir", type=Path, help="directory for WAV files")
+    parser.add_argument("segments", nargs="?", type=Path, help="JSON segment list")
+    parser.add_argument("output_dir", nargs="?", type=Path, help="directory for WAV files")
     parser.add_argument(
         "--model",
         default="hexgrad/Kokoro-82M",
         help="Hugging Face Kokoro model repository",
     )
-    parser.add_argument("--voice", default="af_heart", help="default Kokoro voice")
-    parser.add_argument("--lang-code", default="a", help="Kokoro pipeline language code")
+    parser.add_argument(
+        "--voice",
+        default="af_heart",
+        help="default Kokoro voice id (see --list-voices)",
+    )
+    parser.add_argument(
+        "--lang-code",
+        help="force one Kokoro G2P language for every segment; omit to derive "
+        "it from each voice id (af_/am_ → a, bf_/bm_ → b, …)",
+    )
+    parser.add_argument(
+        "--list-voices",
+        action="store_true",
+        help="print bundled Kokoro-82M voice ids and exit",
+    )
+    parser.add_argument(
+        "--allow-unknown-voice",
+        action="store_true",
+        help="accept voice ids that are not in the bundled catalog",
+    )
     parser.add_argument("--speed", type=float, default=1.0, help="positive speech speed")
     parser.add_argument(
         "--padding",
@@ -58,14 +77,17 @@ def _parser() -> argparse.ArgumentParser:
 
 
 def _validate_args(args: argparse.Namespace) -> None:
-    if not VOICE_PATTERN.fullmatch(args.voice):
-        raise ManifestError(f"default voice is invalid: {args.voice!r}")
+    resolve_voice(
+        args.voice,
+        override_lang_code=args.lang_code,
+        allow_unknown=args.allow_unknown_voice,
+    )
     if not re.fullmatch(r"^[A-Za-z0-9][A-Za-z0-9._-]*/[A-Za-z0-9][A-Za-z0-9._-]*$", args.model):
         raise ManifestError(
             "model must be a Hugging Face repository id such as "
             "'hexgrad/Kokoro-82M'"
         )
-    if not LANG_CODE_PATTERN.fullmatch(args.lang_code):
+    if args.lang_code is not None and not LANG_CODE_PATTERN.fullmatch(args.lang_code):
         raise ManifestError(
             f"language code must match {LANG_CODE_PATTERN.pattern!r}; "
             f"got {args.lang_code!r}"
@@ -180,6 +202,12 @@ def synthesize_segment(
 
 def main(argv: Sequence[str] | None = None) -> int:
     args = _parser().parse_args(argv)
+    if args.list_voices:
+        sys.stdout.write(format_voice_list())
+        return 0
+    if args.segments is None or args.output_dir is None:
+        _parser().error("segments and output_dir are required unless --list-voices is set")
+
     try:
         _validate_args(args)
         segments = load_segments(args.segments)
@@ -202,26 +230,49 @@ def main(argv: Sequence[str] | None = None) -> int:
             os.environ["TRANSFORMERS_OFFLINE"] = "1"
 
         np, sf, pipeline_class = _load_runtime()
-        try:
-            pipeline = pipeline_class(
-                lang_code=args.lang_code.strip(),
-                repo_id=args.model,
-            )
-        except Exception as exc:
-            cache_hint = (
-                " The requested assets were not found in the Hugging Face cache."
-                if args.offline
-                else " The first run may need network access to download model assets."
-            )
-            raise ManifestError(f"could not initialize Kokoro: {exc}.{cache_hint}") from exc
+        pipelines: dict[str, Any] = {}
+
+        def pipeline_for(lang_code: str) -> Any:
+            if lang_code not in pipelines:
+                try:
+                    pipelines[lang_code] = pipeline_class(
+                        lang_code=lang_code,
+                        repo_id=args.model,
+                    )
+                except Exception as exc:
+                    cache_hint = (
+                        " The requested assets were not found in the Hugging Face cache."
+                        if args.offline
+                        else " The first run may need network access to download model assets."
+                    )
+                    raise ManifestError(
+                        f"could not initialize Kokoro for lang_code={lang_code!r}: "
+                        f"{exc}.{cache_hint}"
+                    ) from exc
+            return pipelines[lang_code]
 
         for index, segment in enumerate(segments, start=1):
-            voice = segment.voice or args.voice
+            voice, lang_code, info = resolve_voice(
+                segment.voice or args.voice,
+                override_lang_code=args.lang_code,
+                allow_unknown=args.allow_unknown_voice,
+            )
+            if info is None:
+                print(
+                    f"warning: {voice!r} is not in the bundled Kokoro catalog; "
+                    f"using lang_code={lang_code!r}. Pass --list-voices to see "
+                    "known ids.",
+                    file=sys.stderr,
+                    flush=True,
+                )
             output_path = output_dir / f"{segment.id}.wav"
-            print(f"[{index}/{len(segments)}] {segment.id} ({voice})", flush=True)
+            print(
+                f"[{index}/{len(segments)}] {segment.id} ({voice}, {lang_code})",
+                flush=True,
+            )
             try:
                 synthesize_segment(
-                    pipeline,
+                    pipeline_for(lang_code),
                     segment.text,
                     voice,
                     args.speed,

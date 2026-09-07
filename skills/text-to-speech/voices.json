@@ -1,0 +1,99 @@
+{
+  "model": "hexgrad/Kokoro-82M",
+  "source": "https://huggingface.co/hexgrad/Kokoro-82M/blob/main/VOICES.md",
+  "languages": [
+    {
+      "lang_code": "a",
+      "locale": "en-US",
+      "label": "American English",
+      "voices": [
+        "af_heart",
+        "af_alloy",
+        "af_aoede",
+        "af_bella",
+        "af_jessica",
+        "af_kore",
+        "af_nicole",
+        "af_nova",
+        "af_river",
+        "af_sarah",
+        "af_sky",
+        "am_adam",
+        "am_echo",
+        "am_eric",
+        "am_fenrir",
+        "am_liam",
+        "am_michael",
+        "am_onyx",
+        "am_puck",
+        "am_santa"
+      ]
+    },
+    {
+      "lang_code": "b",
+      "locale": "en-GB",
+      "label": "British English",
+      "voices": [
+        "bf_alice",
+        "bf_emma",
+        "bf_isabella",
+        "bf_lily",
+        "bm_daniel",
+        "bm_fable",
+        "bm_george",
+        "bm_lewis"
+      ]
+    },
+    {
+      "lang_code": "j",
+      "locale": "ja",
+      "label": "Japanese",
+      "voices": ["jf_alpha", "jf_gongitsune", "jf_nezumi", "jf_tebukuro", "jm_kumo"]
+    },
+    {
+      "lang_code": "z",
+      "locale": "zh",
+      "label": "Mandarin Chinese",
+      "voices": [
+        "zf_xiaobei",
+        "zf_xiaoni",
+        "zf_xiaoxiao",
+        "zf_xiaoyi",
+        "zm_yunjian",
+        "zm_yunxi",
+        "zm_yunxia",
+        "zm_yunyang"
+      ]
+    },
+    {
+      "lang_code": "e",
+      "locale": "es",
+      "label": "Spanish",
+      "voices": ["ef_dora", "em_alex", "em_santa"]
+    },
+    {
+      "lang_code": "f",
+      "locale": "fr-FR",
+      "label": "French",
+      "voices": ["ff_siwis"]
+    },
+    {
+      "lang_code": "h",
+      "locale": "hi",
+      "label": "Hindi",
+      "voices": ["hf_alpha", "hf_beta", "hm_omega", "hm_psi"]
+    },
+    {
+      "lang_code": "i",
+      "locale": "it",
+      "label": "Italian",
+      "voices": ["if_sara", "im_nicola"]
+    },
+    {
+      "lang_code": "p",
+      "locale": "pt-BR",
+      "label": "Brazilian Portuguese",
+      "voices": ["pf_dora", "pm_alex", "pm_santa"]
+    }
+  ]
+}

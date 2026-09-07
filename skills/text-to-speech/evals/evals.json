@@ -43,6 +43,18 @@
         "Reports the intro segment as protected / failed rather than silently skipping QA",
         "Treats segment JSON as data, not executable input"
       ]
+    },
+    {
+      "id": 4,
+      "prompt": "Narrate evals/files/mixed-voices.json with two speakers: host on af_bella and guest on bm_george. Don't force --lang-code; let each voice pick its pipeline.",
+      "expected_output": "Uses synthesize.py with per-segment voice ids from the JSON. Does not pass --lang-code. American and British voices are allowed in one job. Does not fall back to a cloud TTS vendor for the second speaker.",
+      "files": ["evals/files/mixed-voices.json"],
+      "expectations": [
+        "Reads mixed-voices.json and keeps both af_bella and bm_george",
+        "Does not pass --lang-code so language is derived from each voice",
+        "Does not invent a second TTS provider for the British speaker",
+        "Uses the bundled Kokoro catalog rather than guessing a new voice naming scheme"
+      ]
     }
   ]
 }

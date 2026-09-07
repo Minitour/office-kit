@@ -14,9 +14,10 @@ status, including preview, review, and delivery status.
 
 Use HyperFrames for visuals and rendering. Narration must go through the
 `text-to-speech` skill (Kokoro via `uv run`, one WAV per segment plus a measured
-manifest) so timing and revisions stay local and isolated. Do not substitute
-cloud TTS, ElevenLabs, or a new synthesis stack, and do not run TTS in primary
-context.
+manifest) so timing and revisions stay local and isolated. Pick voices from
+`skills/text-to-speech/voices.json` (`af_heart`, `am_michael`, `bf_emma`, and
+the rest); do not substitute cloud TTS, ElevenLabs, or a new synthesis stack,
+and do not run TTS in primary context.
 
 Visual styling originates in the generated workspace brand outputs. HyperFrames
 cannot serve files above a project root, so `video-agent` must copy the files

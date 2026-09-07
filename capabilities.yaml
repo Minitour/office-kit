@@ -528,8 +528,13 @@ subagents:
       `text-to-speech` before generating any narration.
 
       **Narration:** synthesize locally and offline, one WAV clip per script
-      segment, using the repository's text-to-speech scripts via `uv run`, with
-      voice, speed, language, and padding from `config.toml` (`[audio]`) unless
+      segment, using the repository's text-to-speech scripts via `uv run`. Use
+      `--voice` from the approved plan or `config.toml` `[audio].voice`. Mix
+      speakers by setting `voice` on individual segments (`af_heart`,
+      `am_michael`, `bf_emma`, and the rest of `skills/text-to-speech/voices.json`).
+      Do not pass `--lang-code` unless the plan explicitly overrides G2P —
+      `synthesize.py` derives language from each voice so American and British
+      English can share one job. Keep speed and padding from `[audio]` unless
       the plan overrides them. Keep clips and `manifest.json` inside the
       project's narration directory, then verify the measured durations against
       the per-scene timings in the plan. Apply the `[audio.levels]` mix targets

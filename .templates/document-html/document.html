@@ -308,10 +308,19 @@
         }
 
         /*
-         * Open regardless of the `open` attribute: the rail is not
-         * collapsible at this width, and this keeps the list visible even
-         * with JavaScript off.
+         * A closed <details> hides its slot in the UA stylesheet
+         * (`::details-content { content-visibility: hidden }`). A
+         * `display: block` on the <ul> never reaches the list, which is
+         * why the rail vanished after a trip through a narrow viewport:
+         * the script collapsed the panel, and this rule could not reopen
+         * it. Force the slot itself open — the rail is not collapsible
+         * at this width, and this is also the no-JS fallback.
          */
+        .doc-toc details::details-content {
+          content-visibility: visible;
+          display: block;
+        }
+
         .doc-toc details > ul {
           display: block;
         }
@@ -659,29 +668,50 @@
         const toc = document.querySelector(".doc-toc");
         const tocDetails = document.querySelector(".doc-toc details");
         /*
-         * Matches the rail breakpoint in the stylesheet. At or above it the
-         * CSS shows the list whatever the `open` attribute says, so this only
-         * governs the collapsible panel below the breakpoint.
+         * Matches the rail breakpoint in the stylesheet. Below it this
+         * governs the collapsible panel. At or above it the rail must be
+         * open: a closed <details> hides its list even when CSS asks
+         * otherwise, so crossing back from a narrow viewport has to set
+         * the attribute, not just restyle the box.
          */
         const wideToc = window.matchMedia("(min-width: 64rem)");
 
         /*
-         * Open as a rail, collapsed in the flow, so the panel never pushes
-         * the article off a narrow first screen. The markup ships open, which
-         * is the right no-JS state. A manual toggle wins from then on.
+         * The markup ships open, which is the right no-JS state. A
+         * manual toggle on the narrow panel wins until the viewport
+         * crosses the rail breakpoint, where the rail is not
+         * collapsible and is always reopened.
+         *
+         * `toggle` fires after `open` is assigned, not during it. A
+         * boolean flipped around the assignment is already false when
+         * the listener runs, so the first collapse to mobile used to
+         * count as a user choice and the rail never came back. Count
+         * the programmatic change and ignore that one event.
          */
         let tocToggledByUser = false;
-        let syncingToc = false;
+        let ignoreToggle = 0;
+        const setTocOpen = (open) => {
+          if (!tocDetails || tocDetails.open === open) return;
+          ignoreToggle += 1;
+          tocDetails.open = open;
+        };
         const syncTocOpen = () => {
-          if (!tocDetails || tocToggledByUser) return;
-          syncingToc = true;
-          tocDetails.open = wideToc.matches;
-          syncingToc = false;
+          if (!tocDetails) return;
+          if (wideToc.matches) {
+            setTocOpen(true);
+            return;
+          }
+          if (tocToggledByUser) return;
+          setTocOpen(false);
         };
 
         if (tocDetails) {
           tocDetails.addEventListener("toggle", () => {
-            if (!syncingToc) tocToggledByUser = true;
+            if (ignoreToggle > 0) {
+              ignoreToggle -= 1;
+              return;
+            }
+            if (!wideToc.matches) tocToggledByUser = true;
           });
         }
         if (wideToc.addEventListener) {

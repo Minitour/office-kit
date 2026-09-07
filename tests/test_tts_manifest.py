@@ -99,10 +99,12 @@ class TtsManifestTests(unittest.TestCase):
             self.assertEqual(first["start_seconds"], 0.0)
             self.assertEqual(first["end_seconds"], 0.5)
             self.assertEqual(first["voice"], "af_heart")
+            self.assertEqual(first["lang_code"], "a")
             self.assertEqual(second["start_seconds"], 0.7)
             self.assertEqual(second["end_seconds"], 1.95)
             self.assertEqual(second["padding_after_seconds"], 0.0)
             self.assertEqual(second["voice"], "am_adam")
+            self.assertEqual(second["lang_code"], "a")
 
     def test_rejects_invalid_wav_and_padding(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -128,6 +130,36 @@ class TtsManifestTests(unittest.TestCase):
             replacement = {"schema_version": 1, "segments": [{"id": "new"}]}
             tts_manifest.write_manifest(replacement, output, overwrite=True)
             self.assertEqual(json.loads(output.read_text()), replacement)
+
+    def test_voice_catalog_covers_english_and_other_locales(self) -> None:
+        catalog = tts_manifest.load_voice_catalog()
+        self.assertGreaterEqual(len(catalog), 50)
+        self.assertEqual(catalog["af_heart"].lang_code, "a")
+        self.assertEqual(catalog["am_michael"].lang_code, "a")
+        self.assertEqual(catalog["bf_emma"].lang_code, "b")
+        self.assertEqual(catalog["bm_george"].lang_code, "b")
+        self.assertEqual(catalog["jf_alpha"].lang_code, "j")
+        self.assertEqual(catalog["ff_siwis"].lang_code, "f")
+
+        self.assertEqual(tts_manifest.lang_code_for_voice("bf_emma"), "b")
+        self.assertEqual(
+            tts_manifest.lang_code_for_voice("bf_emma", override="a"),
+            "a",
+        )
+
+        unknown_voice, unknown_lang, unknown_info = tts_manifest.resolve_voice(
+            "af_custompack",
+            allow_unknown=True,
+        )
+        self.assertEqual((unknown_voice, unknown_lang, unknown_info), ("af_custompack", "a", None))
+
+        with self.assertRaises(tts_manifest.ManifestError):
+            tts_manifest.resolve_voice("not-a-real-voice", allow_unknown=False)
+
+        listing = tts_manifest.format_voice_list()
+        self.assertIn("bf_emma", listing)
+        self.assertIn("American English", listing)
+        self.assertIn("British English", listing)
 
 
 if __name__ == "__main__":

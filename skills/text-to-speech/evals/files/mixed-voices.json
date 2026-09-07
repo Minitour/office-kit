@@ -1,0 +1,6 @@
+{
+  "segments": [
+    {"id": "host", "text": "Welcome to the workspace tour.", "voice": "af_bella"},
+    {"id": "guest", "text": "And here is the British counterpart.", "voice": "bm_george"}
+  ]
+}

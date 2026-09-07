@@ -52,3 +52,7 @@ Thumbs.db
 *.swo
 *~
 .idea/
+
+# Deliverables are built locally; the workspace ships the templates, not output.
+projects/
+!projects/.gitkeep

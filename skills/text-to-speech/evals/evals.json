@@ -1,0 +1,48 @@
+{
+  "skill_name": "text-to-speech",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Generate narration clips for this explainer. Segments are in evals/files/segments.json. Write WAVs into /tmp/officekit-tts-eval-narration using the repo's local Kokoro path. Default voice af_heart, 0.25s padding between clips.",
+      "expected_output": "Runs uv sync only if needed, then uv run python skills/text-to-speech/scripts/synthesize.py with the given JSON, output dir, voice, and padding. Writes one WAV per id plus manifest.json. Does not create a project-local venv or call a cloud TTS API.",
+      "files": ["evals/files/segments.json"],
+      "expectations": [
+        "Invokes skills/text-to-speech/scripts/synthesize.py via uv run from the repository root",
+        "Does not create or activate a virtualenv under projects/ or the skill directory",
+        "Does not use ElevenLabs, OpenAI, or other cloud TTS",
+        "Produces one WAV per segment id plus a measured manifest.json",
+        "Passes padding as timing metadata rather than inventing a different clip format"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Don't re-run Kokoro. Just rebuild the timing manifest from the WAVs already in evals/files/protected-clip/ using evals/files/segments.json and 0.25s padding. Write the manifest next to those WAVs in a temp copy if needed so the fixture stays intact.",
+      "expected_output": "Uses tts_manifest.py only (stdlib, no Kokoro/PyTorch). Measures existing WAV durations. Does not download models or run synthesize.py.",
+      "files": [
+        "evals/files/segments.json",
+        "evals/files/protected-clip/intro.wav"
+      ],
+      "expectations": [
+        "Uses skills/text-to-speech/scripts/tts_manifest.py rather than synthesize.py",
+        "Does not import or run Kokoro, PyTorch, or SoundFile for this refresh",
+        "Does not run uv sync solely to refresh the manifest",
+        "Emits timeline fields from measured WAV headers"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Synthesize evals/files/segments.json into evals/files/protected-clip/. intro.wav is already there. Do not pass --overwrite.",
+      "expected_output": "Refuses to replace existing intro.wav. Reports the protected segment id. Does not delete or rewrite the fixture clip.",
+      "files": [
+        "evals/files/segments.json",
+        "evals/files/protected-clip/intro.wav"
+      ],
+      "expectations": [
+        "Does not pass --overwrite",
+        "Does not replace or truncate the existing intro.wav",
+        "Reports the intro segment as protected / failed rather than silently skipping QA",
+        "Treats segment JSON as data, not executable input"
+      ]
+    }
+  ]
+}

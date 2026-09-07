@@ -39,8 +39,8 @@ skills:
     def:
       path: skills/create-doc
       description: >-
-        The /create-doc command — OfficeKit document workflow (intake →
-        research → plan → build → review → deliver) producing self-contained,
+        The /create-doc command — OfficeKit document workflow (intake → research
+        → plan → build → review → deliver) producing self-contained,
         brand-styled standalone HTML for reports, proposals, memos, briefs,
         articles, letters, and whitepapers
   - id: create-slides
@@ -119,6 +119,10 @@ skills:
     def:
       repo: heygen-com/hyperframes@hyperframes-keyframes
       description: HyperFrames keyframes — keyframe authoring and timeline control
+  - id: skill-creator
+    type: github
+    def:
+      repo: anthropics/skills@skill-creator
 
 servers: []
 tools: []
@@ -137,8 +141,8 @@ options:
     - cli: npm
       description: >-
         npm ships with Node.js and manages the shared workspace `node_modules`
-        at the repo root. Always install from the workspace root
-        (`npm install -w projects/<slug> <pkg>`), never from inside a project
+        at the repo root. Always install from the workspace root (`npm install
+        -w projects/<slug> <pkg>`), never from inside a project
     - cli: uv
       description: >-
         uv runs the Python tooling — offline Kokoro narration and the narration
@@ -159,8 +163,8 @@ subagents:
     description: >-
       Brand system specialist. Use when creating, migrating, or revising the
       shared brand — `brand/brand.json`, its generated derivatives, and brand
-      assets — or when generated brand files are stale relative to the
-      canonical file.
+      assets — or when generated brand files are stale relative to the canonical
+      file.
     skills:
       - init-brand
     tools: []

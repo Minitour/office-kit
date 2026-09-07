@@ -1,10 +1,12 @@
 ---
 name: text-to-speech
 description: >
-  Generate local narration as one WAV file per JSON segment with Kokoro, and
-  build measured timing manifests for video or slide composition. Use when a
-  project needs offline-capable speech synthesis, narration clips, or WAV
-  duration metadata.
+  Generate local Kokoro narration as one WAV file per JSON segment and build
+  measured timing manifests for video or slide composition. Use whenever a
+  project needs offline voiceover, Hugging Face TTS, narration clips, speech
+  timing, or WAV duration metadata—including when create-video asks for
+  per-segment audio. Do not use for transcription, speech-to-text, captions from
+  audio, or cloud TTS APIs.
 requires: []
 ---
 

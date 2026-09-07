@@ -72,6 +72,9 @@
         --doc-measure: 68ch;
         --doc-gutter: clamp(1rem, 4vw, 3rem);
         --doc-rule: color-mix(in srgb, var(--doc-foreground) 15%, transparent);
+        /* Width of the contents rail, and its distance from the article. */
+        --doc-rail: 14rem;
+        --doc-rail-gap: clamp(2rem, 5vw, 4rem);
       }
 
       /* ── Reset ─────────────────────────────────────────────── */
@@ -242,45 +245,120 @@
         color: var(--doc-primary);
       }
 
-      @media (min-width: 48rem) {
-        /*
-         * The stuck panel would otherwise cover the heading a contents link
-         * jumped to. --doc-toc-height is measured by the script; the
-         * fallback is the cap below, which over-shoots for a short panel but
-         * never leaves a target hidden underneath it.
-         */
-        html {
-          scroll-padding-top: calc(var(--doc-toc-height, min(40vh, 18rem)) + 1.5rem);
+      /*
+       * ── Wide layout: contents as a side rail ─────────────────
+       * Narrower than this, the contents sit in the flow at the top of the
+       * document, collapsed, so they cost a small screen almost nothing.
+       * From here there is room for two columns, and the contents become a
+       * rail beside the article rather than a band across the top of it.
+       * Nothing overlays the text, so a jump target is never hidden.
+       *
+       * Scoped with :has so a document whose <nav> was deleted, or a browser
+       * without :has, keeps the centred single-column flow above.
+       */
+      @media (min-width: 64rem) {
+        body:has(.doc-toc) {
+          display: grid;
+          grid-template-columns: var(--doc-rail) minmax(0, var(--doc-measure));
+          grid-template-rows: auto auto auto;
+          column-gap: var(--doc-rail-gap);
+          justify-content: center;
+        }
+
+        /* The grid tracks own the measure and the centring from here on. */
+        body:has(.doc-toc) > .doc-header,
+        body:has(.doc-toc) > .doc-body,
+        body:has(.doc-toc) > .doc-footer {
+          grid-column: 2;
+          max-width: none;
+          margin-inline: 0;
+        }
+
+        body:has(.doc-toc) > .doc-header {
+          grid-row: 1;
+        }
+
+        body:has(.doc-toc) > .doc-body {
+          grid-row: 2;
+        }
+
+        body:has(.doc-toc) > .doc-footer {
+          grid-row: 3;
         }
 
         /*
-         * Capped so the panel stays a navigation strip rather than half the
-         * screen. A long list scrolls inside it and the script keeps the
-         * current entry in view.
+         * Spans every row, because a sticky grid item can only travel inside
+         * its own grid area — one row would unstick it at the first heading.
+         * The rail scrolls internally when the list is longer than the
+         * viewport, and the script keeps the current entry in view.
          */
         .doc-toc {
+          grid-column: 1;
+          grid-row: 1 / -1;
           position: sticky;
           top: 0;
-          z-index: 5;
-          max-height: min(40vh, 18rem);
+          align-self: start;
+          max-width: none;
+          margin-inline: 0;
+          max-height: 100vh;
           overflow-y: auto;
           overscroll-behavior: contain;
-          /* Top padding moves onto the sticky label so links scroll under it. */
-          padding-top: 0;
+          padding-block: clamp(2rem, 8vh, 5rem) 1.5rem;
+          border-bottom: none;
         }
 
-        /* Always open here, and kept visible while the list scrolls under it. */
+        /*
+         * Open regardless of the `open` attribute: the rail is not
+         * collapsible at this width, and this keeps the list visible even
+         * with JavaScript off.
+         */
+        .doc-toc details > ul {
+          display: block;
+        }
+
+        /* A rail reads as navigation, so the bullets and indent are noise. */
+        .doc-toc ul {
+          padding-left: 0;
+          list-style: none;
+        }
+
+        .doc-toc li + li {
+          margin-top: 0.5rem;
+        }
+
+        /*
+         * Underlines are dropped in this one nav context, where position and
+         * the rule below carry the affordance; hover and focus restore them.
+         * The transparent rule keeps the text from shifting when it lights up.
+         */
+        .doc-toc a {
+          display: block;
+          padding-left: 0.75rem;
+          border-left: 2px solid transparent;
+          text-decoration: none;
+        }
+
+        .doc-toc a:hover,
+        .doc-toc a:focus-visible {
+          text-decoration: underline;
+        }
+
+        .doc-toc a[aria-current] {
+          border-left-color: var(--doc-primary);
+        }
+
+        /* Held above the list while it scrolls under. */
         .doc-toc summary {
           position: sticky;
           top: 0;
           z-index: 1;
-          padding-block: 1.5rem 0.35rem;
+          padding-block: 0 0.5rem;
           background: var(--doc-background);
           pointer-events: none;
           cursor: default;
         }
 
-        /* Not collapsible at this width, so drop the show/hide hint. */
+        /* Not collapsible here, so drop the show/hide hint. */
         .doc-toc summary::after,
         .doc-toc details[open] > summary::after {
           content: none;
@@ -443,6 +521,12 @@
       /* ── Print ─────────────────────────────────────────────── */
 
       @media print {
+        /* One column on paper: the rail is dropped, so its track would
+           otherwise leave an empty margin down every page. */
+        body:has(.doc-toc) {
+          display: block;
+        }
+
         body {
           padding: 0;
           font-size: 11pt;
@@ -451,6 +535,12 @@
         .skip-link,
         .doc-toc {
           display: none;
+        }
+
+        body:has(.doc-toc) > .doc-header,
+        body:has(.doc-toc) > .doc-body,
+        body:has(.doc-toc) > .doc-footer {
+          max-width: none;
         }
 
         a {
@@ -541,9 +631,13 @@
     </footer>
 
     <script>
+      /* officekit:script:start */
       /*
        * Progressive enhancement. The document is fully readable with
        * JavaScript off — nothing here is required for content or layout.
+       *
+       * This block belongs to the template and `doc.py refresh` rewrites it;
+       * put anything specific to this document in its own <script> below.
        */
       (() => {
         "use strict";
@@ -564,23 +658,16 @@
 
         const toc = document.querySelector(".doc-toc");
         const tocDetails = document.querySelector(".doc-toc details");
-        const wideToc = window.matchMedia("(min-width: 48rem)");
-
         /*
-         * Wide viewports stick the contents panel to the top, so in-page
-         * jumps have to clear it. Publishing the measured height lets the
-         * stylesheet size its scroll-padding exactly; without JS it falls
-         * back to the max-height cap.
+         * Matches the rail breakpoint in the stylesheet. At or above it the
+         * CSS shows the list whatever the `open` attribute says, so this only
+         * governs the collapsible panel below the breakpoint.
          */
-        const publishTocHeight = () => {
-          if (!toc) return;
-          const height = Math.round(toc.getBoundingClientRect().height);
-          root.style.setProperty("--doc-toc-height", `${height}px`);
-        };
+        const wideToc = window.matchMedia("(min-width: 64rem)");
 
         /*
-         * Open on wide viewports, closed on narrow ones so the panel does not
-         * push the article off the first screen. The markup ships open, which
+         * Open as a rail, collapsed in the flow, so the panel never pushes
+         * the article off a narrow first screen. The markup ships open, which
          * is the right no-JS state. A manual toggle wins from then on.
          */
         let tocToggledByUser = false;
@@ -590,26 +677,17 @@
           syncingToc = true;
           tocDetails.open = wideToc.matches;
           syncingToc = false;
-          publishTocHeight();
         };
 
         if (tocDetails) {
           tocDetails.addEventListener("toggle", () => {
             if (!syncingToc) tocToggledByUser = true;
-            publishTocHeight();
           });
         }
         if (wideToc.addEventListener) {
           wideToc.addEventListener("change", syncTocOpen);
         }
         syncTocOpen();
-        publishTocHeight();
-
-        if (toc && "ResizeObserver" in window) {
-          new ResizeObserver(publishTocHeight).observe(toc);
-        } else {
-          window.addEventListener("resize", publishTocHeight);
-        }
 
         const tocLinks = Array.from(
           document.querySelectorAll(".doc-toc a[href^='#']"),
@@ -674,6 +752,7 @@
           }
         }
       })();
+      /* officekit:script:end */
     </script>
   </body>
 </html>

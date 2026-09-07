@@ -15,7 +15,9 @@ Subcommands
 ``toc <file>``      Regenerate the contents list from the section headings.
 ``check <file>``    Verify the file is self-contained, branded, accessible, and
                     free of unfilled placeholders. Read-only; exit 1 on failure.
-``refresh <file>``  Re-inline the current brand after ``brand.json`` changes.
+``refresh <file>``  Re-inline the current brand after ``brand.json`` changes, and
+                    re-apply the template's shared styles so a fix made to the
+                    template reaches documents scaffolded before it.
 ``embed <file>``    Pull local stylesheets, scripts, and images into the file as
                     inline text or data URIs, in place.
 
@@ -50,7 +52,7 @@ import re
 import sys
 from html.parser import HTMLParser
 from pathlib import Path
-from typing import Sequence
+from typing import NamedTuple, Sequence
 from urllib.parse import urlsplit
 
 DEFAULT_TEMPLATE = "document-html"
@@ -58,6 +60,10 @@ TEMPLATE_FILE = "document.html"
 
 BRAND_START = "/* officekit:brand:start */"
 BRAND_END = "/* officekit:brand:end */"
+STYLES_START = "/* officekit:styles:start */"
+STYLES_END = "/* officekit:styles:end */"
+SCRIPT_START = "/* officekit:script:start */"
+SCRIPT_END = "/* officekit:script:end */"
 TOC_START = "<!-- officekit:toc:start -->"
 TOC_END = "<!-- officekit:toc:end -->"
 CONTENT_MARKER = "<!-- officekit:content -->"
@@ -209,6 +215,53 @@ def _replace_region(text: str, start: str, end: str, body: str, *, label: str) -
     indent = _marker_indent(text, start)
     block = "\n" + _indent_block(body, indent) + "\n" + indent
     return text[:opening] + block + text[closing:]
+
+
+def _replace_span(text: str, start: str, end: str, body: str, *, label: str) -> str:
+    """Swap the text between two markers verbatim, indentation included."""
+    opening, closing = _region_bounds(text, start, end, label=label)
+    return text[:opening] + body + text[closing:]
+
+
+class Shell(NamedTuple):
+    """A template-owned span of a document, and the template's copy of it."""
+
+    label: str
+    start: str
+    end: str
+    body: str
+
+
+def template_text(root: Path, template: str = DEFAULT_TEMPLATE) -> str:
+    path = root / ".templates" / template / TEMPLATE_FILE
+    if not path.is_file():
+        raise DocError(f"template is missing: {_relative(path, root)}")
+    try:
+        text = path.read_text(encoding="utf-8")
+    except OSError as exc:
+        raise DocError(f"cannot read {path}: {exc}") from exc
+    # Documents are scaffolded with hints stripped; compare like with like.
+    return HINT_RE.sub("", text)
+
+
+def shell_spans(root: Path, template: str = DEFAULT_TEMPLATE) -> list[Shell]:
+    """The template-owned blocks of a document, read back out of the template.
+
+    A self-contained file cannot pick up a template fix on its own: every rule
+    it needs was copied into it at scaffold time. Naming the spans the template
+    owns — the shell CSS between the brand and project style regions, and the
+    progressive-enhancement script — is what lets ``refresh`` carry a later fix
+    into documents that already exist. Everything outside them, content and the
+    ``officekit:styles`` region, belongs to the document and is never touched.
+    """
+    text = template_text(root, template)
+    return [
+        Shell(label, start, end, _region_body(text, start, end, label=label))
+        for label, start, end in (
+            ("shared styles", BRAND_END, STYLES_START),
+            ("shared script", SCRIPT_START, SCRIPT_END),
+        )
+    ]
 
 
 def _normalize(text: str) -> str:
@@ -429,6 +482,26 @@ def check_document(path: Path, root: Path) -> tuple[list[str], list[str], dict[s
                 "the brand region no longer matches brand/; run `doc.py refresh <file>`"
             )
 
+    # -- template-owned blocks ----------------------------------------------
+    # Advisory, not fatal: an older shell still renders correctly, it just
+    # misses fixes made to the template since this document was scaffolded.
+    try:
+        spans = shell_spans(root)
+    except DocError:
+        spans = []
+    for span in spans:
+        if span.start not in text or span.end not in text:
+            continue
+        try:
+            current_shell = _region_body(text, span.start, span.end, label=span.label)
+        except DocError:
+            continue
+        if _normalize(current_shell) != _normalize(span.body):
+            warnings.append(
+                f"the {span.label} block is older than the document template; "
+                "run `doc.py refresh <file>` to pick up template fixes"
+            )
+
     # -- self-containment ---------------------------------------------------
     references = (
         [("stylesheet", url) for url in parser.stylesheets]
@@ -520,8 +593,8 @@ def check_document(path: Path, root: Path) -> tuple[list[str], list[str], dict[s
 
     if parser.has_toc and "scroll-padding-top" not in css:
         errors.append(
-            "the contents panel is sticky but the stylesheet sets no "
-            "scroll-padding-top, so in-page jumps land under it"
+            "the stylesheet sets no scroll-padding-top, so a contents link "
+            "leaves its heading flush against the top of the viewport"
         )
 
     # -- advisory -----------------------------------------------------------
@@ -730,18 +803,41 @@ def cmd_refresh(args: argparse.Namespace) -> int:
 
     root = _workspace_root(args.workspace_root, documents[0])
     region = brand_region(root)
+    try:
+        spans = shell_spans(root)
+    except DocError as exc:
+        spans = []
+        print(f"  warn:  {exc}; refreshing the brand only")
+
     changed = 0
     for path in documents:
         if not path.is_file():
             raise DocError(f"document does not exist: {path}")
+        label = _relative(path, root)
         text = path.read_text(encoding="utf-8")
+
         updated = _replace_region(text, BRAND_START, BRAND_END, region, label="brand region")
-        if updated == text:
-            print(f"{_relative(path, root)} brand already current")
+        moved = ["brand"] if updated != text else []
+
+        for span in spans:
+            if span.start not in updated or span.end not in updated:
+                # A hand-migrated document without the markers: its own code and
+                # the template's are indistinguishable, so leave the block alone.
+                print(f"  warn:  {label} has no {span.label} markers; that block was left alone")
+                continue
+            reshelled = _replace_span(
+                updated, span.start, span.end, span.body, label=span.label
+            )
+            if reshelled != updated:
+                moved.append(span.label)
+            updated = reshelled
+
+        if not moved:
+            print(f"{label} already current")
             continue
         _atomic_write(path, updated)
         changed += 1
-        print(f"Refreshed the brand in {_relative(path, root)}")
+        print(f"Refreshed the {' and '.join(moved)} in {label}")
     if changed:
         print(f"{changed} document(s) updated; re-run `doc.py check` on each")
     return 0

@@ -120,6 +120,13 @@ class DocumentPipelineContractTests(unittest.TestCase):
         self.assertNotIn("max-height: min(40vh, 18rem)", template)
         # Dropped when the rail arrived; a leftover would mean dead measuring JS.
         self.assertNotIn("--doc-toc-height", template)
+        # Closed <details> hide their slot; the rail has to force that slot
+        # open or a trip through a narrow viewport leaves it empty.
+        self.assertIn("::details-content", template)
+        self.assertIn("content-visibility: visible", template)
+        # Crossing back to the rail must set open, not trust a CSS override.
+        self.assertIn("setTocOpen(true)", template)
+        self.assertNotIn("if (!tocDetails || tocToggledByUser) return;", template)
 
     def test_the_template_owns_refreshable_regions(self) -> None:
         """A self-contained document can only take a template fix through these."""

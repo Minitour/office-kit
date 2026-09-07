@@ -4,13 +4,13 @@
     {
       "id": 1,
       "prompt": "hey can you write this up for the ops team? we need a one-pager they can open in a browser. Notes: Q3 incident count dropped 18% after the on-call rotation change; still waiting on legal for the customer-facing wording on the Feb outage; audience is managers not engineers. Don't make slides.",
-      "expected_output": "Builds the document immediately in one pass: scaffolds with `scripts/document/doc.py new`, writes the sections over the officekit:content marker, runs `doc.py toc` and `doc.py check`, writes a short NOTES.md, and hands back the file path and file:// URL. No subagent, no plan file, no approval gate, no server.",
+      "expected_output": "Builds the document immediately in one pass: scaffolds with `uv run python scripts/document/doc.py new`, writes the sections over the officekit:content marker, runs `uv run python scripts/document/doc.py toc` and `uv run python scripts/document/doc.py check`, writes a short NOTES.md, and hands back the file path and file:// URL. No subagent, no plan file, no approval gate, no server.",
       "files": [],
       "expectations": [
         "Treats the request as create-doc, not slides or video",
         "Writes the document itself instead of delegating to a subagent",
         "Does not create a BRIEF.md, a plan/PLAN.md, or a reports/ directory, and does not wait for plan approval before writing",
-        "Uses scripts/document/doc.py to scaffold and verify rather than hand-writing the HTML shell or hand-copying brand tokens",
+        "Uses `uv run python scripts/document/doc.py` to scaffold and verify rather than hand-writing the HTML shell or hand-copying brand tokens",
         "Produces exactly one file, projects/<slug>/<slug>.html, and does not start a preview server or a headless browser",
         "Honors the audience note by pitching at managers, and reflects the unresolved legal wording rather than inventing it"
       ]
@@ -18,7 +18,7 @@
     {
       "id": 2,
       "prompt": "Add a short section to the ops memo about what we're changing next quarter: moving the paging threshold and adding a second reviewer for postmortems. Files are in evals/files/existing-doc/ (treat that as projects/ops-memo/).",
-      "expected_output": "Reads the existing one-file document and NOTES.md, inserts the new section in place, re-runs `doc.py toc` so the contents list picks it up, re-runs `doc.py check`, and appends the change to NOTES.md. Does not rebuild the document or re-scaffold it.",
+      "expected_output": "Reads the existing one-file document and NOTES.md, inserts the new section in place, re-runs `uv run python scripts/document/doc.py toc` so the contents list picks it up, re-runs `uv run python scripts/document/doc.py check`, and appends the change to NOTES.md. Does not rebuild the document or re-scaffold it.",
       "files": [
         "evals/files/existing-doc/ops-memo.html",
         "evals/files/existing-doc/NOTES.md"
@@ -26,7 +26,7 @@
       "expectations": [
         "Reads the existing document and NOTES.md before editing",
         "Edits the existing file in place instead of running `doc.py new` over it or starting a fresh project",
-        "Re-runs `doc.py toc` so the contents list matches the new section, then `doc.py check`",
+        "Re-runs `uv run python scripts/document/doc.py toc` so the contents list matches the new section, then `uv run python scripts/document/doc.py check`",
         "Keeps the section shape used by the document (a <section> with an id and an <h2>)",
         "Does not hand-edit the region between the officekit:brand markers"
       ]
@@ -49,7 +49,7 @@
     {
       "id": 4,
       "prompt": "We're rebranding to teal. Update the brand and make sure the ops memo matches. Files in evals/files/existing-doc/ (treat as projects/ops-memo/).",
-      "expected_output": "Routes the identity change to init-brand / brand-agent, which updates brand/brand.json and regenerates derivatives. Then propagates it into the document with `doc.py refresh`, because a standalone document embeds a copy of the token sheet. Does not hand-edit colors in the document.",
+      "expected_output": "Routes the identity change to init-brand / brand-agent, which updates brand/brand.json and regenerates derivatives. Then propagates it into the document with `uv run python scripts/document/doc.py refresh`, because a standalone document embeds a copy of the token sheet. Does not hand-edit colors in the document.",
       "files": [
         "evals/files/existing-doc/ops-memo.html",
         "evals/files/existing-doc/NOTES.md"
@@ -57,7 +57,7 @@
       "expectations": [
         "Routes the brand change to init-brand rather than editing the document's CSS or the generated token sheet",
         "Does not hand-edit values inside the officekit:brand region of the document",
-        "Propagates the change with `scripts/document/doc.py refresh` after the brand is regenerated",
+        "Propagates the change with `uv run python scripts/document/doc.py refresh` after the brand is regenerated",
         "Recognizes that the document carries an embedded brand copy that goes stale, and that `doc.py check` detects it"
       ]
     }

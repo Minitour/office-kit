@@ -112,7 +112,7 @@ does not import Kokoro, PyTorch, or SoundFile.
 - Keep narration outputs within the intended project directory.
 - Do not claim synthesis is network-free until model assets are cached.
 - Do not run `uv sync` merely to inspect or test manifest logic if doing so
-  would trigger a large ML download; `python -m pytest` can use an existing
+  would trigger a large ML download; `uv run python -m pytest` can use an existing
   test installation.
 - Report segment IDs with failures so invalid input and inference errors are
   actionable.

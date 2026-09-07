@@ -16,7 +16,7 @@
     {
       "id": 2,
       "prompt": "Change the primary color to #FF6A00 and update tokens.css. The decks should pick it up automatically.",
-      "expected_output": "Treats this as a brand revision. Relays a brand-agent proposal and waits. After imagined approval, brand.json is the write target and derivatives are regenerated with scripts/brand/generate.py — tokens.css is not edited by hand.",
+      "expected_output": "Treats this as a brand revision. Relays a brand-agent proposal and waits. After imagined approval, brand.json is the write target and derivatives are regenerated with `uv run python scripts/brand/generate.py` — tokens.css is not edited by hand.",
       "files": [],
       "expectations": [
         "Does not hand-edit brand/tokens.css as the source of truth",

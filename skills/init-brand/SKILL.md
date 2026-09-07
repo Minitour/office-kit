@@ -23,7 +23,7 @@ originals. Record provenance and derived variants separately.
 Brand state is workspace-level, so inspect `brand/brand.json`, the generated
 files, and `brand/assets/` first. A `projects/<slug>/` directory matters only
 when the brand work is scoped to a specific deliverable; in that case also read
-its `BRIEF.md`, `plan/PLAN.md`, and reports.
+its `plan/PLAN.md` and reports, or its `NOTES.md` for a document.
 
 Resume at the first incomplete stage. If `brand/brand.json` is absent, this is a
 first-time initialization. If the generated files disagree with
@@ -40,21 +40,21 @@ owns every change to the canonical and generated brand files:
    user approval** before writing anything. Relay that proposal and the
    approval.
 2. After approval, `brand-agent` preserves assets, writes `brand/brand.json`,
-   regenerates `brand/BRAND.md`, `brand/tokens.css`, and `brand/frame.md`, and
-   shows incremental visual previews. Relay preview status.
+   regenerates `brand/BRAND.md`, `brand/tokens.css`, and `brand/frame.md`, then
+   propagates the change to the consumers that hold generated copies: existing
+   standalone documents via `python scripts/document/doc.py refresh --all`, and
+   any video project's `brand/` snapshot. Relay what it touched.
 3. `review-agent` checks canonical/generated parity, contrast, typography, asset
    provenance, and cross-media usability. Route fixes to `brand-agent`, then
    re-review.
 
 Add stages only when the situation calls for them:
 
-- `intake-agent` — when the request is ambiguous, spans multiple deliverables,
-  or workspace state is contradictory and needs reconciliation into `BRIEF.md`.
 - `research-agent` — when the identity direction depends on evidence (audience,
   competitive, or accessibility research) rather than user-supplied direction.
-- `plan-agent` — only to sync an existing project's `plan/PLAN.md` after the
-  brand changes. A brand-only initialization needs no `PLAN.md`, and brand work
-  is never gated on plan approval.
+- `plan-agent` — only to sync an existing deck or video project's `plan/PLAN.md`
+  after the brand changes. A brand-only initialization needs no `PLAN.md`, and
+  brand work is never gated on plan approval.
 - `delivery-agent` — only when the user asks for a packaged brand handoff.
 
 Keep all production work inside the assigned subagent.

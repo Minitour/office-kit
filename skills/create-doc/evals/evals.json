@@ -4,44 +4,61 @@
     {
       "id": 1,
       "prompt": "hey can you write this up for the ops team? we need a one-pager they can open in a browser. Notes: Q3 incident count dropped 18% after the on-call rotation change; still waiting on legal for the customer-facing wording on the Feb outage; audience is managers not engineers. Don't make slides.",
-      "expected_output": "Routes as a new HTML document. Delegates intake then research/plan, writes durable project state under projects/<slug>/, presents a draft PLAN.md, and stops for explicit approval. Does not author HTML, pick colors, or run the packager in primary context.",
+      "expected_output": "Builds the document immediately in one pass: scaffolds with `scripts/document/doc.py new`, writes the sections over the officekit:content marker, runs `doc.py toc` and `doc.py check`, writes a short NOTES.md, and hands back the file path and file:// URL. No subagent, no plan file, no approval gate, no server.",
       "files": [],
       "expectations": [
         "Treats the request as create-doc, not slides or video",
-        "Delegates intake-agent (and research/plan as needed) instead of writing the memo in chat",
-        "Does not start doc-agent while plan/PLAN.md is missing or status is draft",
-        "Relays the draft plan and waits for explicit user approval",
-        "Does not invent brand colors or fonts; uses generated brand outputs"
+        "Writes the document itself instead of delegating to a subagent",
+        "Does not create a BRIEF.md, a plan/PLAN.md, or a reports/ directory, and does not wait for plan approval before writing",
+        "Uses scripts/document/doc.py to scaffold and verify rather than hand-writing the HTML shell or hand-copying brand tokens",
+        "Produces exactly one file, projects/<slug>/<slug>.html, and does not start a preview server or a headless browser",
+        "Honors the audience note by pitching at managers, and reflects the unresolved legal wording rather than inventing it"
       ]
     },
     {
       "id": 2,
-      "prompt": "Continue the Q4 ops memo. The project files are in evals/files/resume-draft-plan/ (treat that tree as projects/q4-ops-memo/). I already like the outline — keep going.",
-      "expected_output": "Inspects BRIEF.md and plan/PLAN.md, sees status: draft, and does not treat chat approval or existing files as plan approval. Relays the draft plan and waits. Does not launch doc-agent or recreate intake.",
+      "prompt": "Add a short section to the ops memo about what we're changing next quarter: moving the paging threshold and adding a second reviewer for postmortems. Files are in evals/files/existing-doc/ (treat that as projects/ops-memo/).",
+      "expected_output": "Reads the existing one-file document and NOTES.md, inserts the new section in place, re-runs `doc.py toc` so the contents list picks it up, re-runs `doc.py check`, and appends the change to NOTES.md. Does not rebuild the document or re-scaffold it.",
       "files": [
-        "evals/files/resume-draft-plan/BRIEF.md",
-        "evals/files/resume-draft-plan/plan/PLAN.md"
+        "evals/files/existing-doc/ops-memo.html",
+        "evals/files/existing-doc/NOTES.md"
       ],
       "expectations": [
-        "Reads BRIEF.md and plan/PLAN.md before doing any production work",
-        "Recognizes plan status is draft and refuses to start doc-agent",
-        "Does not infer approval from the user's 'keep going' phrasing or from existing files",
-        "Does not recreate completed intake or rewrite BRIEF.md from scratch"
+        "Reads the existing document and NOTES.md before editing",
+        "Edits the existing file in place instead of running `doc.py new` over it or starting a fresh project",
+        "Re-runs `doc.py toc` so the contents list matches the new section, then `doc.py check`",
+        "Keeps the section shape used by the document (a <section> with an id and an <h2>)",
+        "Does not hand-edit the region between the officekit:brand markers"
       ]
     },
     {
       "id": 3,
-      "prompt": "Turn the attached research notes into a Word doc I can email. If Word isn't possible just give me something I can print. Path: evals/files/resume-draft-plan/",
-      "expected_output": "Stays on the HTML document track, explains that standalone HTML is the supported deliverable, and does not switch to Slidev, Quarto, or a .docx pipeline. Still honors the draft-plan approval gate.",
+      "prompt": "Turn the attached research notes into a Word doc I can email. If Word isn't possible just give me something I can print. Path: evals/files/existing-doc/",
+      "expected_output": "Stays on the single-file HTML track, says HTML is the supported deliverable and that it prints cleanly from the browser, and does not switch to a .docx, Quarto, or paged-PDF pipeline. Emails cleanly because the artifact is already one self-contained file.",
       "files": [
-        "evals/files/resume-draft-plan/BRIEF.md",
-        "evals/files/resume-draft-plan/plan/PLAN.md"
+        "evals/files/existing-doc/ops-memo.html",
+        "evals/files/existing-doc/NOTES.md"
       ],
       "expectations": [
-        "Does not introduce Quarto, Word, or Google Docs as the production engine",
-        "Tells the user HTML is the supported document deliverable and lets them decide",
-        "Does not export or run scripts/document/package.py before an approved plan and an explicit delivery request",
+        "Does not introduce Word, docx, Quarto, or Google Docs as the production engine",
+        "Tells the user standalone HTML is the supported document deliverable and that the browser's print dialog covers printing",
+        "Notes that the existing file is already self-contained and can be emailed as one attachment, rather than inventing a packaging or export step",
         "Does not route to create-slides or create-video"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "We're rebranding to teal. Update the brand and make sure the ops memo matches. Files in evals/files/existing-doc/ (treat as projects/ops-memo/).",
+      "expected_output": "Routes the identity change to init-brand / brand-agent, which updates brand/brand.json and regenerates derivatives. Then propagates it into the document with `doc.py refresh`, because a standalone document embeds a copy of the token sheet. Does not hand-edit colors in the document.",
+      "files": [
+        "evals/files/existing-doc/ops-memo.html",
+        "evals/files/existing-doc/NOTES.md"
+      ],
+      "expectations": [
+        "Routes the brand change to init-brand rather than editing the document's CSS or the generated token sheet",
+        "Does not hand-edit values inside the officekit:brand region of the document",
+        "Propagates the change with `scripts/document/doc.py refresh` after the brand is regenerated",
+        "Recognizes that the document carries an embedded brand copy that goes stale, and that `doc.py check` detects it"
       ]
     }
   ]

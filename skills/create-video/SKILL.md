@@ -28,37 +28,38 @@ workspace brand, and never hand-edit it.
 
 ## Resume from durable state
 
-Resolve `projects/<slug>/`, then inspect `BRIEF.md`, `plan/PLAN.md`,
+Resolve `projects/<slug>/`, then inspect `plan/PLAN.md`,
 `reports/{research,build,review,delivery}.md`, and existing script, segment,
-audio, preview, and render artifacts. `PLAN.md` must declare `status: draft` or
-`status: approved`.
+audio, preview, and render artifacts. `PLAN.md` carries the brief and must
+declare `status: draft` or `status: approved`.
 
 Resume at the first incomplete stage. Send new, ambiguous, stale, or
-contradictory state to `intake-agent`. Never regenerate accepted segments or
+contradictory state to `plan-agent`. Never regenerate accepted segments or
 infer approval from prior chat, media files, or a render.
 
 ## Stage routing
 
-1. `intake-agent` confirms purpose, audience, platform, duration, aspect ratio,
-   narration needs, delivery request, assets, and project state; it writes
-   `BRIEF.md`.
-2. `research-agent` verifies claims, sources, and references and writes
-   `reports/research.md`.
-3. `plan-agent` writes or revises `plan/PLAN.md` with `status: draft`, the
+1. `plan-agent` does intake and planning in one stage: it confirms purpose,
+   audience, platform, duration, aspect ratio, narration needs, delivery
+   request, and assets, then writes `plan/PLAN.md` with `status: draft`, the
    script, segment-by-segment storyboard, visual direction, narration text,
    timing, accessibility, and acceptance criteria.
-4. Relay the plan and wait for explicit approval. Have `plan-agent` change
+2. `research-agent` verifies claims, sources, and references and writes
+   `reports/research.md` — only when the script turns on claims that need
+   checking. Skip it otherwise.
+3. Relay the plan and wait for explicit approval. Have `plan-agent` change
    the status to `approved`; no video implementation may begin while it is
-   `draft`.
-5. `video-agent` builds approved segments incrementally in HyperFrames, invokes
+   `draft`. Narration and rendering are the expensive stages this gate exists
+   to protect.
+4. `video-agent` builds approved segments incrementally in HyperFrames, invokes
    the existing offline TTS once per segment, synchronizes each segment to its
    narration, creates early low-cost previews, and records checkpoints in
    `reports/build.md`. Relay preview status by logical segment group.
-6. `review-agent` checks claims, pacing, synchronization, safe areas,
+5. `review-agent` checks claims, pacing, synchronization, safe areas,
    readability, accessibility, brand fidelity, audio quality, and acceptance
    criteria; it writes `reports/review.md`. Route fixes to `video-agent`, then
    re-review affected segments.
-7. Only when requested, `delivery-agent` renders exactly the requested video
+6. Only when requested, `delivery-agent` renders exactly the requested video
    and companion outputs, verifies them, and writes `reports/delivery.md`.
 
 Preserve user assets and approved audio. Keep production work inside subagents.

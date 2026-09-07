@@ -1,6 +1,6 @@
 ---
 name: create-slides
-description: Route creation or continuation of an OfficeKit Slidev presentation. Use for pitch decks, lectures, talks, seminars, workshops, demos, kickoff decks, internal reviews, or requests for slides, PDF, or PowerPoint—even when the user only provides notes or asks to resume an existing deck. Do not use for written documents, video, or brand creation.
+description: Route creation or continuation of an OfficeKit Slidev presentation. Use whenever the user wants a pitch deck, lecture, talk, seminar, workshop, demo, kickoff, internal review, slides, PDF export, or PowerPoint—even when they only paste notes, ask for a “deck,” or resume an existing presentation. Do not use for written documents, standalone HTML reports, video, or brand creation.
 ---
 
 # Create Slides

@@ -1,6 +1,6 @@
 ---
 name: create-video
-description: Route creation or continuation of an OfficeKit narrated video built with HyperFrames and offline text-to-speech. Use for explainers, product videos, motion graphics, narrated walkthroughs, social clips, training videos, or requests to turn a script, document, or deck into video—even when the user asks to resume an existing video project. Do not use for slides, standalone documents, or brand-only work.
+description: Route creation or continuation of an OfficeKit narrated video built with HyperFrames and offline text-to-speech. Use whenever the user wants an explainer, product video, motion graphic, narrated walkthrough, social clip, training video, voiceover animation, or to turn a script, document, or deck into video—even if they only say “make a video” or ask to resume an existing video project. Do not use for Slidev decks, standalone HTML documents, transcription, or brand-only work.
 ---
 
 # Create Video
@@ -12,9 +12,11 @@ status, including preview, review, and delivery status.
 
 ## Fixed production stack
 
-Use HyperFrames for visuals and rendering. Narration must use the repository's
-offline TTS path, generated per segment so timing and revisions remain local and
-isolated. Do not substitute cloud TTS or implement a new TTS system.
+Use HyperFrames for visuals and rendering. Narration must go through the
+`text-to-speech` skill (Kokoro via `uv run`, one WAV per segment plus a measured
+manifest) so timing and revisions stay local and isolated. Do not substitute
+cloud TTS, ElevenLabs, or a new synthesis stack, and do not run TTS in primary
+context.
 
 Visual styling originates in the generated workspace brand outputs. HyperFrames
 cannot serve files above a project root, so `video-agent` must copy the files

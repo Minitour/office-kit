@@ -1,0 +1,50 @@
+{
+  "skill_name": "create-video",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Turn this script into a ~45 second product explainer, 1920x1080, with voiceover. Script: (1) Teams still copy numbers between three tools. (2) OfficeKit keeps the brief, plan, and preview in one workspace. (3) Approve the plan, then we render. End card with the logo. I need an mp4 for Slack.",
+      "expected_output": "Routes as HyperFrames video with offline TTS. Intake captures duration, aspect, and narration. Plan includes segment storyboard and narration text. Stops for approval. Does not synthesize speech, write composition HTML, or render mp4 in primary context. Does not promise delivery until after approval, build, and an explicit export.",
+      "files": [],
+      "expectations": [
+        "Treats the request as create-video, not slides or a written HTML doc",
+        "Plans per-segment HyperFrames work plus offline Kokoro TTS via the text-to-speech skill",
+        "Does not start video-agent while the plan is unapproved",
+        "Does not call a cloud TTS API",
+        "Does not render the Slack mp4 until the user requests delivery after review"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Keep going on the explainer. Project: evals/files/resume-approved-partial/ (treat as projects/workspace-explainer/). Intro narration already sounds good — don't remake it. Just do the rest.",
+      "expected_output": "Resumes at remaining video-agent segments. Preserves the existing intro WAV. Copies brand snapshot into the project if scaffolding continues. Relays preview by segment group. Does not regenerate accepted audio.",
+      "files": [
+        "evals/files/resume-approved-partial/BRIEF.md",
+        "evals/files/resume-approved-partial/plan/PLAN.md",
+        "evals/files/resume-approved-partial/reports/build.md",
+        "evals/files/resume-approved-partial/narration/intro.wav"
+      ],
+      "expectations": [
+        "Reads durable state and resumes at incomplete segments rather than restarting intake",
+        "Does not regenerate the accepted intro narration clip",
+        "Delegates HyperFrames and TTS to video-agent, not primary context",
+        "Treats project-local brand/ as a snapshot to refresh, not a second source of truth"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "For the workspace explainer, switch the voiceover to ElevenLabs so it sounds more natural, then render tonight.",
+      "expected_output": "Refuses cloud TTS. Keeps Kokoro via text-to-speech. Does not treat 'render tonight' as plan approval or as a reason to skip review. If the plan is not approved in the attached tree, still wait; if using the resume fixture, still does not skip review-agent before delivery.",
+      "files": [
+        "evals/files/resume-approved-partial/BRIEF.md",
+        "evals/files/resume-approved-partial/plan/PLAN.md"
+      ],
+      "expectations": [
+        "Does not use ElevenLabs, OpenAI TTS, or any cloud speech API",
+        "Keeps narration on the repository text-to-speech / Kokoro path",
+        "Does not implement a new TTS system",
+        "Does not skip review-agent solely because the user asked to render tonight"
+      ]
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 ---
 name: create-doc
-description: Route creation or continuation of a written OfficeKit deliverable as a standalone HTML document. Use for reports, proposals, memos, briefs, articles, letters, whitepapers, and web documents—even when the user only says “write this,” provides source material, or asks to resume an existing document project. Do not use for slides, video, or brand creation.
+description: Route creation or continuation of a written OfficeKit deliverable as a standalone HTML document. Use whenever the user wants a report, proposal, memo, brief, article, letter, whitepaper, web document, or asks to “write this up,” paste source material, or resume an existing document project—even if they never say create-doc or HTML. Do not use for slides, decks, video, motion graphics, or brand creation.
 ---
 
 # Create Document
@@ -13,10 +13,11 @@ status.
 ## Fixed output
 
 Documents are self-contained, standalone HTML — one file with local styles,
-scripts, brand tokens, and assets inlined by
-`scripts/document/package.py`. There is no other document engine and no
-paged-output pipeline; if the user wants a paged or office-suite file, say that
-HTML is the supported deliverable and let them decide.
+scripts, brand tokens, and assets inlined by `scripts/document/package.py` at
+delivery time. There is no other document engine and no paged-output pipeline;
+if the user wants Word, Google Docs, or a print PDF, say that HTML is the
+supported deliverable and let them decide. Do not run the packager or author
+`index.html` in primary context.
 
 Styling comes from the generated brand outputs (`brand/tokens.css`, with
 `brand/BRAND.md` for usage rules). Never hand-pick colors or fonts, and route

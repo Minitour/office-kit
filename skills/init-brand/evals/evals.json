@@ -1,0 +1,44 @@
+{
+  "skill_name": "init-brand",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Our HTML one-pagers, the Slidev decks, and the product videos all look like different companies. Can you make them share one visual identity? We have a logo at brand/assets/logo.svg already.",
+      "expected_output": "Triggers init-brand without the user naming it. brand-agent inventories goals and existing assets, proposes a direction, and waits for approval before writing brand.json. Does not start a document, deck, or video.",
+      "files": [],
+      "expectations": [
+        "Routes to init-brand / brand-agent rather than create-doc, create-slides, or create-video",
+        "Does not write brand/brand.json or generated files before explicit approval of the proposed direction",
+        "Preserves the existing logo bytes under brand/assets/",
+        "Does not author a sample report or deck as the way to 'make them look the same'"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Change the primary color to #FF6A00 and update tokens.css. The decks should pick it up automatically.",
+      "expected_output": "Treats this as a brand revision. Relays a brand-agent proposal and waits. After imagined approval, brand.json is the write target and derivatives are regenerated with scripts/brand/generate.py — tokens.css is not edited by hand.",
+      "files": [],
+      "expectations": [
+        "Does not hand-edit brand/tokens.css as the source of truth",
+        "Plans to update brand/brand.json and regenerate BRAND.md, tokens.css, and frame.md",
+        "Waits for explicit approval before writing identity files",
+        "Does not open a Slidev project to hard-code #FF6A00 in slides.md"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "tokens.css still shows the old violet but brand.json already has the new teal. Fix the brand files. Fixture: evals/files/stale-derivatives/ (treat as the workspace brand/ directory).",
+      "expected_output": "Treats generated files as stale vs brand.json. Delegates regeneration rather than copying tokens back into brand.json. Does not infer that existing files mean the brand change was already approved for downstream projects.",
+      "files": [
+        "evals/files/stale-derivatives/brand.json",
+        "evals/files/stale-derivatives/tokens.css"
+      ],
+      "expectations": [
+        "Treats brand/brand.json as canonical and generated files as stale",
+        "Regenerates derivatives instead of reverting brand.json to match tokens.css",
+        "Does not invent a second brand source of truth",
+        "Does not start create-doc or create-slides to preview until brand files are consistent"
+      ]
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 ---
 name: init-brand
-description: Route creation, migration, or revision of the OfficeKit brand system. Use when the user wants to initialize branding, define colors or typography, adopt logos and visual assets, create design tokens or brand guidelines, refresh an existing identity, or make documents, slides, and videos share one brand—even if they do not say “init-brand.” Do not use for producing a document, deck, or video.
+description: Route creation, migration, or revision of the OfficeKit brand system. Use whenever the user wants to initialize branding, change colors or typography, adopt logos, edit design tokens, refresh brand guidelines, or make documents, slides, and videos share one identity—even if they never say init-brand and only mention tokens.css, BRAND.md, or “make these look consistent.” Do not use for producing a document, deck, or video.
 ---
 
 # Initialize Brand
@@ -14,9 +14,9 @@ gates and stage status, including preview, review, and delivery status.
 
 `brand/brand.json` is the canonical machine-readable source of truth.
 `brand/BRAND.md`, `brand/tokens.css`, and `brand/frame.md` are generated from it
-and must not become independent sources. Preserve supplied assets byte-for-byte
-under `brand/assets/`; never edit or overwrite originals. Record provenance and
-derived variants separately.
+by `scripts/brand/generate.py` and must not become independent sources. Preserve
+supplied assets byte-for-byte under `brand/assets/`; never edit or overwrite
+originals. Record provenance and derived variants separately.
 
 ## Resume from durable state
 

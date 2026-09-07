@@ -1,0 +1,6 @@
+{
+  "segments": [
+    {"id": "intro", "text": "Teams still copy numbers between three tools.", "voice": "af_heart"},
+    {"id": "workspace", "text": "OfficeKit keeps the brief, plan, and preview in one workspace."}
+  ]
+}

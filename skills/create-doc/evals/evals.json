@@ -1,0 +1,48 @@
+{
+  "skill_name": "create-doc",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "hey can you write this up for the ops team? we need a one-pager they can open in a browser. Notes: Q3 incident count dropped 18% after the on-call rotation change; still waiting on legal for the customer-facing wording on the Feb outage; audience is managers not engineers. Don't make slides.",
+      "expected_output": "Routes as a new HTML document. Delegates intake then research/plan, writes durable project state under projects/<slug>/, presents a draft PLAN.md, and stops for explicit approval. Does not author HTML, pick colors, or run the packager in primary context.",
+      "files": [],
+      "expectations": [
+        "Treats the request as create-doc, not slides or video",
+        "Delegates intake-agent (and research/plan as needed) instead of writing the memo in chat",
+        "Does not start doc-agent while plan/PLAN.md is missing or status is draft",
+        "Relays the draft plan and waits for explicit user approval",
+        "Does not invent brand colors or fonts; uses generated brand outputs"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Continue the Q4 ops memo. The project files are in evals/files/resume-draft-plan/ (treat that tree as projects/q4-ops-memo/). I already like the outline — keep going.",
+      "expected_output": "Inspects BRIEF.md and plan/PLAN.md, sees status: draft, and does not treat chat approval or existing files as plan approval. Relays the draft plan and waits. Does not launch doc-agent or recreate intake.",
+      "files": [
+        "evals/files/resume-draft-plan/BRIEF.md",
+        "evals/files/resume-draft-plan/plan/PLAN.md"
+      ],
+      "expectations": [
+        "Reads BRIEF.md and plan/PLAN.md before doing any production work",
+        "Recognizes plan status is draft and refuses to start doc-agent",
+        "Does not infer approval from the user's 'keep going' phrasing or from existing files",
+        "Does not recreate completed intake or rewrite BRIEF.md from scratch"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Turn the attached research notes into a Word doc I can email. If Word isn't possible just give me something I can print. Path: evals/files/resume-draft-plan/",
+      "expected_output": "Stays on the HTML document track, explains that standalone HTML is the supported deliverable, and does not switch to Slidev, Quarto, or a .docx pipeline. Still honors the draft-plan approval gate.",
+      "files": [
+        "evals/files/resume-draft-plan/BRIEF.md",
+        "evals/files/resume-draft-plan/plan/PLAN.md"
+      ],
+      "expectations": [
+        "Does not introduce Quarto, Word, or Google Docs as the production engine",
+        "Tells the user HTML is the supported document deliverable and lets them decide",
+        "Does not export or run scripts/document/package.py before an approved plan and an explicit delivery request",
+        "Does not route to create-slides or create-video"
+      ]
+    }
+  ]
+}

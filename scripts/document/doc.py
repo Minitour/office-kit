@@ -35,12 +35,13 @@ expected, and a document without a network connection falls back to system
 fonts. A reference to a *local* file is an error — that is the one thing that
 would stop the file opening on its own.
 
-Stdlib only.
+``new`` renders the HTML template with Jinja. Check and refresh stay
+stdlib-only once the file exists.
 
 Usage:
-    python scripts/document/doc.py new quarterly-review --title "Quarterly Review"
-    python scripts/document/doc.py toc projects/quarterly-review/quarterly-review.html
-    python scripts/document/doc.py check projects/quarterly-review/quarterly-review.html
+    uv run python scripts/document/doc.py new quarterly-review --title "Quarterly Review"
+    uv run python scripts/document/doc.py toc projects/quarterly-review/quarterly-review.html
+    uv run python scripts/document/doc.py check projects/quarterly-review/quarterly-review.html
 """
 
 from __future__ import annotations
@@ -72,12 +73,10 @@ TOC_END = "<!-- officekit:toc:end -->"
 CONTENT_MARKER = "<!-- officekit:content -->"
 
 HINT_RE = re.compile(r"[ \t]*<!--\s*officekit:hint\b.*?-->[ \t]*\n?", re.DOTALL)
-PLACEHOLDER_RE = re.compile(r"\{\{[A-Z_]+\}\}")
+PLACEHOLDER_RE = re.compile(r"\{\{\s*[A-Za-z_][A-Za-z0-9_]*\s*\}\}")
 SLUG_RE = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 CSS_URL_RE = re.compile(r"url\(\s*(?P<quote>[\"']?)(?P<url>.*?)(?P=quote)\s*\)", re.DOTALL)
 CSS_IMPORT_RE = re.compile(r"@import\s+(?:url\(\s*)?[\"']?(?P<url>[^\"')\s;]+)", re.IGNORECASE)
-SUBTITLE_RE = re.compile(r"[ \t]*<p class=\"subtitle\">\{\{SUBTITLE\}\}</p>[ \t]*\n")
-FOOTER_RE = re.compile(r"\n[ \t]*<footer class=\"doc-footer\">.*?</footer>[ \t]*\n", re.DOTALL)
 
 # A standalone document larger than this is awkward to email; usually an
 # oversized embedded image.
@@ -117,6 +116,19 @@ def _load_catalog():
 
 
 _catalog = _load_catalog()
+
+
+def _load_common():
+    path = Path(__file__).resolve().parents[1] / "common.py"
+    spec = importlib.util.spec_from_file_location("officekit_common", path)
+    if spec is None or spec.loader is None:  # pragma: no cover
+        raise DocError(f"cannot load {path}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+_common = _load_common()
 
 
 # ── Brand region ─────────────────────────────────────────────────────────────
@@ -745,29 +757,26 @@ def cmd_new(args: argparse.Namespace) -> int:
 
     brand_id = resolve_document_brand(root, getattr(args, "brand", None))
     title = args.title or slug.replace("-", " ").title()
-    fields = {
-        "TITLE": title,
-        "AUTHOR": args.author or _brand_name(root, brand_id),
-        "DATE_ISO": date.isoformat(),
-        "DATE_HUMAN": f"{date.day} {date:%B %Y}",
-        "DESCRIPTION": args.description or args.subtitle or title,
-    }
-    if args.subtitle:
-        fields["SUBTITLE"] = args.subtitle
-    else:
-        # No subtitle beats an empty one sitting under the title.
-        text = SUBTITLE_RE.sub("", text)
-    if args.footer:
-        fields["FOOTER"] = args.footer
-    else:
-        text = FOOTER_RE.sub("\n", text)
-
     text = HINT_RE.sub("", text)
+    try:
+        text = _common.render_string(
+            text,
+            {
+                "title": title,
+                "subtitle": args.subtitle or None,
+                "author": args.author or _brand_name(root, brand_id),
+                "date_iso": date.isoformat(),
+                "date_human": f"{date.day} {date:%B %Y}",
+                "description": args.description or args.subtitle or title,
+                "footer": args.footer or None,
+            },
+            autoescape=True,
+        )
+    except _common.ScaffoldError as exc:
+        raise DocError(str(exc)) from exc
     text = _replace_region(
         text, BRAND_START, BRAND_END, brand_region(root, brand_id), label="brand region"
     )
-    for key, value in fields.items():
-        text = text.replace("{{" + key + "}}", html.escape(value, quote=True))
 
     leftover = sorted(set(PLACEHOLDER_RE.findall(text)))
     if leftover:

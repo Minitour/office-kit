@@ -2,20 +2,15 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=1920, height=1080" />
-    <title>Video Title</title>
-
-    <!--
-      This template is intentionally self-contained and neutral so
-      `hyperframes check` passes before project setup. At scaffold time, follow
-      frame.md to create the project-local brand snapshot and activate it here.
-    -->
+    <meta name="viewport" content="width={{ width }}, height={{ height }}" />
+    <title>{{ title }}</title>
+    <link rel="stylesheet" href="./brand/tokens.css" />
 
     <style>
       /*
-       * Neutral defaults make the untouched template valid offline. Once the
-       * local brand snapshot exists, its tokens override these variables.
-       * No current OfficeKit brand value is hardcoded here.
+       * Neutral defaults make the composition valid if the snapshot is
+       * missing. Once brand/tokens.css is in place, its tokens override
+       * these variables. No brand hex or font name is hardcoded here.
        */
       :root {
         --v-foreground: var(--color-foreground, CanvasText);
@@ -36,14 +31,15 @@
 
       /*
        * The composition root is a real, explicitly sized box. It also sets
-       * `container-type: size` because the local brand/frame.md snapshot's container law requires
-       * display type to be sized in `cqw` against the frame, never `vw`.
+       * `container-type: size` because the local brand/frame.md snapshot's
+       * container law requires display type to be sized in `cqw` against
+       * the frame, never `vw`.
        */
       #root {
         position: relative;
         container-type: size;
-        width: 1920px;
-        height: 1080px;
+        width: {{ width }}px;
+        height: {{ height }}px;
         overflow: hidden;
         background: var(--v-background);
         color: var(--v-foreground);
@@ -86,16 +82,16 @@
       id="root"
       data-composition-id="main"
       data-start="0"
-      data-duration="5"
-      data-width="1920"
-      data-height="1080"
-      data-fps="30"
+      data-duration="{{ duration }}"
+      data-width="{{ width }}"
+      data-height="{{ height }}"
+      data-fps="{{ fps }}"
       data-no-timeline
     >
-      <section id="title-card" class="clip" data-start="0" data-duration="5" data-track-index="1">
+      <section id="title-card" class="clip" data-start="0" data-duration="{{ duration }}" data-track-index="1">
         <div>
           <div id="accent"></div>
-          <h1 id="title">Video Title</h1>
+          <h1 id="title">{{ title }}</h1>
         </div>
       </section>
     </div>

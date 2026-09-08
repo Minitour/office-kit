@@ -4,7 +4,7 @@
     {
       "id": 1,
       "prompt": "Turn this script into a ~45 second product explainer, 1920x1080, with voiceover. Script: (1) Teams still copy numbers between three tools. (2) OfficeKit keeps the brief, plan, and preview in one workspace. (3) Approve the plan, then we render. End card with the logo. I need an mp4 for Slack.",
-      "expected_output": "Treats this as create-video. Writes the plan and storyboard here, scaffolds HyperFrames, copies the brand snapshot, starts the preview, and synthesizes Kokoro clips in this conversation via the text-to-speech skill. Does not spawn a subagent to author. Does not wait for plan approval. Does not call a cloud TTS API. Does not render the Slack mp4 until the user requests delivery after the build.",
+      "expected_output": "Treats this as create-video. Writes the plan and storyboard here, scaffolds with `uv run python scripts/video/video.py new` (Jinja template plus brand snapshot), starts the preview, and synthesizes Kokoro clips in this conversation via the text-to-speech skill. Does not spawn a subagent to author. Does not wait for plan approval. Does not call a cloud TTS API. Does not render the Slack mp4 until the user requests delivery after the build.",
       "files": [],
       "expectations": [
         "Treats the request as create-video, not slides or a written HTML doc",

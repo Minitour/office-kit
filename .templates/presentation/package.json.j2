@@ -1,9 +1,9 @@
 {
   "private": true,
   "scripts": {
-    "dev": "slidev --port 3030",
+    "dev": "slidev --port {{ preview_port }}",
     "build": "slidev build",
-    "export": "slidev export --output dist/slides.pdf"
+    "export": "slidev export --output {{ export_dir }}/slides.{{ export_ext }}"
   },
   "dependencies": {
     "@slidev/cli": "^52.19.1",

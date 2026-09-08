@@ -78,6 +78,8 @@ class WorkspaceContractTests(unittest.TestCase):
         self.assertIn("research-agent", video)
         self.assertIn("slidev-layouts", slides)
         self.assertIn("slidev-themes", slides)
+        self.assertIn("scripts/presentation/deck.py", slides)
+        self.assertIn("scripts/video/video.py", video)
 
         brand_start = capabilities.index("  - id: brand-agent")
         brand_next = capabilities.find("\n  - id: ", brand_start + 1)
@@ -216,8 +218,8 @@ class DocumentPipelineContractTests(unittest.TestCase):
         assigned = re.search(r'^\[brand\]\s*^default\s*=\s*"([^"]+)"', config, re.M)
         self.assertIsNotNone(assigned)
         self.assertEqual(assigned.group(1), "officekit")
-        slides = read(ROOT / ".templates" / "presentation" / "style.css")
-        self.assertIn("../../brands/{{BRAND_ID}}/tokens.css", slides)
+        slides = read(ROOT / ".templates" / "presentation" / "style.css.j2")
+        self.assertIn("../../brands/{{ brand_id }}/tokens.css", slides)
 
 
 class SkillInvocationContractTests(unittest.TestCase):

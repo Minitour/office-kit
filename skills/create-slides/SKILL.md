@@ -56,12 +56,13 @@ outline, or runtime changes; otherwise edit the slides in place.
    the deck. No status field, no approval checklist.
 2. `research-agent` writes `reports/research.md` only when the deck turns on
    claims that need checking. Skip it otherwise. You still write the slides.
-3. If the project is not scaffolded, copy `.templates/presentation/` to
-   `projects/<slug>/`. Install from the workspace root with
-   `npm install -w projects/<slug>` — never create a per-project
-   `node_modules`. In `style.css`, replace every `{{BRAND_ID}}` with the
-   project's brand id so the deck imports `../../brands/<id>/tokens.css`
-   and the matching mark.
+3. If the project is not scaffolded, run
+   `uv run python scripts/presentation/deck.py new <slug> --title "…" [--brand <id>]`.
+   That copies `.templates/presentation/`, renders the Jinja (`*.j2`)
+   files, and points `style.css` at `../../brands/<id>/tokens.css`.
+   Install from the workspace root with `npm install -w projects/<slug>`
+   — never create a per-project `node_modules`. Do not hand-copy the
+   template or hand-edit brand paths.
 4. Start the Slidev preview on `config.toml`'s `[preview] presentation_port`
    **before** writing slides and keep it running. Do not author blind.
 5. Implement the outline in `slides.md` (and `pages/`, `components/`,

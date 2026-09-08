@@ -115,8 +115,8 @@ office-kit/
 │   ├── document/
 │   │   ├── doc.py         # new | toc | check | refresh | embed
 │   │   └── package.py     # asset-inlining library used by `doc.py embed`
-│   ├── presentation/deck.py  # new — Slidev project from .templates/presentation
-│   └── video/video.py     # new | refresh — HyperFrames project + brand snapshot
+│   ├── presentation/deck.py  # new | dev | audit | export | stop
+│   └── video/video.py     # new | dev | audit | refresh | stop
 ├── package.json           # npm workspaces (root node_modules)
 ├── pyproject.toml         # Root uv / Python tooling
 └── projects/<slug>/       # One deliverable per directory
@@ -130,8 +130,10 @@ office-kit/
 Documents, decks, and video are scaffolded by scripts that render Jinja templates (`*.j2`, or `document.html`) and bind a brand id:
 
 - `uv run python scripts/document/doc.py new <slug>`
-- `uv run python scripts/presentation/deck.py new <slug>`
+- `uv run python scripts/presentation/deck.py new <slug>`  # also runs npm install -w
 - `uv run python scripts/video/video.py new <slug>`
+
+Then start the live preview with `deck.py dev <slug>` / `video.py dev <slug>`, and gate completion with `deck.py audit` / `video.py audit`. Never run `npx slidev` from the workspace root.
 
 Add a custom template under `.templates/` and point `config.toml` at its directory name.
 
@@ -153,9 +155,11 @@ If modality is unclear, you should get one routing question — not a mixed proj
 | Kind | Look at it | Export |
 |---|---|---|
 | Document | `open projects/<slug>/<slug>.html` — no server; it is already one file | Nothing to export. Print to PDF from the browser if you need paper |
-| Presentation | `npx slidev --port 3030` from the project (via root `node_modules`) | `npx slidev export` → PDF/PPTX/PNG under `dist/`, only when requested |
-| Video | `npx hyperframes preview --port 3002` | `npx hyperframes render` → file under `renders/`, only when requested |
+| Presentation | `uv run python scripts/presentation/deck.py dev <slug>` | `uv run python scripts/presentation/deck.py export <slug>` → PDF/PPTX/PNG under `dist/`, only when requested |
+| Video | `uv run python scripts/video/video.py dev <slug>` | `npx hyperframes render` from the project (via `video.py` workflow) → file under `renders/`, only when requested |
 
 Verify a document with `uv run python scripts/document/doc.py check projects/<slug>/<slug>.html`: it proves the file is self-contained, brand-current, and accessible without opening a browser.
 
-For decks and video, do not treat a live preview or a leftover `dist/` / `renders/` file as the requested delivery. Ports and default export dirs are in `config.toml`.
+Verify a deck with `uv run python scripts/presentation/deck.py audit <slug>` (static; must pass before you call the deck done). Verify a video with `uv run python scripts/video/video.py audit <slug>`.
+
+For decks and video, do not treat a live preview or a leftover `dist/` / `renders/` file as the requested delivery. Ports and default export dirs are in `config.toml`. There is one `node_modules` at the workspace root (npm workspaces); never install per-project.

@@ -55,13 +55,14 @@ storyboard, or runtime changes; otherwise edit the scenes in place.
    video.
 3. If the project is not scaffolded, run
    `uv run python scripts/video/video.py new <slug> --title "…" [--brand <id>]`.
-   That copies `.templates/video/`, renders the Jinja (`*.j2`) files, and
-   snapshots `brands/<id>/` into the project-local `brand/` directory.
-   Install from the workspace root with `npm install -w projects/<slug>`
-   — never create a per-project `node_modules`. Use `uv` for Python
-   tooling and `ffmpeg` for muxing. Do not hand-copy the template.
-4. Start the HyperFrames preview on `config.toml`'s `[preview] video_port`
-   before building scenes and keep it running. Do not build blind.
+   That copies `.templates/video/`, renders the Jinja (`*.j2`) files,
+   snapshots `brands/<id>/` into the project-local `brand/` directory, and
+   runs `npm install -w projects/<slug>` from the workspace root. Never
+   create a per-project `node_modules`. Do not hand-copy the template.
+4. Start the preview with
+   `uv run python scripts/video/video.py dev <slug>` before building scenes
+   and keep it running. Do not build blind. Do not run `npx hyperframes`
+   by hand.
 5. Synthesize narration locally, one WAV per planned script segment, via
    `uv run python skills/text-to-speech/scripts/synthesize.py`. Use `--voice`
    from the plan or `[audio].voice`. Do not pass `--lang-code` unless the
@@ -71,8 +72,12 @@ storyboard, or runtime changes; otherwise edit the scenes in place.
    copy.
 6. Build one scene at a time, synchronize it to its clip, verify it in the
    preview, and record the checkpoint in `reports/build.md`. Leave no
-   placeholder scenes or scratch audio.
-7. Review the piece yourself against the plan: claims, pacing,
+   placeholder scenes or scratch audio. Edit only the composition HTML,
+   project CSS, media, and narration — never `node_modules/` or
+   `package-lock.json`.
+7. Audit before you call it done:
+   `uv run python scripts/video/video.py audit <slug>` must exit 0. Then
+   review the piece yourself against the plan: claims, pacing,
    synchronization, safe areas, readability, accessibility, brand fidelity,
    audio quality. Write `reports/review.md` and fix what you find.
 8. Render the final encoded file only when the user names it. Use `[video]`

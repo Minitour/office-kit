@@ -1144,6 +1144,7 @@ source = { virtual = "." }
 dependencies = [
     { name = "jinja2" },
     { name = "kokoro" },
+    { name = "pyyaml" },
     { name = "soundfile" },
     { name = "tomli" },
 ]
@@ -1157,6 +1158,7 @@ dev = [
 requires-dist = [
     { name = "jinja2", specifier = ">=3.1,<4" },
     { name = "kokoro", specifier = ">=0.9.4,<0.10" },
+    { name = "pyyaml", specifier = ">=6,<7" },
     { name = "soundfile", specifier = ">=0.12,<1" },
     { name = "tomli", specifier = ">=2.0.1,<3" },
 ]

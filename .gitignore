@@ -37,6 +37,10 @@ hyperframes-extract-cache*/
 
 # Slidev
 .slidev/
+.slidev-dev.pid
+.slidev-dev.log
+.hyperframes-dev.pid
+.hyperframes-dev.log
 
 # Environment
 .env

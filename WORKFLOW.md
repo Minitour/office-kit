@@ -28,7 +28,9 @@ writing; that goes to `research-agent`, and the writing still happens here.
 ## Decks and video are authored here
 
 Load `create-slides` or `create-video` and do the work yourself: write the
-plan, scaffold, start the preview, author, and review in this conversation.
+plan, scaffold with `scripts/presentation/deck.py` or
+`scripts/video/video.py`, start the preview, author, and review in this
+conversation.
 Do not delegate planning, authoring, review, or export to a subagent. Do not
 stop for a plan-approval gate. The request is the start signal.
 

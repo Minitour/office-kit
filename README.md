@@ -110,10 +110,13 @@ office-kit/
 │   └── video/             # HyperFrames
 ├── skills/                # Local entry skills + TTS
 ├── scripts/
+│   ├── common.py          # config, brand, Jinja render used by all scaffolders
 │   ├── brand/             # catalog + brand.json → derivatives
-│   └── document/
-│       ├── doc.py         # new | toc | check | refresh | embed
-│       └── package.py     # asset-inlining library used by `doc.py embed`
+│   ├── document/
+│   │   ├── doc.py         # new | toc | check | refresh | embed
+│   │   └── package.py     # asset-inlining library used by `doc.py embed`
+│   ├── presentation/deck.py  # new — Slidev project from .templates/presentation
+│   └── video/video.py     # new | refresh — HyperFrames project + brand snapshot
 ├── package.json           # npm workspaces (root node_modules)
 ├── pyproject.toml         # Root uv / Python tooling
 └── projects/<slug>/       # One deliverable per directory
@@ -124,7 +127,13 @@ office-kit/
     └── …source, dist/ or renders/
 ```
 
-Deck and video templates are copied into `projects/<name>/` at scaffold time. Documents are generated from `.templates/document-html/document.html` by `doc.py new`, which also inlines the brand. Add a custom template under `.templates/` and point `config.toml` at its directory name.
+Documents, decks, and video are scaffolded by scripts that render Jinja templates (`*.j2`, or `document.html`) and bind a brand id:
+
+- `uv run python scripts/document/doc.py new <slug>`
+- `uv run python scripts/presentation/deck.py new <slug>`
+- `uv run python scripts/video/video.py new <slug>`
+
+Add a custom template under `.templates/` and point `config.toml` at its directory name.
 
 ## Quick usage
 

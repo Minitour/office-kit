@@ -35,6 +35,7 @@ toc = true                     # Keep the contents panel; doc.py generates its e
 toc_min_sections = 4           # Below this, delete the <nav> instead
 
 # ── Presentations (Slidev) ───────────────────────────────────
+# Scaffold with: uv run python scripts/presentation/deck.py new <slug>
 [presentation]
 template = "presentation"      # Directory under .templates/
 theme = "default"              # → slides.md headmatter `theme`
@@ -48,6 +49,7 @@ dark = false                   # → `slidev export --dark`
 output_dir = "dist"
 
 # ── Video (HyperFrames) ──────────────────────────────────────
+# Scaffold with: uv run python scripts/video/video.py new <slug>
 [video]
 template = "video"             # Directory under .templates/
 composition = "index.html"     # → `hyperframes render --composition`

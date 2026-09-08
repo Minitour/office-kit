@@ -55,8 +55,9 @@ which brand id that project already uses.
    changes. It then propagates the change to the consumers that hold
    generated copies: existing standalone documents via
    `uv run python scripts/document/doc.py refresh --all`, and any video
-   project's `brand/` snapshot that was taken from this identity. Relay
-   what it touched.
+   project's `brand/` snapshot via
+   `uv run python scripts/video/video.py refresh <slug>`. Relay what it
+   touched.
 4. Check canonical/generated parity, contrast, typography, asset provenance,
    and cross-media usability here. Route fixes back to `brand-agent`.
 

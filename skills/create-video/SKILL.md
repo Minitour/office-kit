@@ -23,12 +23,14 @@ synthesis stack.
 Visual styling originates in the generated workspace brand outputs under
 `brands/<id>/`. The project's brand is the one the user named, or
 `[brand] default`. HyperFrames cannot serve files above a project root, so
-immediately after scaffolding copy the files listed in `config.toml`
-`[video.brand_snapshot]` from `brands/<id>/` into the project-local
-`brand/` directory. This is a generated snapshot, not a second source of
-truth; refresh it after `init-brand` changes that workspace identity, and
-never hand-edit it. Link only `./brand/tokens.css`. Record `brand: <id>` in
-`plan/PLAN.md`. Run `hyperframes check` after snapshotting.
+immediately after scaffolding (or via
+`uv run python scripts/video/video.py refresh <slug>`) copy the files
+listed in `config.toml` `[video.brand_snapshot]` from `brands/<id>/` into
+the project-local `brand/` directory. This is a generated snapshot, not a
+second source of truth; refresh it after `init-brand` changes that
+workspace identity, and never hand-edit it. Link only `./brand/tokens.css`.
+Record `brand: <id>` in `plan/PLAN.md`. Run `hyperframes check` after
+snapshotting.
 
 ## Resume from durable state
 
@@ -51,11 +53,13 @@ storyboard, or runtime changes; otherwise edit the scenes in place.
 2. `research-agent` writes `reports/research.md` only when the script turns
    on claims that need checking. Skip it otherwise. You still write the
    video.
-3. If the project is not scaffolded, copy `.templates/video/` to
-   `projects/<slug>/`, then copy the brand snapshot. Install from the
-   workspace root with `npm install -w projects/<slug>` — never create a
-   per-project `node_modules`. Use `uv` for Python tooling and `ffmpeg` for
-   muxing.
+3. If the project is not scaffolded, run
+   `uv run python scripts/video/video.py new <slug> --title "…" [--brand <id>]`.
+   That copies `.templates/video/`, renders the Jinja (`*.j2`) files, and
+   snapshots `brands/<id>/` into the project-local `brand/` directory.
+   Install from the workspace root with `npm install -w projects/<slug>`
+   — never create a per-project `node_modules`. Use `uv` for Python
+   tooling and `ffmpeg` for muxing. Do not hand-copy the template.
 4. Start the HyperFrames preview on `config.toml`'s `[preview] video_port`
    before building scenes and keep it running. Do not build blind.
 5. Synthesize narration locally, one WAV per planned script segment, via

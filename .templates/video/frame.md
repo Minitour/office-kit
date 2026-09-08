@@ -7,8 +7,8 @@ this video; do not restate brand values.
 
 HyperFrames serves and validates the project root only. It rejects runtime
 references such as `../../brands/<id>/tokens.css`, even when the workspace
-file exists. Therefore copy the snapshot immediately after the template and
-before authoring:
+file exists. `video.py new` copies the snapshot; `video.py refresh`
+re-copies it after a brand change. Manual setup, if you ever need it:
 
 1. Create `brand/assets/` inside the new video project.
 2. Copy the generated workspace `brands/<id>/tokens.css` to

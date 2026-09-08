@@ -8,11 +8,11 @@
  * This is the ONLY file in the deck that reaches outside the project. Both
  * paths below resolve from projects/<name>/ to the workspace root, which is
  * exactly the form brands/<id>/BRAND.md documents. Brand values are never
- * copied into a project. After scaffolding, replace {{BRAND_ID}} with the
- * project's brand id (the one the user named, or [brand] default).
+ * copied into a project. `deck.py new` fills brand_id from the project's
+ * brand, or from config.toml [brand] default.
  */
 
-@import "../../brands/{{BRAND_ID}}/tokens.css";
+@import "../../brands/{{ brand_id }}/tokens.css";
 @import "./styles/brand.css";
 
 :root {
@@ -26,5 +26,5 @@
    * fallback in that case is to copy the mark into public/ and set
    * `--ok-logo: url("/logo.svg")`.
    */
-  --ok-logo: url("../../brands/{{BRAND_ID}}/assets/logo.svg");
+  --ok-logo: url("../../brands/{{ brand_id }}/{{ logo_rel }}");
 }

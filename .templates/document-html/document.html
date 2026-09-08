@@ -6,7 +6,7 @@
   inside it, so it opens straight from disk over file:// with no server and
   no build step. Scaffold it with:
 
-      python scripts/document/doc.py new <slug>
+      uv run python scripts/document/doc.py new <slug>
 
   which copies this template to projects/<slug>/<slug>.html, fills the brand
   region below, and strips every officekit:hint comment. Author the <body>;
@@ -19,9 +19,9 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>{{TITLE}}</title>
-    <meta name="description" content="{{DESCRIPTION}}" />
-    <meta name="author" content="{{AUTHOR}}" />
+    <title>{{ title }}</title>
+    <meta name="description" content="{{ description }}" />
+    <meta name="author" content="{{ author }}" />
 
     <style>
       /*
@@ -598,11 +598,13 @@
 
     <header class="doc-header">
       <div class="brand-mark" aria-hidden="true"></div>
-      <h1>{{TITLE}}</h1>
-      <p class="subtitle">{{SUBTITLE}}</p>
+      <h1>{{ title }}</h1>
+      {% if subtitle %}
+      <p class="subtitle">{{ subtitle }}</p>
+      {% endif %}
       <p class="byline">
-        <span>{{AUTHOR}}</span>
-        <time datetime="{{DATE_ISO}}">{{DATE_HUMAN}}</time>
+        <span>{{ author }}</span>
+        <time datetime="{{ date_iso }}">{{ date_human }}</time>
       </p>
     </header>
 
@@ -637,9 +639,11 @@
       <!-- officekit:content -->
     </main>
 
+    {% if footer %}
     <footer class="doc-footer">
-      <p>{{FOOTER}}</p>
+      <p>{{ footer }}</p>
     </footer>
+    {% endif %}
 
     <script>
       /* officekit:script:start */

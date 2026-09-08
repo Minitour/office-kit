@@ -89,6 +89,7 @@ def cmd_new(args: argparse.Namespace) -> int:
     print(f"Created {rel} ({len(written)} file(s), brand {brand_id})")
     print(f"  next:  npm install -w {rel}")
     print(f"  next:  npx slidev --port {ctx['preview_port']}")
+    print(f"  open:  http://localhost:{ctx['preview_port']}/")
     return 0
 
 

@@ -4,12 +4,14 @@
     {
       "id": 1,
       "prompt": "Need a 12-minute kickoff deck for Thursday's customer workshop. Notes: problem (manual reconciliations), demo of the new matching UI, timeline (pilot in Oct, GA in Jan), ask for two design partners. 16:9, they'll present live, maybe export PDF later.",
-      "expected_output": "Treats this as create-slides. Loads slidev, slidev-layouts, and slidev-themes. Writes plan/PLAN.md here (venue, duration, 16:9, slide sequence with a layout per slide), scaffolds with `uv run python scripts/presentation/deck.py new` if needed, starts the Slidev preview, and authors slides.md in this conversation. Skips research because nothing needs verifying. Does not spawn a subagent to write the deck, does not wait for plan approval, and does not export PDF yet.",
+      "expected_output": "Treats this as create-slides. Loads slidev, slidev-layouts, and slidev-themes. Scaffolds with `uv run python scripts/presentation/deck.py new` if needed, starts the Slidev preview from the template, and tells the user the URL before finishing plan/PLAN.md. Authors slides.md in this conversation with Lucide icons. Skips research because nothing needs verifying. Does not spawn a subagent to write the deck, does not wait for plan approval, and does not export PDF yet.",
       "files": [],
       "expectations": [
         "Treats the request as create-slides, not create-doc or create-video",
         "Captures duration and 16:9 in the plan rather than assuming",
         "Authors the Slidev deck in primary context, loading slidev-layouts and slidev-themes rather than guessing layout or theme names",
+        "Starts the Slidev preview from the scaffolded template before the plan is finished, so the user can watch the deck get built",
+        "Uses Lucide icons (`@iconify-json/lucide`) rather than leaving content slides as unadorned lists",
         "Does not export PDF or PPTX because delivery was only mentioned as a maybe"
       ]
     },

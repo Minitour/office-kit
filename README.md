@@ -25,7 +25,7 @@ Process is matched to the cost of the deliverable.
 
 **A document is written directly**, in the chat context, in one pass: scaffold, author, verify, hand over. No subagent, no plan file, no approval gate, no preview server, no packaging step. Budget is three minutes. The output is `projects/<slug>/<slug>.html` — styles, brand tokens, marks, and images all inlined — plus a short `NOTES.md`.
 
-**A deck or a video is authored in the same conversation**, so the prefix stays warm. The agent writes a short plan, starts a live preview, and builds in this context. It should not spawn a subagent to author slides, scenes, or narration. The only production subagent is `research-agent`, and only when claims need checking.
+**A deck or a video is authored in the same conversation**, so the prefix stays warm. For a deck, the preview starts from the scaffolded template so you can watch it get built. The agent should not spawn a subagent to author slides, scenes, or narration. The only production subagent is `research-agent`, and only when claims need checking.
 
 That is a **workflow contract**, not a hard sandbox. CAPA and the host provider (Cursor, Claude Code, and others) may restrict tools, but enforcement varies.
 

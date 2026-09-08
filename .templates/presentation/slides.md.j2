@@ -12,11 +12,15 @@ canvasWidth: {{ canvas_width }}
 # by style.css. Do not add a `fonts:` block here: tokens.css already loads the
 # brand webfonts, and restating a family in the headmatter hardcodes a brand
 # value and double-loads the font.
+# Icons are Lucide via @iconify-json/lucide. Use <lucide-name class="ok-icon" />.
 ---
 
 # {{ title }}
 
-Subtitle or tagline goes here
+<div class="ok-kicker">
+  <lucide-presentation class="ok-icon" />
+  <span>Subtitle or tagline goes here</span>
+</div>
 
 <div class="abs-bl m-6 text-sm opacity-50">
 {{ author }}
@@ -26,9 +30,18 @@ Subtitle or tagline goes here
 
 ## Agenda
 
-- Topic 1
-- Topic 2
-- Topic 3
+<div class="ok-icon-row">
+  <lucide-flag class="ok-icon" />
+  <span>Topic 1</span>
+</div>
+<div class="ok-icon-row">
+  <lucide-map class="ok-icon" />
+  <span>Topic 2</span>
+</div>
+<div class="ok-icon-row">
+  <lucide-circle-check class="ok-icon" />
+  <span>Topic 3</span>
+</div>
 
 ---
 layout: center
@@ -36,4 +49,7 @@ layout: center
 
 # Thank You
 
-Questions?
+<div class="ok-kicker">
+  <lucide-message-circle class="ok-icon" />
+  <span>Questions?</span>
+</div>

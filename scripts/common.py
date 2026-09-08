@@ -4,11 +4,18 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import os
 import re
 import shutil
+import signal
+import socket
+import subprocess
 import sys
+import time
+import urllib.error
+import urllib.request
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any, Mapping, Sequence
 
 from jinja2 import Environment, StrictUndefined, TemplateError
 
@@ -247,3 +254,233 @@ def snapshot_brand(
             shutil.rmtree(dest)
         shutil.copytree(src, dest)
     return target
+
+
+def npm_install_workspace(root: Path, workspace_rel: str) -> None:
+    """Install a project workspace from the repo root (npm workspaces hoist)."""
+    package = root / "package.json"
+    if not package.is_file():
+        raise ScaffoldError(f"workspace package.json is missing at {package}")
+    try:
+        result = subprocess.run(
+            ["npm", "install", "-w", workspace_rel, "--no-fund", "--no-audit"],
+            cwd=root,
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+    except FileNotFoundError as exc:
+        raise ScaffoldError("npm is not installed or not on PATH") from exc
+    if result.returncode != 0:
+        detail = (result.stderr or result.stdout or "").strip()
+        raise ScaffoldError(
+            f"npm install -w {workspace_rel} failed"
+            + (f": {detail}" if detail else "")
+        )
+
+
+def port_is_free(port: int, host: str = "127.0.0.1") -> bool:
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        try:
+            sock.bind((host, port))
+        except OSError:
+            return False
+    return True
+
+
+def pids_listening_on(port: int) -> list[int]:
+    """Return PIDs holding TCP ``port`` (best-effort via ``lsof``)."""
+    try:
+        result = subprocess.run(
+            ["lsof", "-nP", f"-iTCP:{port}", "-sTCP:LISTEN", "-t"],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+    except FileNotFoundError:
+        return []
+    if result.returncode not in (0, 1):
+        return []
+    pids: list[int] = []
+    for line in result.stdout.splitlines():
+        line = line.strip()
+        if line.isdigit():
+            pids.append(int(line))
+    return pids
+
+
+def process_command(pid: int) -> str:
+    try:
+        result = subprocess.run(
+            ["ps", "-p", str(pid), "-o", "command="],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+    except FileNotFoundError:
+        return ""
+    if result.returncode != 0:
+        return ""
+    return result.stdout.strip()
+
+
+def kill_pids(pids: Sequence[int], *, grace_seconds: float = 1.5) -> None:
+    alive = [pid for pid in pids if pid > 0]
+    for pid in alive:
+        try:
+            os.kill(pid, signal.SIGTERM)
+        except ProcessLookupError:
+            continue
+        except PermissionError as exc:
+            raise ScaffoldError(f"cannot stop pid {pid}: {exc}") from exc
+    deadline = time.monotonic() + grace_seconds
+    while time.monotonic() < deadline:
+        remaining = []
+        for pid in alive:
+            try:
+                os.kill(pid, 0)
+            except ProcessLookupError:
+                continue
+            except PermissionError:
+                remaining.append(pid)
+            else:
+                remaining.append(pid)
+        if not remaining:
+            return
+        time.sleep(0.1)
+        alive = remaining
+    for pid in alive:
+        try:
+            os.kill(pid, signal.SIGKILL)
+        except ProcessLookupError:
+            continue
+
+
+def claim_port(
+    preferred: int,
+    *,
+    reclaimable: Sequence[str],
+    max_offset: int = 20,
+) -> tuple[int, list[str]]:
+    """Return an available port, killing reclaimable holders of ``preferred``.
+
+    ``reclaimable`` is a list of substrings; if every listener's command line
+    matches at least one, those processes are stopped and ``preferred`` is
+    reused. Otherwise the next free port in ``preferred..preferred+max_offset``
+    is chosen.
+    """
+    notes: list[str] = []
+    holders = pids_listening_on(preferred)
+    if not holders:
+        return preferred, notes
+
+    commands = {pid: process_command(pid) for pid in holders}
+    reclaimable_l = [token.lower() for token in reclaimable]
+    all_reclaimable = True
+    for pid, command in commands.items():
+        lowered = command.lower()
+        if not any(token in lowered for token in reclaimable_l):
+            all_reclaimable = False
+            notes.append(
+                f"port {preferred} held by pid {pid} ({command or 'unknown'}); "
+                "not reclaiming"
+            )
+            break
+
+    if all_reclaimable:
+        kill_pids(holders)
+        notes.append(
+            f"stopped {len(holders)} process(es) on port {preferred}: "
+            + ", ".join(str(pid) for pid in holders)
+        )
+        if port_is_free(preferred):
+            return preferred, notes
+
+    for offset in range(1, max_offset + 1):
+        candidate = preferred + offset
+        if port_is_free(candidate) and not pids_listening_on(candidate):
+            notes.append(f"using port {candidate} because {preferred} is busy")
+            return candidate, notes
+
+    raise ScaffoldError(
+        f"no free port in {preferred}..{preferred + max_offset}; "
+        + ("; ".join(notes) if notes else "all candidates busy")
+    )
+
+
+def wait_http_ok(
+    url: str,
+    *,
+    timeout_seconds: float = 45.0,
+    poll_seconds: float = 0.4,
+) -> bool:
+    deadline = time.monotonic() + timeout_seconds
+    while time.monotonic() < deadline:
+        try:
+            with urllib.request.urlopen(url, timeout=2.0) as response:
+                if 200 <= getattr(response, "status", 200) < 300:
+                    return True
+        except (urllib.error.URLError, TimeoutError, OSError):
+            pass
+        time.sleep(poll_seconds)
+    return False
+
+
+def write_pidfile(path: Path, pid: int, *, port: int, slug: str) -> None:
+    atomic_write(path, f"pid={pid}\nport={port}\nslug={slug}\n")
+
+
+def read_pidfile(path: Path) -> dict[str, str]:
+    if not path.is_file():
+        return {}
+    data: dict[str, str] = {}
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if "=" in line:
+            key, value = line.split("=", 1)
+            data[key.strip()] = value.strip()
+    return data
+
+
+def spawn_detached(
+    command: Sequence[str],
+    *,
+    cwd: Path,
+    log_path: Path,
+) -> int:
+    """Start ``command`` detached; return its PID. Logs go to ``log_path``."""
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    log_handle = log_path.open("w", encoding="utf-8")
+    try:
+        process = subprocess.Popen(
+            list(command),
+            cwd=cwd,
+            stdout=log_handle,
+            stderr=subprocess.STDOUT,
+            start_new_session=True,
+        )
+    except OSError as exc:
+        log_handle.close()
+        raise ScaffoldError(f"failed to start {' '.join(command)}: {exc}") from exc
+    log_handle.close()
+    return int(process.pid)
+
+
+def stop_pidfile(path: Path) -> list[str]:
+    """Stop the process recorded in ``path`` and remove the file."""
+    notes: list[str] = []
+    data = read_pidfile(path)
+    raw_pid = data.get("pid")
+    if raw_pid and raw_pid.isdigit():
+        pid = int(raw_pid)
+        try:
+            os.kill(pid, 0)
+        except ProcessLookupError:
+            notes.append(f"pid {pid} already stopped")
+        except PermissionError as exc:
+            raise ScaffoldError(f"cannot stop pid {pid}: {exc}") from exc
+        else:
+            kill_pids([pid])
+            notes.append(f"stopped pid {pid}")
+    path.unlink(missing_ok=True)
+    return notes

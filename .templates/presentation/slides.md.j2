@@ -13,43 +13,283 @@ canvasWidth: {{ canvas_width }}
 # brand webfonts, and restating a family in the headmatter hardcodes a brand
 # value and double-loads the font.
 # Icons are Lucide via @iconify-json/lucide. Use <lucide-name class="ok-icon" />.
+# Layout vocabulary below: keep, reorder, duplicate, or delete slides as needed.
+# Never invent a layout name — use only names from slidev-layouts / deck.py audit.
+layout: cover
+class: ok-cover
 ---
 
-# {{ title }}
+<!-- Cover — open on the promise, not a definition. Dark brand ground. -->
 
-<div class="ok-kicker">
+<div class="ok-kicker ok-kicker-on-dark">
   <lucide-presentation class="ok-icon" />
   <span>Subtitle or tagline goes here</span>
 </div>
 
-<div class="abs-bl m-6 text-sm opacity-50">
-{{ author }}
-</div>
+# {{ title }}
+
+<div class="ok-rule" />
+
+<p class="ok-sub">One sentence that states the outcome of this deck.</p>
+
+<div class="abs-bl m-6 ok-cover-mark" aria-hidden="true"></div>
 
 ---
+
+<!-- Agenda — three to five icon rows; drop unused rows rather than padding. -->
 
 ## Agenda
 
 <div class="ok-icon-row">
   <lucide-flag class="ok-icon" />
-  <span>Topic 1</span>
+  <span>Topic 1 — the problem or stakes</span>
 </div>
 <div class="ok-icon-row">
   <lucide-map class="ok-icon" />
-  <span>Topic 2</span>
+  <span>Topic 2 — the approach</span>
 </div>
 <div class="ok-icon-row">
   <lucide-circle-check class="ok-icon" />
-  <span>Topic 3</span>
+  <span>Topic 3 — the proof or ask</span>
 </div>
 
 ---
-layout: center
+layout: section
+class: ok-section
 ---
+
+<!-- Section — chapter break. Prefer short titles; body is optional. -->
+
+# Part One
+
+The framing shift before the detail.
+
+---
+layout: statement
+---
+
+<!-- Statement — one idea, full weight. No bullets. -->
+
+# The Floor Is Not the Goal.
+
+---
+layout: default
+class: ok-tight
+---
+
+<!-- Hero — big number + supporting copy. Swap the figure; keep the grid. -->
+
+# The Scale Of The Problem
+
+<div class="ok-hero">
+  <div class="ok-hero-num">
+    <span>00</span>
+    <p>Replace with the headline metric and one line of context.</p>
+  </div>
+  <div class="ok-hero-copy">
+    <div class="ok-icon-line">
+      <lucide-eye class="ok-icon" />
+      <p>First supporting point with a Lucide mark.</p>
+    </div>
+    <div class="ok-icon-line">
+      <lucide-gauge class="ok-icon" />
+      <p>Second supporting point — keep each to one sentence.</p>
+    </div>
+  </div>
+</div>
+
+---
+layout: two-cols
+---
+
+<!-- Two columns — equal panels. Put a heading above the grid if needed. -->
+
+# Two Sides
+
+::left::
+
+<div class="ok-icon-line">
+  <lucide-circle-x class="ok-icon" />
+  <div>
+    <h2>Before</h2>
+    <p>What people do today, and why it fails.</p>
+  </div>
+</div>
+
+::right::
+
+<div class="ok-icon-line">
+  <lucide-circle-check class="ok-icon" />
+  <div>
+    <h2>After</h2>
+    <p>What changes when the new approach lands.</p>
+  </div>
+</div>
+
+---
+layout: two-cols-header
+---
+
+# Split With A Shared Title
+
+::left::
+
+### Left panel
+
+- Point with substance
+- Point with substance
+
+::right::
+
+### Right panel
+
+- Point with substance
+- Point with substance
+
+---
+layout: fact
+---
+
+<!-- Fact — one number or short phrase dominates the slide. -->
+
+# 3×
+
+The lift, the savings, or the risk — name the unit in the speaker notes.
+
+---
+layout: quote
+---
+
+<!-- Quote — attribution below; keep the quote under two lines. -->
+
+# “Replace this with a customer or research quote.”
+
+---
+layout: default
+class: ok-tight
+---
+
+<!-- Bands — three horizontal index/status rows. Recolor via .a / .b / .c. -->
+
+# How It Breaks Down
+
+<div class="ok-bands">
+  <div class="ok-band a">
+    <span>01</span>
+    <div>
+      <h3>First band</h3>
+      <p>Short description.</p>
+    </div>
+  </div>
+  <div class="ok-band b">
+    <span>02</span>
+    <div>
+      <h3>Second band</h3>
+      <p>Short description.</p>
+    </div>
+  </div>
+  <div class="ok-band c">
+    <span>03</span>
+    <div>
+      <h3>Third band</h3>
+      <p>Short description.</p>
+    </div>
+  </div>
+</div>
+
+---
+layout: default
+class: ok-tight
+---
+
+<!-- Flow — three steps with joins. Duplicate a step only if the story needs four. -->
+
+# How It Works
+
+<div class="ok-flow">
+  <div class="ok-step">
+    <div class="ok-step-n">Step 1</div>
+    <lucide-scan-search class="ok-icon" />
+    <h3>Measure</h3>
+    <p>What is captured and where it comes from.</p>
+  </div>
+  <div class="ok-flow-join" aria-hidden="true"></div>
+  <div class="ok-step">
+    <div class="ok-step-n">Step 2</div>
+    <lucide-sparkles class="ok-icon" />
+    <h3>Activate</h3>
+    <p>How the signal is used in buying or product.</p>
+  </div>
+  <div class="ok-flow-join" aria-hidden="true"></div>
+  <div class="ok-step">
+    <div class="ok-step-n">Step 3</div>
+    <lucide-line-chart class="ok-icon" />
+    <h3>Prove</h3>
+    <p>How outcomes are read back against the spend.</p>
+  </div>
+</div>
+
+---
+layout: two-cols-header
+---
+
+<!-- Outcomes — big numbers in each column. -->
+
+# Proof
+
+::left::
+
+<div class="ok-outcome">
+  <div class="ok-outcome-kicker">
+    <lucide-trophy class="ok-icon" />
+    <span>Case A</span>
+  </div>
+  <div class="ok-outcome-num">+0%</div>
+  <p>One-line result. Name the partner in the notes.</p>
+</div>
+
+::right::
+
+<div class="ok-outcome alt">
+  <div class="ok-outcome-kicker">
+    <lucide-badge-check class="ok-icon" />
+    <span>Case B</span>
+  </div>
+  <div class="ok-outcome-num">+0%</div>
+  <p>One-line result. Keep units consistent across columns.</p>
+</div>
+
+---
+layout: image-right
+image: https://cover.sli.dev
+---
+
+<!-- Image-right — replace the URL with a file under public/ or drop the slide. -->
+
+# Show The Thing
+
+A short caption. Prefer a local asset in `public/` over a remote URL.
+
+---
+layout: section
+class: ok-section-alt
+---
+
+<!-- Section alt — secondary chapter colour from --ok-secondary. -->
+
+# Part Two
+
+Optional second chapter.
+
+---
+layout: end
+---
+
+<!-- End — close on the ask. Questions, next step, or contact. -->
 
 # Thank You
 
-<div class="ok-kicker">
+<div class="ok-kicker ok-kicker-on-dark">
   <lucide-message-circle class="ok-icon" />
   <span>Questions?</span>
 </div>

@@ -40,6 +40,7 @@ class VideoScaffoldTests(unittest.TestCase):
             "explainer",
             "--title",
             "Product tour",
+            "--no-install",
             "--workspace-root",
             str(self.root),
         )
@@ -56,10 +57,18 @@ class VideoScaffoldTests(unittest.TestCase):
         self.assertTrue((dest / "brand" / "frame.md").is_file())
         self.assertTrue((dest / "brand" / "assets" / "logo.svg").is_file())
         self.assertFalse((dest / "index.html.j2").exists())
+        self.assertIn("video.py dev explainer", output)
 
     def test_refresh_rewrites_a_drifted_snapshot(self) -> None:
         self.assertEqual(
-            run("new", "explainer", "--workspace-root", str(self.root))[0], 0
+            run(
+                "new",
+                "explainer",
+                "--no-install",
+                "--workspace-root",
+                str(self.root),
+            )[0],
+            0,
         )
         tokens = self.root / "projects" / "explainer" / "brand" / "tokens.css"
         tokens.write_text("/* stale */\n", encoding="utf-8")
@@ -75,7 +84,13 @@ class VideoScaffoldTests(unittest.TestCase):
 
     def test_rejects_an_unknown_brand(self) -> None:
         code, output = run(
-            "new", "explainer", "--brand", "missing", "--workspace-root", str(self.root)
+            "new",
+            "explainer",
+            "--brand",
+            "missing",
+            "--no-install",
+            "--workspace-root",
+            str(self.root),
         )
         self.assertEqual(code, 2)
         self.assertIn("does not exist", output)

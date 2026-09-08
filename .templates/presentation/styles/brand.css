@@ -22,6 +22,7 @@
   --ok-secondary: var(--color-secondary, var(--ok-primary));
   --ok-muted: var(--color-muted, GrayText);
   --ok-panel: var(--color-panel, color-mix(in srgb, var(--ok-foreground) 6%, var(--ok-background)));
+  --ok-green: var(--color-green, var(--ok-primary));
 
   --ok-font-sans: var(--font-sans, ui-sans-serif, system-ui, sans-serif);
   --ok-font-heading: var(--font-heading, var(--ok-font-sans));
@@ -89,8 +90,372 @@
   color: var(--ok-muted);
 }
 
+.ok-kicker-on-dark {
+  color: var(--ok-background);
+  opacity: 0.92;
+}
+
+.ok-kicker-on-dark .ok-icon {
+  color: var(--ok-background);
+}
+
 .ok-icon-row + .ok-icon-row {
   margin-top: 0.85rem;
+}
+
+.ok-icon-line {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+}
+
+.ok-icon-line + .ok-icon-line {
+  margin-top: 0.85rem;
+}
+
+.ok-icon-line .ok-icon {
+  margin-top: 0.15rem;
+}
+
+.ok-icon-line p,
+.ok-icon-line h2 {
+  margin: 0;
+}
+
+.ok-icon-line p {
+  font-size: 1.02rem;
+  line-height: 1.4;
+}
+
+/* Cover / end — inverted ground. */
+.ok-cover.slidev-layout {
+  background: var(--ok-foreground);
+  color: var(--ok-background);
+}
+
+.ok-cover.slidev-layout h1,
+.ok-cover.slidev-layout h2 {
+  color: var(--ok-background);
+}
+
+.ok-rule {
+  width: 3.5rem;
+  height: 4px;
+  background: var(--ok-primary);
+  margin: 1.25rem 0 1.5rem;
+  border-radius: 999px;
+}
+
+.ok-sub {
+  font-size: 1.35rem;
+  font-weight: 400;
+  line-height: 1.35;
+  max-width: 22em;
+  opacity: 0.88;
+}
+
+.ok-cover-mark {
+  height: 36px;
+  width: 96px;
+  background-image: var(--ok-logo-on-dark, var(--ok-logo, none));
+  background-repeat: no-repeat;
+  background-position: left center;
+  background-size: contain;
+}
+
+.ok-lead {
+  margin: 0 0 0.85rem;
+  color: var(--ok-muted);
+  font-size: 1.02rem;
+}
+
+.ok-pill {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ok-background);
+  background: var(--ok-primary);
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  margin-bottom: 0.55rem;
+}
+
+.ok-pill.alt {
+  background: var(--ok-secondary);
+}
+
+.ok-note {
+  margin-top: 0.85rem;
+  font-size: 0.98rem;
+  line-height: 1.4;
+  color: var(--ok-muted);
+}
+
+/* Compact content slides. */
+.slidev-layout.default.ok-tight,
+.slidev-layout.two-cols-header.ok-tight,
+.slidev-layout.two-columns.ok-tight {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.slidev-layout.ok-tight h1 {
+  font-size: 1.75rem;
+  margin-bottom: 0.7rem;
+}
+
+.slidev-layout.ok-tight h2 {
+  font-size: 1.25rem;
+  margin: 0.15rem 0 0.55rem;
+}
+
+/* Hero number + copy. */
+.ok-hero {
+  display: grid;
+  grid-template-columns: 0.9fr 1.1fr;
+  gap: 1.25rem;
+  align-items: stretch;
+  flex: 1;
+  min-height: 0;
+}
+
+.ok-hero-num {
+  background: var(--ok-foreground);
+  color: var(--ok-background);
+  border-radius: 0.75rem;
+  padding: 1.4rem 1.35rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.ok-hero-num span {
+  font-size: 3.4rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--ok-primary);
+}
+
+.ok-hero-num p {
+  margin: 0.85rem 0 0;
+  font-size: 1rem;
+  line-height: 1.4;
+  opacity: 0.9;
+}
+
+.ok-hero-copy {
+  background: var(--ok-panel);
+  border-radius: 0.75rem;
+  padding: 1.15rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* Horizontal index bands. */
+.ok-bands {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  flex: 1;
+}
+
+.ok-band {
+  display: grid;
+  grid-template-columns: 3.2rem 1fr;
+  gap: 0.9rem;
+  align-items: center;
+  border-radius: 0.75rem;
+  padding: 0.85rem 1.15rem;
+  color: var(--ok-background);
+}
+
+.ok-band span {
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  opacity: 0.85;
+}
+
+.ok-band h3 {
+  margin: 0 0 0.15rem;
+  font-size: 1.15rem;
+  color: var(--ok-background);
+}
+
+.ok-band p {
+  margin: 0;
+  font-size: 0.95rem;
+  opacity: 0.92;
+}
+
+.ok-band.a { background: var(--ok-primary); }
+.ok-band.b { background: var(--ok-secondary); }
+.ok-band.c { background: var(--ok-foreground); }
+
+/* Three-step flow. */
+.ok-flow {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr auto 1fr;
+  gap: 0.55rem;
+  align-items: stretch;
+  flex: 1;
+  min-height: 0;
+}
+
+.ok-step {
+  background: var(--ok-panel);
+  border-radius: 0.75rem;
+  padding: 1.05rem 1rem 1.15rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.ok-step .ok-icon {
+  margin-bottom: 0.45rem;
+}
+
+.ok-step-n {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ok-primary);
+  margin-bottom: 0.3rem;
+}
+
+.ok-step:nth-child(3) .ok-step-n,
+.ok-step:nth-child(3) .ok-icon {
+  color: var(--ok-secondary);
+}
+
+.ok-step:nth-child(5) .ok-step-n,
+.ok-step:nth-child(5) .ok-icon {
+  color: var(--ok-green);
+}
+
+.ok-step h3 {
+  font-size: 1.1rem;
+  margin: 0 0 0.4rem;
+}
+
+.ok-step p {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.4;
+  color: var(--ok-muted);
+}
+
+.ok-flow-join {
+  width: 0.55rem;
+  align-self: center;
+  height: 0.55rem;
+  border-radius: 999px;
+  background: var(--ok-primary);
+}
+
+/* Outcome numbers. */
+.ok-outcome {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.ok-outcome-kicker {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ok-primary);
+  margin-bottom: 0.35rem;
+}
+
+.ok-outcome.alt .ok-outcome-kicker,
+.ok-outcome.alt .ok-outcome-kicker .ok-icon {
+  color: var(--ok-secondary);
+}
+
+.ok-outcome-num {
+  font-size: 3.4rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--ok-foreground);
+  margin: 0.15rem 0 0.55rem;
+}
+
+.ok-outcome p {
+  margin: 0;
+  font-size: 1.05rem;
+  line-height: 1.4;
+  color: var(--ok-muted);
+}
+
+.ok-ticks {
+  list-style: none;
+  padding: 0;
+  margin: 0.85rem 0 0;
+}
+
+.ok-ticks li {
+  position: relative;
+  padding-left: 1rem;
+  margin: 0 0 0.45rem;
+  font-size: 0.98rem;
+  line-height: 1.35;
+}
+
+.ok-ticks li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.45rem;
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 999px;
+  background: var(--ok-primary);
+}
+
+.slidev-layout .col-right .ok-ticks li::before {
+  background: var(--ok-secondary);
+}
+
+/* Section dividers. */
+.slidev-layout.section.ok-section {
+  background: var(--ok-primary);
+  color: var(--ok-background);
+}
+
+.slidev-layout.section.ok-section-alt {
+  background: var(--ok-secondary);
+  color: var(--ok-background);
+}
+
+.slidev-layout.section.ok-section h1,
+.slidev-layout.section.ok-section p,
+.slidev-layout.section.ok-section-alt h1,
+.slidev-layout.section.ok-section-alt p {
+  color: var(--ok-background);
+  opacity: 1;
+}
+
+.slidev-layout.end {
+  background: var(--ok-foreground);
+  color: var(--ok-background);
+}
+
+.slidev-layout.end h1 {
+  color: var(--ok-background);
+}
+
+.slidev-layout.end p {
+  color: color-mix(in srgb, var(--ok-background) 82%, var(--ok-foreground));
 }
 
 /*

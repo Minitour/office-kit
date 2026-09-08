@@ -22,6 +22,12 @@ HTML is the only document engine. If the user asks for Word, Google Docs, or a
 print PDF, tell them HTML is what this produces — it prints cleanly from the
 browser — and let them decide. Never improvise another pipeline.
 
+## Edit boundary (hard rule)
+
+Edit only the document HTML (and `NOTES.md`). Never touch `node_modules/`,
+`package-lock.json`, or any Slidev/HyperFrames tooling for a document. Verify
+with `doc.py check` — that is the audit.
+
 ## The pass
 
 ```bash

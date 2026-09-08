@@ -29,10 +29,12 @@ writing; that goes to `research-agent`, and the writing still happens here.
 
 Load `create-slides` or `create-video` and do the work yourself: write the
 plan, scaffold with `scripts/presentation/deck.py` or
-`scripts/video/video.py`, start the preview, author, and review in this
-conversation.
-Do not delegate planning, authoring, review, or export to a subagent. Do not
-stop for a plan-approval gate. The request is the start signal.
+`scripts/video/video.py`, and author in this conversation.
+For a deck, start the Slidev preview from the scaffolded template **before**
+writing slides, tell the user the URL, then edit in place so they watch it
+get built. Do not delegate planning, authoring, review, or export to a
+subagent. Do not stop for a plan-approval gate. The request is the start
+signal.
 
 Durable state lives under `projects/<slug>/`, never only in chat:
 
@@ -69,9 +71,9 @@ stops; you turn that into the deliverable.
 ## Gates
 
 1. Documents: build, verify, hand over. Revise on request.
-2. Decks and video: write the plan, then author in previewable increments in
-   this conversation. Relay checkpoints; do not wait for the user to approve
-   the plan.
+2. Decks and video: scaffold, start the live preview from the template,
+   then author in previewable increments in this conversation. Relay
+   checkpoints; do not wait for the user to approve the plan.
 3. Review the work yourself against the plan and the brand; record it in
    `reports/review.md`. Fix what you find.
 4. Export only when the user requests a specific deliverable.

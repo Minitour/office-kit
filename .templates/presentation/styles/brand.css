@@ -21,6 +21,7 @@
   --ok-primary: var(--color-primary, LinkText);
   --ok-secondary: var(--color-secondary, var(--ok-primary));
   --ok-muted: var(--color-muted, GrayText);
+  --ok-panel: var(--color-panel, color-mix(in srgb, var(--ok-foreground) 6%, var(--ok-background)));
 
   --ok-font-sans: var(--font-sans, ui-sans-serif, system-ui, sans-serif);
   --ok-font-heading: var(--font-heading, var(--ok-font-sans));
@@ -62,4 +63,56 @@
 
 .slidev-layout th {
   border-bottom-color: var(--ok-secondary);
+}
+
+/*
+ * Lucide icons from @iconify-json/lucide. Color follows the brand; size is
+ * relative to the surrounding type so a mark in a kicker and a mark in a
+ * list stay in proportion.
+ */
+.ok-icon {
+  color: var(--ok-primary);
+  width: 1.35em;
+  height: 1.35em;
+  flex-shrink: 0;
+}
+
+.ok-kicker,
+.ok-icon-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.ok-kicker {
+  margin-top: 1.25rem;
+  color: var(--ok-muted);
+}
+
+.ok-icon-row + .ok-icon-row {
+  margin-top: 0.85rem;
+}
+
+/*
+ * Slidev's two-cols and two-cols-header grids ship with no column-gap, so
+ * adjacent body copy reads as one line. Keep a gutter on every split, and
+ * let columns shrink so long strings wrap instead of colliding.
+ */
+div.slidev-layout.two-cols-header,
+div.slidev-layout.two-columns {
+  column-gap: 4rem;
+  row-gap: 1rem;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: start;
+}
+
+.slidev-layout.two-cols-header .col-left,
+.slidev-layout.two-cols-header .col-right,
+.slidev-layout.two-columns .col-left,
+.slidev-layout.two-columns .col-right {
+  min-width: 0;
+  align-self: start;
+  padding: 1rem 1.25rem 1.15rem;
+  background: var(--ok-panel);
+  border-radius: 0.75rem;
 }

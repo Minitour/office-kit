@@ -6,17 +6,17 @@ this video; do not restate brand values.
 ## Required scaffold-time brand snapshot
 
 HyperFrames serves and validates the project root only. It rejects runtime
-references such as `../../brand/tokens.css`, even when the workspace file
-exists. Therefore the video agent must perform this setup immediately after
-copying the template and before authoring:
+references such as `../../brands/<id>/tokens.css`, even when the workspace
+file exists. Therefore copy the snapshot immediately after the template and
+before authoring:
 
 1. Create `brand/assets/` inside the new video project.
-2. Copy the generated workspace `brand/tokens.css` to
+2. Copy the generated workspace `brands/<id>/tokens.css` to
    `<project>/brand/tokens.css`.
-3. Copy the generated workspace `brand/frame.md` to
+3. Copy the generated workspace `brands/<id>/frame.md` to
    `<project>/brand/frame.md`.
 4. Copy every logo or other file referenced by that frame spec from workspace
-   `brand/assets/` to `<project>/brand/assets/`, preserving filenames.
+   `brands/<id>/assets/` to `<project>/brand/assets/`, preserving filenames.
 5. Add this line in the `head` of `index.html`, before its inline style:
 
    ```html
@@ -28,8 +28,9 @@ copying the template and before authoring:
 7. Run `npx hyperframes@latest check` again.
 
 This is a deliberate generated snapshot, not a second brand source. Refresh it
-from the workspace-generated files whenever `brand/brand.json` changes. Do not
-hand-edit the snapshot.
+from the workspace-generated files whenever `brands/<id>/brand.json` changes.
+Do not hand-edit the snapshot. `<id>` is the project's brand, or
+`[brand] default` in `config.toml`.
 
 The untouched template intentionally has no token link, logo, media element,
 or animation dependency. Its neutral CSS fallbacks allow HyperFrames check to

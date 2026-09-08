@@ -51,12 +51,16 @@ class DocumentPipelineTestCase(unittest.TestCase):
         self.root = Path(self._tmp.name)
         self.addCleanup(self._tmp.cleanup)
 
-        (self.root / "brand" / "assets").mkdir(parents=True)
+        brand = self.root / "brands" / "officekit"
+        (brand / "assets").mkdir(parents=True)
         (self.root / ".templates" / "document-html").mkdir(parents=True)
+        (self.root / "config.toml").write_text(
+            '[brand]\ndefault = "officekit"\n', encoding="utf-8"
+        )
         for name in ("brand.json", "tokens.css"):
-            shutil.copy(ROOT / "brand" / name, self.root / "brand" / name)
+            shutil.copy(ROOT / "brands" / "officekit" / name, brand / name)
         for name in ("logo.svg", "logo-light.svg"):
-            (self.root / "brand" / "assets" / name).write_text(LOGO_SVG, encoding="utf-8")
+            (brand / "assets" / name).write_text(LOGO_SVG, encoding="utf-8")
         shutil.copy(
             ROOT / ".templates" / "document-html" / "document.html",
             self.root / ".templates" / "document-html" / "document.html",
@@ -101,6 +105,7 @@ class NewTests(DocumentPipelineTestCase):
         self.assertIn("Q3 FY26", text)
         # Brand values are inlined from the token sheet, not linked.
         self.assertIn("--color-primary: #7C3AED;", text)
+        self.assertIn("officekit:brand-id: officekit", text)
         self.assertIn('--brand-logo: url("data:image/svg+xml;base64,', text)
         self.assertNotIn('<link rel="stylesheet"', text)
         self.assertNotIn("tokens.css\"", text)
@@ -139,13 +144,35 @@ class NewTests(DocumentPipelineTestCase):
         self.assertEqual(code, 0)
 
     def test_reports_a_missing_token_sheet_instead_of_guessing(self) -> None:
-        (self.root / "brand" / "tokens.css").unlink()
+        (self.root / "brands" / "officekit" / "tokens.css").unlink()
         code, output = run("new", "review", "--workspace-root", str(self.root))
         self.assertEqual(code, 2)
-        self.assertIn("brand/tokens.css is missing", output)
+        self.assertIn("brands/officekit/tokens.css is missing", output)
+
+    def test_scaffold_can_bind_a_named_brand(self) -> None:
+        other = self.root / "brands" / "acme"
+        shutil.copytree(self.root / "brands" / "officekit", other)
+        tokens = other / "tokens.css"
+        tokens.write_text(
+            tokens.read_text(encoding="utf-8").replace("#7C3AED", "#0F766E"),
+            encoding="utf-8",
+        )
+        path = self.scaffold("acme-memo", title="Acme Memo", brand="acme")
+        text = path.read_text(encoding="utf-8")
+        self.assertIn("officekit:brand-id: acme", text)
+        self.assertIn("--color-primary: #0F766E;", text)
+        branded = text.split("officekit:brand:end", 1)[0]
+        self.assertNotIn("#7C3AED", branded)
+
+    def test_rejects_an_unknown_brand(self) -> None:
+        code, output = run(
+            "new", "review", "--brand", "missing", "--workspace-root", str(self.root)
+        )
+        self.assertEqual(code, 2)
+        self.assertIn("does not exist", output)
 
     def test_reports_a_mark_named_but_missing(self) -> None:
-        (self.root / "brand" / "assets" / "logo.svg").unlink()
+        (self.root / "brands" / "officekit" / "assets" / "logo.svg").unlink()
         code, output = run("new", "review", "--workspace-root", str(self.root))
         self.assertEqual(code, 2)
         self.assertIn("missing", output)
@@ -239,7 +266,7 @@ class CheckTests(DocumentPipelineTestCase):
 
         code, output = self.check(path)
         self.assertEqual(code, 1)
-        self.assertIn("no longer matches brand/", output)
+        self.assertIn("no longer matches officekit", output)
 
     def test_an_image_without_alt_text_fails(self) -> None:
         path = self.complete()
@@ -351,7 +378,7 @@ class RefreshTests(DocumentPipelineTestCase):
 
     def test_refresh_propagates_a_brand_change(self) -> None:
         path = self.complete()
-        tokens = self.root / "brand" / "tokens.css"
+        tokens = self.root / "brands" / "officekit" / "tokens.css"
         tokens.write_text(
             tokens.read_text(encoding="utf-8").replace("#7C3AED", "#0F766E"),
             encoding="utf-8",
@@ -362,6 +389,36 @@ class RefreshTests(DocumentPipelineTestCase):
         self.assertEqual(run("refresh", "--all", "--workspace-root", str(self.root))[0], 0)
         self.assertIn("#0F766E", path.read_text(encoding="utf-8"))
         self.assertEqual(self.check(path)[0], 0)
+
+    def test_refresh_keeps_each_document_on_its_own_brand(self) -> None:
+        other = self.root / "brands" / "acme"
+        shutil.copytree(self.root / "brands" / "officekit", other)
+        other.joinpath("tokens.css").write_text(
+            other.joinpath("tokens.css")
+            .read_text(encoding="utf-8")
+            .replace("#7C3AED", "#0F766E"),
+            encoding="utf-8",
+        )
+        office = self.complete("review")
+        acme = self.scaffold("acme-memo", title="Acme", brand="acme")
+        self.author(acme)
+        self.assertEqual(run("toc", str(acme))[0], 0)
+
+        for path, old in ((office, "#7C3AED"), (acme, "#0F766E")):
+            path.write_text(
+                path.read_text(encoding="utf-8").replace(old, "#FF0000"),
+                encoding="utf-8",
+            )
+
+        self.assertEqual(
+            run("refresh", "--all", "--workspace-root", str(self.root))[0], 0
+        )
+        office_text = office.read_text(encoding="utf-8")
+        acme_text = acme.read_text(encoding="utf-8")
+        self.assertIn("#7C3AED", office_text)
+        self.assertIn("officekit:brand-id: officekit", office_text)
+        self.assertIn("#0F766E", acme_text)
+        self.assertIn("officekit:brand-id: acme", acme_text)
 
     def test_refresh_is_a_no_op_when_already_current(self) -> None:
         path = self.complete()
@@ -456,7 +513,7 @@ class ShellTests(DocumentPipelineTestCase):
     def test_a_missing_template_does_not_stop_a_brand_refresh(self) -> None:
         path = self.complete()
         (self.root / ".templates" / "document-html" / "document.html").unlink()
-        tokens = self.root / "brand" / "tokens.css"
+        tokens = self.root / "brands" / "officekit" / "tokens.css"
         tokens.write_text(
             tokens.read_text(encoding="utf-8").replace("#7C3AED", "#0F766E"),
             encoding="utf-8",

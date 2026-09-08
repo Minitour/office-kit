@@ -7,16 +7,11 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 
-# Documents are written in one pass in primary context, so they have no
-# subagent. Decks and video keep their staged roster.
+# Authoring stays in primary context so the conversation prefix stays warm.
+# Research is the only production subagent; brand-agent owns identity writes.
 EXPECTED_AGENTS = {
     "brand-agent",
     "research-agent",
-    "plan-agent",
-    "slides-agent",
-    "video-agent",
-    "review-agent",
-    "delivery-agent",
 }
 ROUTERS = (
     ROOT / "WORKFLOW.md",
@@ -45,21 +40,55 @@ class WorkspaceContractTests(unittest.TestCase):
             referenced.update(re.findall(r"`([a-z-]+-agent)`", read(path)))
         self.assertLessEqual(referenced, declared)
 
-    def test_builder_agents_require_an_approved_plan(self) -> None:
+    def test_decks_and_video_are_authored_in_primary_context(self) -> None:
+        """A subagent would drop the prefix. Research is the only spawn."""
         capabilities = read(ROOT / "capabilities.yaml")
-        for agent in ("slides-agent", "video-agent"):
-            start = capabilities.index(f"  - id: {agent}")
-            next_agent = capabilities.find("\n  - id: ", start + 1)
-            section = capabilities[start : next_agent if next_agent >= 0 else None]
-            self.assertIn("status: approved", section, agent)
-            self.assertIn("Approval gate", section, agent)
+        for retired in (
+            "plan-agent",
+            "slides-agent",
+            "video-agent",
+            "review-agent",
+            "delivery-agent",
+        ):
+            self.assertNotIn(f"  - id: {retired}", capabilities, retired)
+
+        for path in (
+            ROOT / "WORKFLOW.md",
+            ROOT / "skills/create-slides/SKILL.md",
+            ROOT / "skills/create-video/SKILL.md",
+        ):
+            text = read(path)
+            self.assertNotIn("wait for explicit approval", text, path.name)
+            self.assertNotIn("status: draft", text, path.name)
+            self.assertNotIn("status: approved", text, path.name)
+            for retired in (
+                "plan-agent",
+                "slides-agent",
+                "video-agent",
+                "review-agent",
+                "delivery-agent",
+            ):
+                self.assertNotIn(retired, text, f"{path.name} still names {retired}")
+
+        slides = read(ROOT / "skills/create-slides/SKILL.md")
+        video = read(ROOT / "skills/create-video/SKILL.md")
+        self.assertIn("Write the deck yourself", slides)
+        self.assertIn("Write the video yourself", video)
+        self.assertIn("research-agent", slides)
+        self.assertIn("research-agent", video)
+        self.assertIn("slidev-layouts", slides)
+        self.assertIn("slidev-themes", slides)
+
+        brand_start = capabilities.index("  - id: brand-agent")
+        brand_next = capabilities.find("\n  - id: ", brand_start + 1)
+        brand = capabilities[brand_start : brand_next if brand_next >= 0 else None]
+        self.assertIn("Approval gate", brand)
 
     def test_delivery_is_request_only(self) -> None:
-        capabilities = read(ROOT / "capabilities.yaml")
-        delivery = capabilities.split("  - id: delivery-agent", 1)[1]
-        # Wrapped across lines in the YAML block, so match on whitespace.
-        self.assertRegex(delivery, r"explicit\s+user\s+request")
-        self.assertRegex(delivery, r"ready\s+to\s+deliver")
+        slides = read(ROOT / "skills/create-slides/SKILL.md")
+        video = read(ROOT / "skills/create-video/SKILL.md")
+        self.assertIn("Export only when the user names", slides)
+        self.assertIn("only when the user names it", video)
 
     def test_legacy_contracts_are_absent(self) -> None:
         checked = [
@@ -72,7 +101,8 @@ class WorkspaceContractTests(unittest.TestCase):
         legacy = re.compile(
             r"quarto|_brand\.yml|create-docs|planning-agent|document-agent"
             # Retired by the one-pass document pipeline.
-            r"|doc-agent|intake-agent|BRIEF\.md|document_port|document_root",
+            r"|doc-agent|intake-agent|BRIEF\.md|document_port|document_root"
+            r"|slides-agent|video-agent|plan-agent|review-agent|delivery-agent",
             re.IGNORECASE,
         )
         for path in checked:
@@ -178,6 +208,16 @@ class DocumentPipelineContractTests(unittest.TestCase):
         config = read(ROOT / "config.toml")
         preview = config.split("[preview]", 1)[1]
         self.assertNotIn("document", preview)
+
+    def test_brands_live_in_a_named_catalog(self) -> None:
+        self.assertTrue((ROOT / "brands" / "officekit" / "brand.json").is_file())
+        self.assertFalse((ROOT / "brand").exists())
+        config = read(ROOT / "config.toml")
+        assigned = re.search(r'^\[brand\]\s*^default\s*=\s*"([^"]+)"', config, re.M)
+        self.assertIsNotNone(assigned)
+        self.assertEqual(assigned.group(1), "officekit")
+        slides = read(ROOT / ".templates" / "presentation" / "style.css")
+        self.assertIn("../../brands/{{BRAND_ID}}/tokens.css", slides)
 
 
 class SkillInvocationContractTests(unittest.TestCase):

@@ -1,7 +1,3 @@
----
-status: approved
----
-
 # Workspace explainer plan
 
 ## Brief

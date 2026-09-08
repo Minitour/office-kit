@@ -1,12 +1,12 @@
 <p align="center">
-  <img src="brand/assets/logo.svg" alt="OfficeKit" width="120" />
+  <img src="brands/officekit/assets/logo.svg" alt="OfficeKit" width="120" />
 </p>
 
 <h1 align="center">OfficeKit</h1>
 
 <p align="center">
   An AI-powered workspace for branded documents, slide decks, and narrated video.<br/>
-  You describe the deliverable; the agent routes work, waits for approval, and builds it in stages.
+  You describe the deliverable; the agent routes work and builds it. Revisions come from follow-up requests.
 </p>
 
 ---
@@ -25,50 +25,51 @@ Process is matched to the cost of the deliverable.
 
 **A document is written directly**, in the chat context, in one pass: scaffold, author, verify, hand over. No subagent, no plan file, no approval gate, no preview server, no packaging step. Budget is three minutes. The output is `projects/<slug>/<slug>.html` — styles, brand tokens, marks, and images all inlined — plus a short `NOTES.md`.
 
-**A deck or a video is staged**, because the build is long and the export is expensive to redo. There the primary context is a router: it selects the skill, delegates each stage to a named subagent, and relays approval gates plus status. It should not author slides, scenes, narration, or exports itself.
+**A deck or a video is authored in the same conversation**, so the prefix stays warm. The agent writes a short plan, starts a live preview, and builds in this context. It should not spawn a subagent to author slides, scenes, or narration. The only production subagent is `research-agent`, and only when claims need checking.
 
-That split is a **workflow contract**, not a hard sandbox. CAPA and the host provider (Cursor, Claude Code, and others) may restrict tools, but enforcement varies — do not assume the primary context is mechanically prevented from editing files.
+That is a **workflow contract**, not a hard sandbox. CAPA and the host provider (Cursor, Claude Code, and others) may restrict tools, but enforcement varies.
 
 **Four primary skills:**
 
 | Skill | Use for | Shape |
 |---|---|---|
 | `create-doc` | Reports, proposals, memos, briefs, articles, letters, whitepapers | Direct, one pass |
-| `create-slides` | Pitches, lectures, talks, kickoffs → Slidev | Routed, plan-gated |
-| `create-video` | Explainers, motion pieces, narrated walkthroughs → HyperFrames + local TTS | Routed, plan-gated |
-| `init-brand` | Create or revise the shared visual identity | Routed, proposal-gated |
+| `create-slides` | Pitches, lectures, talks, kickoffs → Slidev | Direct, in this conversation |
+| `create-video` | Explainers, motion pieces, narrated walkthroughs → HyperFrames + local TTS | Direct, in this conversation |
+| `init-brand` | Create or revise a visual identity under `brands/<id>/` | Routed, proposal-gated |
 
 Supporting skill: `text-to-speech` (Kokoro clips and timing manifests; used by video, not a user-facing entry point).
 
-**Seven stage subagents**, for decks, video, and brand only: `plan-agent`, `research-agent`, `slides-agent`, `video-agent`, `brand-agent`, `review-agent`, `delivery-agent`. Documents have none.
+**Two subagents:** `research-agent` (opt-in fact checking for any modality) and `brand-agent` (identity writes, behind a proposal gate). Planning, Slidev, HyperFrames, review, and export happen in the primary conversation.
 
 **Durable state** lives on disk under `projects/<slug>/`, not only in chat:
 
 | Modality | State |
 |---|---|
 | Document | `<slug>.html` (the deliverable itself) and `NOTES.md` |
-| Deck, video | `plan/PLAN.md` with frontmatter `status: draft` or `status: approved`, plus `reports/build.md` and `reports/review.md` (and `research.md` / `delivery.md` when those stages run) |
+| Deck, video | `plan/PLAN.md` plus `reports/build.md` and `reports/review.md` (and `research.md` / `delivery.md` when those stages run) |
 
-**Approval gates apply to decks and video:** plan → **explicit user approval** → implementation. Silence, an old chat yes, a running preview, or an existing file is not approval. Export and final render happen only when you request a specific deliverable. Documents are draft-first instead — you get the file, then redirect it. Brand-only work (`init-brand`) uses a brand-proposal gate.
+**Decks and video start as soon as you ask.** The same agent writes the plan and the slides or scenes, then you say what to change. Export and final render happen only when you request a specific deliverable. Brand-only work (`init-brand`) still uses a brand-proposal gate.
 
 ## Brand contract
 
-Workspace-level, not per project:
+The workspace can hold several identities. Each one is a directory:
 
-| File | Role |
+| Path | Role |
 |---|---|
-| `brand/brand.json` | Canonical, machine-readable source of truth |
-| `brand/BRAND.md` | Generated usage rules |
-| `brand/tokens.css` | Generated CSS custom properties (documents and decks) |
-| `brand/frame.md` | Generated HyperFrames framing / safe areas |
-| `brand/assets/` | Supplied logos and marks, preserved byte-for-byte |
+| `brands/<id>/brand.json` | Canonical, machine-readable source of truth for that identity |
+| `brands/<id>/BRAND.md` | Generated usage rules |
+| `brands/<id>/tokens.css` | Generated CSS custom properties (documents and decks) |
+| `brands/<id>/frame.md` | Generated HyperFrames framing / safe areas |
+| `brands/<id>/assets/` | Supplied logos and marks, preserved byte-for-byte |
+| `config.toml` `[brand] default` | Identity used when a project does not name one |
 
-Change identity by updating `brand.json` (via `init-brand` / `brand-agent`) and regenerating derivatives. Do not hand-edit generated files or copy colors/fonts into `config.toml` or project sources.
+This repo ships `brands/officekit/` as the default. Add another identity with `init-brand` rather than overwriting an existing one. Change an identity by updating that `brand.json` (via `init-brand` / `brand-agent`) and regenerating derivatives. Do not hand-edit generated files or copy colors/fonts into `config.toml` or project sources.
 
-Two consumers hold *generated copies* rather than reading `brand/` live, and both must be refreshed after an identity change:
+Two consumers hold *generated copies* rather than reading `brands/<id>/` live, and both must be refreshed after that identity changes:
 
-- **Documents** embed the token sheet and the marks so the file stands alone. Run `python scripts/document/doc.py refresh --all`; `doc.py check` fails on a document whose brand region has drifted, so staleness cannot pass silently. The same command re-applies the template's shell CSS and script, which is how a fix to `.templates/document-html/document.html` reaches documents that already exist — `check` reports an older shell as a warning.
-- **Video** projects need a project-local snapshot because HyperFrames cannot serve files above a project root. Scaffolding copies the files listed in `[video.brand_snapshot]` into the project's `brand/` directory.
+- **Documents** embed the token sheet and the marks so the file stands alone. The file records which brand it used. Run `uv run python scripts/document/doc.py refresh --all`; `doc.py check` fails on a document whose brand region has drifted, so staleness cannot pass silently. The same command re-applies the template's shell CSS and script, which is how a fix to `.templates/document-html/document.html` reaches documents that already exist — `check` reports an older shell as a warning.
+- **Video** projects need a project-local snapshot because HyperFrames cannot serve files above a project root. Scaffolding copies the files listed in `[video.brand_snapshot]` from `brands/<id>/` into the project's `brand/` directory.
 
 Operational defaults (templates, canvas size, preview ports, TTS flags, export dirs) live in `config.toml`. A project's plan may override those values for that project only.
 
@@ -99,8 +100,8 @@ Then open the repo in your agent and start chatting.
 
 ```
 office-kit/
-├── brand/                 # Shared identity contract
-├── config.toml            # Operational defaults (not brand)
+├── brands/<id>/           # One identity per directory (default: officekit)
+├── config.toml            # Operational defaults plus [brand] default
 ├── capabilities.yaml      # CAPA skills and subagents
 ├── WORKFLOW.md            # Orchestration contract (primary context)
 ├── .templates/
@@ -109,7 +110,7 @@ office-kit/
 │   └── video/             # HyperFrames
 ├── skills/                # Local entry skills + TTS
 ├── scripts/
-│   ├── brand/generate.py  # brand.json → derivatives
+│   ├── brand/             # catalog + brand.json → derivatives
 │   └── document/
 │       ├── doc.py         # new | toc | check | refresh | embed
 │       └── package.py     # asset-inlining library used by `doc.py embed`
@@ -134,7 +135,7 @@ Examples of what to say:
 - “Turn this script into a 60-second branded explainer with voiceover.”
 - “Set up our brand from this logo and palette.”
 
-For a **document**, you get the finished file back in about three minutes, then say what to change. For a **deck or video**: a draft plan → your explicit approval → an incremental build you watch in a live preview → review → a named export when you ask for one.
+For a **document**, you get the finished file back in about three minutes, then say what to change. For a **deck or video**, a plan is written and the same agent starts building in a live preview — then you ask for a named export when you want one.
 
 If modality is unclear, you should get one routing question — not a mixed project. One directory is one engine.
 
@@ -146,6 +147,6 @@ If modality is unclear, you should get one routing question — not a mixed proj
 | Presentation | `npx slidev --port 3030` from the project (via root `node_modules`) | `npx slidev export` → PDF/PPTX/PNG under `dist/`, only when requested |
 | Video | `npx hyperframes preview --port 3002` | `npx hyperframes render` → file under `renders/`, only when requested |
 
-Verify a document with `python scripts/document/doc.py check projects/<slug>/<slug>.html`: it proves the file is self-contained, brand-current, and accessible without opening a browser.
+Verify a document with `uv run python scripts/document/doc.py check projects/<slug>/<slug>.html`: it proves the file is self-contained, brand-current, and accessible without opening a browser.
 
-For decks and video, do not treat a live preview or a leftover `dist/` / `renders/` file as the approved delivery. Ports and default export dirs are in `config.toml`.
+For decks and video, do not treat a live preview or a leftover `dist/` / `renders/` file as the requested delivery. Ports and default export dirs are in `config.toml`.

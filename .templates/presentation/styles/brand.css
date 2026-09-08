@@ -3,8 +3,8 @@
  *
  * This file holds NO brand values and no shared paths — style.css owns both.
  * It is only the adapter between the shared token sheet and the selectors
- * Slidev renders. Editing brand/brand.json and regenerating tokens.css
- * restyles every deck; nothing here needs to change.
+ * Slidev renders. Editing brands/<id>/brand.json and regenerating tokens.css
+ * restyles every deck that imports that identity; nothing here needs to change.
  *
  * tokens.css already aliases --slidev-theme-primary, --slidev-theme-background,
  * --slidev-font-sans, and --slidev-font-mono, so those are deliberately not

@@ -28,13 +28,15 @@
        * ── Brand region ─────────────────────────────────────────
        * Owned by scripts/document/doc.py. `new` and `refresh` replace
        * everything between the two markers with the current contents of
-       * brand/tokens.css plus data-URI copies of the brand marks, which is
-       * what lets a finished document carry its own identity in one file.
+       * brands/<id>/tokens.css plus data-URI copies of the brand marks, which
+       * is what lets a finished document carry its own identity in one file.
+       * The region records `officekit:brand-id` so refresh stays on that
+       * identity when the workspace holds more than one brand.
        *
        * Never hand-edit inside the markers and never paste a brand colour,
        * font, or logo path anywhere else. To change identity, change
-       * brand/brand.json, regenerate, then run `doc.py refresh`.
-       * `doc.py check` fails when this region drifts from brand/.
+       * brands/<id>/brand.json, regenerate, then run `doc.py refresh`.
+       * `doc.py check` fails when this region drifts from that brand.
        */
       /* officekit:brand:start */
       /* officekit:brand:end */

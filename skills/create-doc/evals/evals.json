@@ -49,7 +49,7 @@
     {
       "id": 4,
       "prompt": "We're rebranding to teal. Update the brand and make sure the ops memo matches. Files in evals/files/existing-doc/ (treat as projects/ops-memo/).",
-      "expected_output": "Routes the identity change to init-brand / brand-agent, which updates brand/brand.json and regenerates derivatives. Then propagates it into the document with `uv run python scripts/document/doc.py refresh`, because a standalone document embeds a copy of the token sheet. Does not hand-edit colors in the document.",
+      "expected_output": "Routes the identity change to init-brand / brand-agent, which updates brands/<id>/brand.json and regenerates derivatives. Then propagates it into the document with `uv run python scripts/document/doc.py refresh`, because a standalone document embeds a copy of the token sheet. Does not hand-edit colors in the document.",
       "files": [
         "evals/files/existing-doc/ops-memo.html",
         "evals/files/existing-doc/NOTES.md"

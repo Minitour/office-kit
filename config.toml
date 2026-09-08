@@ -1,15 +1,23 @@
 # ──────────────────────────────────────────────────────────────
 # OfficeKit — Operational Defaults
 # ──────────────────────────────────────────────────────────────
-# Non-brand settings only. Canonical brand identity lives in
-# brand/brand.json and reaches projects through generated files
-# under brand/ — never through this file.
+# Non-brand settings only, except [brand] default which names the
+# identity under brands/<id>/ used when a project does not pick one.
+# Canonical identity lives in brands/<id>/brand.json and reaches
+# projects through that directory's generated files — never through
+# palette values in this file.
 #
 # The agent reads this at the start of every workflow to pick a
 # template, canvas size, render settings, and preview port. A
 # project's plan may override any value for that project alone;
 # this file is not edited per-project.
 # ──────────────────────────────────────────────────────────────
+
+# ── Brand catalog ────────────────────────────────────────────
+# Each identity is brands/<id>/{brand.json, BRAND.md, tokens.css, frame.md, assets/}.
+# A project may name a brand; otherwise this default is used.
+[brand]
+default = "officekit"
 
 # ── Documents (standalone HTML) ──────────────────────────────
 # A document is one self-contained file at projects/<slug>/<slug>.html,
@@ -51,11 +59,12 @@ quality = "standard"           # draft | standard | high
 output_dir = "renders"         # → `render --output <dir>/<name>.<ext>`
 
 # HyperFrames rejects runtime paths outside the video project root. Immediately
-# after scaffolding, copy these generated workspace brand derivatives into the
-# project-local target directory, preserving the assets/ subtree. The untouched
-# template has neutral fallbacks and validates before this snapshot exists.
+# after scaffolding, copy these generated files from brands/<id>/ (the
+# project's brand, or [brand] default) into the project-local target
+# directory, preserving the assets/ subtree. The untouched template has
+# neutral fallbacks and validates before this snapshot exists.
 [video.brand_snapshot]
-source_dir = "brand"
+source_dir = "brands"
 target_dir = "brand"
 files = ["tokens.css", "frame.md"]
 directories = ["assets"]

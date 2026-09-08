@@ -4,39 +4,39 @@
     {
       "id": 1,
       "prompt": "Need a 12-minute kickoff deck for Thursday's customer workshop. Notes: problem (manual reconciliations), demo of the new matching UI, timeline (pilot in Oct, GA in Jan), ask for two design partners. 16:9, they'll present live, maybe export PDF later.",
-      "expected_output": "Routes as Slidev. Delegates intake and planning to plan-agent in one stage (venue, duration, aspect ratio, then the slide sequence), presents the draft, and waits for approval. Skips research because nothing needs verifying. Does not write slides.md or start a preview in primary context, and does not export PDF yet.",
+      "expected_output": "Treats this as create-slides. Loads slidev, slidev-layouts, and slidev-themes. Writes plan/PLAN.md here (venue, duration, 16:9, slide sequence with a layout per slide), scaffolds from the presentation template if needed, starts the Slidev preview, and authors slides.md in this conversation. Skips research because nothing needs verifying. Does not spawn a subagent to write the deck, does not wait for plan approval, and does not export PDF yet.",
       "files": [],
       "expectations": [
         "Treats the request as create-slides, not create-doc or create-video",
-        "Captures duration and 16:9 via plan-agent rather than assuming",
-        "Does not implement Slidev until plan status is approved",
+        "Captures duration and 16:9 in the plan rather than assuming",
+        "Authors the Slidev deck in primary context, loading slidev-layouts and slidev-themes rather than guessing layout or theme names",
         "Does not export PDF or PPTX because delivery was only mentioned as a maybe"
       ]
     },
     {
       "id": 2,
-      "prompt": "The partner kickoff deck is already approved — keep building. Project tree: evals/files/resume-approved-partial/ (treat as projects/partner-kickoff/). Preview was running yesterday so you can just finish the rest.",
-      "expected_output": "Resumes at slides-agent implementation. Does not re-run intake or treat a prior preview as a substitute for the approved plan. Builds the remaining slide groups against generated brand outputs and relays preview checkpoints.",
+      "prompt": "The partner kickoff deck is already underway — keep building. Project tree: evals/files/resume-approved-partial/ (treat as projects/partner-kickoff/). Preview was running yesterday so you can just finish the rest.",
+      "expected_output": "Resumes by reading PLAN.md and reports, then continues authoring the remaining slide groups here against generated brand outputs. Does not re-run intake or treat a prior preview as a substitute for the plan file.",
       "files": [
         "evals/files/resume-approved-partial/plan/PLAN.md",
         "evals/files/resume-approved-partial/reports/research.md",
         "evals/files/resume-approved-partial/reports/build.md"
       ],
       "expectations": [
-        "Reads durable state and resumes at the first incomplete build stage",
-        "Does not send the project back through plan-agent intake as if it were new",
-        "Does not infer extra approval from 'preview was running yesterday'",
-        "Delegates remaining Slidev work to slides-agent instead of editing slides in primary context"
+        "Reads durable state and resumes at the first incomplete piece",
+        "Does not restart intake as if the project were new",
+        "Does not treat 'preview was running yesterday' as a reason to skip remaining work or the plan file",
+        "Edits the Slidev sources in primary context rather than spawning a subagent"
       ]
     },
     {
       "id": 3,
       "prompt": "Make me PowerPoint slides of this blog post by tonight. Also change the brand purple to orange so it pops.",
-      "expected_output": "Stays on Slidev for authoring; PPTX is a delivery-agent export only after an approved plan and an explicit export request later in the flow. Brand color change is routed to init-brand / brand-agent, not edited in the deck theme.",
+      "expected_output": "Stays on Slidev for authoring; PPTX is an export only after implementation and an explicit export request. Brand color change is routed to init-brand / brand-agent, not edited in the deck theme.",
       "files": [],
       "expectations": [
         "Does not treat PPTX as the authoring format; Slidev remains the engine",
-        "Does not start delivery-agent before plan approval, implementation, and review",
+        "Does not export before the deck is built and the user names the file",
         "Routes the purple-to-orange request to init-brand rather than hand-editing theme colors",
         "Does not author the blog post as a create-doc HTML page instead of a deck"
       ]

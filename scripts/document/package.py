@@ -13,15 +13,16 @@ a single HTML artifact that carries every local dependency inside it:
 Remote references are left exactly as written: anything carrying a URL scheme
 (``https:``, ``data:``, ``mailto:``), a protocol-relative ``//host/path`` URL, or
 a bare fragment (``#section``, ``url(#gradient)``) passes through untouched, so
-the webfont sheet in ``brand/tokens.css`` and outbound links keep working.
+the webfont sheet in ``brands/<id>/tokens.css`` and outbound links keep working.
 
 Every local reference resolves against the file that names it — HTML paths
 against the HTML file, CSS paths against that stylesheet — which is what lets
-the shared ``../../brand/tokens.css`` sheet and its own relative asset paths
-both land correctly. Referenced files must sit inside the workspace root, found
-by walking up from the entry file to the directory holding ``brand/brand.json``.
-Missing files, references that escape the workspace, and an output path that
-collides with a source file are all hard errors. Sources are only ever read.
+the shared ``../../brands/<id>/tokens.css`` sheet and its own relative asset
+paths both land correctly. Referenced files must sit inside the workspace root,
+found by walking up from the entry file to the directory holding
+``config.toml`` or ``brands/*/brand.json``. Missing files, references that
+escape the workspace, and an output path that collides with a source file are
+all hard errors. Sources are only ever read.
 
 Two deliberate limits. ``defer`` and ``async`` are dropped when a script is
 inlined, because an inline script runs where it sits; the OfficeKit template
@@ -42,6 +43,7 @@ from __future__ import annotations
 import argparse
 import base64
 import html
+import importlib.util
 import mimetypes
 import re
 import sys
@@ -51,8 +53,20 @@ from pathlib import Path
 from typing import Iterable, Sequence
 from urllib.parse import unquote, urlsplit
 
-WORKSPACE_MARKER = Path("brand") / "brand.json"
 MAX_CSS_DEPTH = 16
+
+
+def _load_catalog():
+    path = Path(__file__).resolve().parents[1] / "brand" / "catalog.py"
+    spec = importlib.util.spec_from_file_location("officekit_brand_catalog", path)
+    if spec is None or spec.loader is None:  # pragma: no cover
+        raise RuntimeError(f"cannot load {path}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+_catalog = _load_catalog()
 
 # Types the stdlib guesses inconsistently across platforms, or not at all.
 MIME_BY_SUFFIX = {
@@ -106,17 +120,15 @@ class PackageResult:
 
 
 def find_workspace_root(start: Path) -> Path:
-    """Walk up from `start` to the directory holding brand/brand.json."""
-    current = start.expanduser().resolve()
-    if current.is_file():
-        current = current.parent
-    for candidate in (current, *current.parents):
-        if (candidate / WORKSPACE_MARKER).is_file():
-            return candidate
-    raise PackageError(
-        f"cannot find the workspace root above {start}: no parent directory "
-        f"contains {WORKSPACE_MARKER.as_posix()}"
-    )
+    """Walk up from `start` to the directory holding config.toml or brands/."""
+    try:
+        return _catalog.find_workspace_root(start)
+    except _catalog.BrandCatalogError as exc:
+        raise PackageError(str(exc)) from exc
+
+
+def is_workspace_root(path: Path) -> bool:
+    return _catalog.is_workspace_root(path)
 
 
 def guess_mime(path: Path) -> str:
@@ -533,10 +545,10 @@ def package_document(
         root = find_workspace_root(entry)
     else:
         root = workspace_root.expanduser().resolve()
-        if not (root / WORKSPACE_MARKER).is_file():
+        if not is_workspace_root(root):
             raise PackageError(
                 f"{root} is not an OfficeKit workspace: "
-                f"{WORKSPACE_MARKER.as_posix()} is missing"
+                "config.toml or brands/*/brand.json is missing"
             )
     if not _within(entry, root):
         raise PackageError(f"document sits outside the workspace root {root}: {entry}")
@@ -589,7 +601,7 @@ def _parser() -> argparse.ArgumentParser:
         "--workspace-root",
         type=Path,
         default=None,
-        help="workspace root (default: nearest parent holding brand/brand.json)",
+        help="workspace root (default: nearest parent holding config.toml or brands/)",
     )
     return parser
 

@@ -25,7 +25,7 @@ browser — and let them decide. Never improvise another pipeline.
 ## The pass
 
 ```bash
-uv run python scripts/document/doc.py new <slug> --title "…" [--subtitle "…"] [--footer "…"]
+uv run python scripts/document/doc.py new <slug> --title "…" [--subtitle "…"] [--footer "…"] [--brand <id>]
 ```
 
 Then make one edit replacing the `<!-- officekit:content -->` marker in
@@ -67,8 +67,10 @@ attribute. If the rule would help every document, it belongs in the template.
 
 Never hand-pick a colour, font, or logo path, and never hand-edit between
 `/* officekit:brand:start */` and `/* officekit:brand:end */` — `doc.py` fills
-that region from `brand/tokens.css` and `brand/brand.json`, and `check` fails
-when it drifts. Route any brand change to `init-brand`, then run
+that region from `brands/<id>/tokens.css` and `brands/<id>/brand.json`, and
+`check` fails when it drifts. Pass `--brand <id>` when the user names an
+identity; otherwise `doc.py` uses `[brand] default`. Record the id in
+`NOTES.md`. Route any brand change to `init-brand`, then run
 `uv run python scripts/document/doc.py refresh`.
 
 If the document needs a supplied image, reference it relatively and run
@@ -100,8 +102,9 @@ next week.
 ## Asking, and not asking
 
 Default rather than interview. Unless the user says otherwise: an informative
-document for a reader who knows the domain, OfficeKit branding, a contents
-panel when there are four or more sections, today's date, no invented data.
+document for a reader who knows the domain, the workspace default brand, a
+contents panel when there are four or more sections, today's date, no invented
+data. Use a named brand only when the user asks for one.
 
 Ask exactly one question, before building, only when the answer would change
 the whole document — most often when the modality itself is unclear (document

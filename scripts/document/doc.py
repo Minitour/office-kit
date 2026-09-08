@@ -23,10 +23,12 @@ Subcommands
 
 The region between ``/* officekit:brand:start */`` and
 ``/* officekit:brand:end */`` is script-owned. It is filled from
-``brand/tokens.css`` plus data-URI copies of the marks named in
-``brand/brand.json``, which is how a one-file document carries brand identity
-without anyone hand-copying a colour, a font, or a logo path. ``check`` fails
-when that region drifts from ``brand/``, so a brand change cannot go unnoticed.
+``brands/<id>/tokens.css`` plus data-URI copies of the marks named in
+``brands/<id>/brand.json``, which is how a one-file document carries brand
+identity without anyone hand-copying a colour, a font, or a logo path. The
+region records the brand id so ``check`` and ``refresh`` stay bound to that
+identity. ``check`` fails when the region drifts, so a brand change cannot go
+unnoticed.
 
 Remote references are left alone: the webfont ``@import`` in the token sheet is
 expected, and a document without a network connection falls back to system
@@ -60,6 +62,7 @@ TEMPLATE_FILE = "document.html"
 
 BRAND_START = "/* officekit:brand:start */"
 BRAND_END = "/* officekit:brand:end */"
+BRAND_ID_RE = re.compile(r"/\*\s*officekit:brand-id:\s*([a-z0-9][a-z0-9-]*)\s*\*/")
 STYLES_START = "/* officekit:styles:start */"
 STYLES_END = "/* officekit:styles:end */"
 SCRIPT_START = "/* officekit:script:start */"
@@ -103,6 +106,19 @@ def _load_sibling(name: str, filename: str):
 _packager = _load_sibling("officekit_document_package", "package.py")
 
 
+def _load_catalog():
+    path = Path(__file__).resolve().parents[1] / "brand" / "catalog.py"
+    spec = importlib.util.spec_from_file_location("officekit_brand_catalog", path)
+    if spec is None or spec.loader is None:  # pragma: no cover
+        raise DocError(f"cannot load {path}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+_catalog = _load_catalog()
+
+
 # ── Brand region ─────────────────────────────────────────────────────────────
 
 
@@ -131,42 +147,57 @@ def _logo_sources(logo: object) -> dict[str, str]:
     return found
 
 
-def _logo_declarations(root: Path) -> list[str]:
-    brand_json = root / "brand" / "brand.json"
+def recorded_brand_id(text: str) -> str | None:
+    match = BRAND_ID_RE.search(text)
+    return match.group(1) if match else None
+
+
+def resolve_document_brand(root: Path, explicit: str | None) -> str:
+    try:
+        return _catalog.resolve_brand_id(root, explicit)
+    except _catalog.BrandCatalogError as exc:
+        raise DocError(str(exc)) from exc
+
+
+def _logo_declarations(root: Path, brand_id: str) -> list[str]:
+    directory = _catalog.brand_dir(root, brand_id)
+    brand_json = directory / "brand.json"
     if not brand_json.is_file():
         return []
+    label = f"brands/{brand_id}/brand.json"
     try:
         brand = json.loads(brand_json.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
-        raise DocError(f"cannot read brand/brand.json: {exc}") from exc
+        raise DocError(f"cannot read {label}: {exc}") from exc
 
     declarations: list[str] = []
     for variable, relative in _logo_sources(brand.get("logo")).items():
-        path = (root / "brand" / relative).resolve()
+        path = (directory / relative).resolve()
         if not path.is_file():
-            raise DocError(
-                f"brand/brand.json names a mark that is missing: {relative}"
-            )
+            raise DocError(f"{label} names a mark that is missing: {relative}")
         uri = _packager.data_uri(path.read_bytes(), _packager.guess_mime(path))
         declarations.append(f'  {variable}: url("{uri}");')
     return declarations
 
 
-def brand_region(root: Path) -> str:
+def brand_region(root: Path, brand_id: str | None = None) -> str:
     """Build the script-owned brand block for a standalone document."""
-    tokens = root / "brand" / "tokens.css"
+    brand_id = resolve_document_brand(root, brand_id)
+    directory = _catalog.brand_dir(root, brand_id)
+    tokens = directory / "tokens.css"
+    label = f"brands/{brand_id}/tokens.css"
     if not tokens.is_file():
         raise DocError(
-            "brand/tokens.css is missing; generate the brand first with "
-            "`python scripts/brand/generate.py`"
+            f"{label} is missing; generate the brand first with "
+            f"`uv run python scripts/brand/generate.py {brand_id}`"
         )
     try:
         css = tokens.read_text(encoding="utf-8").strip()
     except OSError as exc:
-        raise DocError(f"cannot read brand/tokens.css: {exc}") from exc
+        raise DocError(f"cannot read {label}: {exc}") from exc
 
-    blocks = [css]
-    declarations = _logo_declarations(root)
+    blocks = [f"/* officekit:brand-id: {brand_id} */", css]
+    declarations = _logo_declarations(root, brand_id)
     if declarations:
         blocks.append(
             "/* Brand marks, embedded so the document carries its own identity. */\n"
@@ -477,10 +508,19 @@ def check_document(path: Path, root: Path) -> tuple[list[str], list[str], dict[s
     else:
         if not current.strip():
             errors.append("the brand region is empty; run `doc.py refresh <file>`")
-        elif _normalize(current) != _normalize(brand_region(root)):
-            errors.append(
-                "the brand region no longer matches brand/; run `doc.py refresh <file>`"
-            )
+        else:
+            brand_id = recorded_brand_id(text) or recorded_brand_id(current)
+            try:
+                expected = brand_region(root, brand_id)
+            except DocError as exc:
+                errors.append(str(exc))
+            else:
+                if _normalize(current) != _normalize(expected):
+                    label = brand_id or "the default brand"
+                    errors.append(
+                        f"the brand region no longer matches {label}; "
+                        "run `doc.py refresh <file>`"
+                    )
 
     # -- template-owned blocks ----------------------------------------------
     # Advisory, not fatal: an older shell still renders correctly, it just
@@ -637,7 +677,7 @@ def _atomic_write(path: Path, text: str) -> None:
 def _workspace_root(explicit: Path | None, start: Path) -> Path:
     if explicit is not None:
         root = explicit.expanduser().resolve()
-        if not (root / "brand" / "brand.json").is_file():
+        if not _catalog.is_workspace_root(root):
             raise DocError(f"{root} is not an OfficeKit workspace")
         return root
     try:
@@ -656,8 +696,12 @@ def _relative(path: Path, root: Path) -> str:
 # ── Commands ─────────────────────────────────────────────────────────────────
 
 
-def _brand_name(root: Path) -> str:
-    brand_json = root / "brand" / "brand.json"
+def _brand_name(root: Path, brand_id: str | None = None) -> str:
+    try:
+        brand_id = resolve_document_brand(root, brand_id)
+    except DocError:
+        return "OfficeKit"
+    brand_json = _catalog.brand_dir(root, brand_id) / "brand.json"
     if not brand_json.is_file():
         return "OfficeKit"
     try:
@@ -699,10 +743,11 @@ def cmd_new(args: argparse.Namespace) -> int:
     else:
         date = dt.date.today()
 
+    brand_id = resolve_document_brand(root, getattr(args, "brand", None))
     title = args.title or slug.replace("-", " ").title()
     fields = {
         "TITLE": title,
-        "AUTHOR": args.author or _brand_name(root),
+        "AUTHOR": args.author or _brand_name(root, brand_id),
         "DATE_ISO": date.isoformat(),
         "DATE_HUMAN": f"{date.day} {date:%B %Y}",
         "DESCRIPTION": args.description or args.subtitle or title,
@@ -718,7 +763,9 @@ def cmd_new(args: argparse.Namespace) -> int:
         text = FOOTER_RE.sub("\n", text)
 
     text = HINT_RE.sub("", text)
-    text = _replace_region(text, BRAND_START, BRAND_END, brand_region(root), label="brand region")
+    text = _replace_region(
+        text, BRAND_START, BRAND_END, brand_region(root, brand_id), label="brand region"
+    )
     for key, value in fields.items():
         text = text.replace("{{" + key + "}}", html.escape(value, quote=True))
 
@@ -802,7 +849,6 @@ def cmd_refresh(args: argparse.Namespace) -> int:
         raise DocError("name at least one document, or pass --all")
 
     root = _workspace_root(args.workspace_root, documents[0])
-    region = brand_region(root)
     try:
         spans = shell_spans(root)
     except DocError as exc:
@@ -815,6 +861,7 @@ def cmd_refresh(args: argparse.Namespace) -> int:
             raise DocError(f"document does not exist: {path}")
         label = _relative(path, root)
         text = path.read_text(encoding="utf-8")
+        region = brand_region(root, recorded_brand_id(text))
 
         updated = _replace_region(text, BRAND_START, BRAND_END, region, label="brand region")
         moved = ["brand"] if updated != text else []
@@ -873,7 +920,7 @@ def _parser() -> argparse.ArgumentParser:
             "document. One file, opened straight from disk."
         )
     )
-    root_help = "workspace root (default: nearest parent holding brand/brand.json)"
+    root_help = "workspace root (default: nearest parent holding config.toml or brands/)"
     parser.add_argument("--workspace-root", type=Path, default=None, help=root_help)
 
     # Repeated on every subcommand so the flag works on either side of it.
@@ -898,6 +945,11 @@ def _parser() -> argparse.ArgumentParser:
     new.add_argument("--footer", default=None, help="footer line (omitted when absent)")
     new.add_argument("--template", default=DEFAULT_TEMPLATE, help="directory under .templates/")
     new.add_argument("--force", action="store_true", help="replace an existing document")
+    new.add_argument(
+        "--brand",
+        default=None,
+        help="brand id under brands/ (default: config.toml [brand] default)",
+    )
     new.set_defaults(handler=cmd_new)
 
     toc = subcommands.add_parser(

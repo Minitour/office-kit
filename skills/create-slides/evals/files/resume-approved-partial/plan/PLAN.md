@@ -1,7 +1,3 @@
----
-status: approved
----
-
 # Partner kickoff plan
 
 ## Brief

@@ -70,7 +70,7 @@ class DocumentPackageTests(unittest.TestCase):
 
         (self.root / "brand" / "assets").mkdir(parents=True)
         (self.project / "assets").mkdir(parents=True)
-        (self.root / "brand" / "brand.json").write_text("{}", encoding="utf-8")
+        (self.root / "config.toml").write_text("[document]\n", encoding="utf-8")
         (self.root / "brand" / "tokens.css").write_text(TOKENS_CSS, encoding="utf-8")
         (self.root / "brand" / "assets" / "logo.svg").write_text(
             LOGO_SVG, encoding="utf-8"

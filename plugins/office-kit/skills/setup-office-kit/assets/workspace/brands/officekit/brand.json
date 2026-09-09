@@ -1,0 +1,60 @@
+{
+  "meta": {
+    "name": "OfficeKit",
+    "url": ""
+  },
+  "logo": {
+    "small": {
+      "light": "assets/logo.svg",
+      "dark": "assets/logo-light.svg"
+    },
+    "medium": {
+      "light": "assets/logo.svg",
+      "dark": "assets/logo-light.svg"
+    }
+  },
+  "palette": {
+    "white": "#FFFFFF",
+    "black": "#111827",
+    "slate": "#64748B",
+    "violet": "#7C3AED",
+    "indigo": "#4338CA",
+    "lavender": "#C4B5FD"
+  },
+  "color": {
+    "foreground": "black",
+    "background": "white",
+    "primary": "violet",
+    "secondary": "indigo"
+  },
+  "typography": {
+    "fonts": [
+      {
+        "family": "Inter",
+        "source": "google",
+        "weight": [300, 400, 500, 600, 700],
+        "style": ["normal", "italic"]
+      },
+      {
+        "family": "JetBrains Mono",
+        "source": "google",
+        "weight": [400, 500, 700]
+      }
+    ],
+    "base": {
+      "family": "Inter",
+      "size": "1rem",
+      "weight": 400,
+      "lineHeight": 1.6
+    },
+    "headings": {
+      "family": "Inter",
+      "weight": 600,
+      "lineHeight": 1.25
+    },
+    "monospace": {
+      "family": "JetBrains Mono",
+      "size": "0.875em"
+    }
+  }
+}

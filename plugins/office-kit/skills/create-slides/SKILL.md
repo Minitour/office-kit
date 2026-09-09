@@ -1,0 +1,84 @@
+---
+name: create-slides
+description: Create or revise a branded Slidev presentation with OfficeKit. Use for pitch decks, talks, lectures, workshops, demos, kickoffs, internal reviews, slides, PDF export, or PowerPoint.
+compatibility: Requires an OfficeKit workspace created by setup-office-kit, Node.js 22+, npm, Python 3.10+, and uv.
+metadata:
+  author: OfficeKit
+  version: "0.1.0"
+---
+
+# Create OfficeKit slides
+
+Work in `office-kit/`. If absent, use `setup-office-kit` first. Author in the
+main agent. Research claims directly with host-provided tools when necessary;
+write verified sources to `projects/<slug>/reports/research.md`.
+
+## Boundary
+
+Edit only:
+
+- `projects/<slug>/slides.md`
+- `projects/<slug>/styles/brand.css`
+- `projects/<slug>/components/`, `layouts/`, and `public/` when needed
+- the project plan and reports
+
+Never inspect or edit `node_modules`, `package-lock.json`, or Vite internals.
+Never run Slidev directly. The OfficeKit Python script owns installation,
+preview, audit, stop, and export.
+
+## Pass
+
+From `office-kit/`, scaffold and immediately start a verified preview:
+
+```bash
+uv run python scripts/presentation/deck.py new <slug> --title "…" \
+  [--brand <id>]
+uv run python scripts/presentation/deck.py dev <slug>
+```
+
+Tell the user the URL only after `dev` prints it. If preview health later
+fails, run `deck.py stop <slug>` then `deck.py dev <slug>`; do not investigate
+dependencies.
+
+While preview runs, write a short `plan/PLAN.md`: purpose, audience,
+constraints, brand ID, slide sequence, visual intent, accessibility, assets,
+delivery request, and acceptance criteria. No plan approval gate.
+
+Use only built-in layout names carried by the template, including `cover`,
+`default`, `center`, `section`, `statement`, `two-cols`,
+`two-cols-header`, `fact`, `quote`, `image-right`, and `end`. Every slide
+declares a real layout. Reorder, duplicate, or remove the scaffold vocabulary
+slides as the narrative demands.
+
+Prefer the template's authored `ok-*` classes (`ok-hero`, `ok-bands`,
+`ok-flow`, `ok-outcome`, `ok-icon-line`, and related classes). Use bundled
+Lucide components such as:
+
+```html
+<lucide-eye class="ok-icon" />
+```
+
+Content slides should not be only a heading and bullets; use a meaningful
+diagram, comparison, number, image, flow, or icon structure. Never hardcode
+brand colors, fonts, or logo paths. Preserve user assets under `public/`.
+
+Build in logical groups while the live preview updates, recording progress in
+`reports/build.md`. Then run:
+
+```bash
+uv run python scripts/presentation/deck.py audit <slug>
+```
+
+Audit must exit 0. Review narrative, overflow, readability, accessibility,
+brand fidelity, visual variety, speaker flow, and acceptance criteria; fix
+findings and write `reports/review.md`.
+
+Export only when requested:
+
+```bash
+uv run python scripts/presentation/deck.py export <slug> \
+  [--format pdf|pptx|png]
+```
+
+Record delivered paths in `reports/delivery.md`. A preview or stale `dist/`
+file is not a delivery.

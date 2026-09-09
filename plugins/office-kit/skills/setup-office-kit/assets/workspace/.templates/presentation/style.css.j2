@@ -1,0 +1,30 @@
+/*
+ * Slidev global style entry point.
+ *
+ * Slidev auto-loads `style.css` from the deck root; anything else has to be
+ * imported from here, and @import order matters — the shared tokens must land
+ * before brand.css maps them onto selectors.
+ *
+ * This is the ONLY file in the deck that reaches outside the project. Both
+ * paths below resolve from projects/<name>/ to the workspace root, which is
+ * exactly the form brands/<id>/BRAND.md documents. Brand values are never
+ * copied into a project. `deck.py new` fills brand_id from the project's
+ * brand, or from config.toml [brand] default.
+ */
+
+@import "../../brands/{{ brand_id }}/tokens.css";
+@import "./styles/brand.css";
+
+:root {
+  /*
+   * The token sheet exposes the logo as a file rather than a variable, so the
+   * path lives here and components read it through --ok-logo. Swap in
+   * logo-light.svg for a dark deck, or set `none` to drop the footer mark.
+   *
+   * Slidev's bundler rewrites this url() at build time. If a build ever leaves
+   * it unresolved the footer mark simply does not paint — nothing breaks. The
+   * fallback in that case is to copy the mark into public/ and set
+   * `--ok-logo: url("/logo.svg")`.
+   */
+  --ok-logo: url("../../brands/{{ brand_id }}/{{ logo_rel }}");
+}

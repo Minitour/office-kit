@@ -1,0 +1,794 @@
+<!doctype html>
+<!-- officekit:hint
+  OfficeKit standalone document.
+
+  One file. Styles, behaviour, brand tokens, and the brand mark all live
+  inside it, so it opens straight from disk over file:// with no server and
+  no build step. Scaffold it with:
+
+      uv run python scripts/document/doc.py new <slug>
+
+  which copies this template to projects/<slug>/<slug>.html, fills the brand
+  region below, and strips every officekit:hint comment. Author the <body>;
+  leave the <style> and <script> alone unless the change belongs to every
+  future document, in which case edit this template so it is fixed once and
+  never re-litigated.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>{{ title }}</title>
+    <meta name="description" content="{{ description }}" />
+    <meta name="author" content="{{ author }}" />
+
+    <style>
+      /*
+       * ── Brand region ─────────────────────────────────────────
+       * Owned by scripts/document/doc.py. `new` and `refresh` replace
+       * everything between the two markers with the current contents of
+       * brands/<id>/tokens.css plus data-URI copies of the brand marks, which
+       * is what lets a finished document carry its own identity in one file.
+       * The region records `officekit:brand-id` so refresh stays on that
+       * identity when the workspace holds more than one brand.
+       *
+       * Never hand-edit inside the markers and never paste a brand colour,
+       * font, or logo path anywhere else. To change identity, change
+       * brands/<id>/brand.json, regenerate, then run `doc.py refresh`.
+       * `doc.py check` fails when this region drifts from that brand.
+       */
+      /* officekit:brand:start */
+      /* officekit:brand:end */
+
+      /*
+       * ── Local styles ─────────────────────────────────────────
+       * No brand values below this line. Everything reads through the
+       * --doc-* variables, each falling back to a CSS system colour or a
+       * system font stack, so a document scaffolded before the brand region
+       * is filled degrades to plain-but-readable rather than broken.
+       */
+      :root {
+        /* Semantic colour */
+        --doc-foreground: var(--color-foreground, CanvasText);
+        --doc-background: var(--color-background, Canvas);
+        --doc-primary: var(--color-primary, LinkText);
+        --doc-secondary: var(--color-secondary, var(--doc-primary));
+        --doc-muted: var(--color-muted, GrayText);
+        --doc-accent-soft: var(--color-accent-soft, var(--doc-primary));
+
+        /* Typography */
+        --doc-font-base: var(--font-sans, ui-sans-serif, system-ui, sans-serif);
+        --doc-font-headings: var(--font-heading, var(--doc-font-base));
+        --doc-font-mono: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+        --doc-font-size: var(--font-size-base, 1rem);
+        --doc-line-height: var(--line-height-base, 1.6);
+        --doc-heading-weight: var(--font-weight-heading, 600);
+        --doc-heading-line-height: var(--line-height-heading, 1.25);
+        --doc-mono-size: var(--font-size-mono, 0.9em);
+
+        /* The mark, embedded as a data URI in the brand region. */
+        --doc-logo: var(--brand-logo, none);
+
+        /* Layout — operational, not brand. */
+        --doc-measure: 68ch;
+        --doc-gutter: clamp(1rem, 4vw, 3rem);
+        --doc-rule: color-mix(in srgb, var(--doc-foreground) 15%, transparent);
+        /* Width of the contents rail, and its distance from the article. */
+        --doc-rail: 14rem;
+        --doc-rail-gap: clamp(2rem, 5vw, 4rem);
+      }
+
+      /* ── Reset ─────────────────────────────────────────────── */
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      /*
+       * In-page jumps land below whatever is stuck to the top of the
+       * viewport. Nothing is sticky at narrow widths, so this is just
+       * breathing room; the wide-viewport rule raises it to clear the
+       * contents panel.
+       */
+      html {
+        scroll-padding-top: 1rem;
+      }
+
+      body {
+        margin: 0;
+        padding: 0 var(--doc-gutter) 4rem;
+        background: var(--doc-background);
+        color: var(--doc-foreground);
+        font-family: var(--doc-font-base);
+        font-size: var(--doc-font-size);
+        line-height: var(--doc-line-height);
+        text-underline-offset: 0.15em;
+        -webkit-text-size-adjust: 100%;
+      }
+
+      /* ── Accessibility ─────────────────────────────────────── */
+
+      .skip-link {
+        position: absolute;
+        left: -9999px;
+        top: 0;
+        z-index: 10;
+        padding: 0.5rem 1rem;
+        background: var(--doc-background);
+        color: var(--doc-primary);
+      }
+
+      .skip-link:focus {
+        left: var(--doc-gutter);
+      }
+
+      :focus-visible {
+        outline: 3px solid var(--doc-primary);
+        outline-offset: 2px;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+          scroll-behavior: auto !important;
+        }
+      }
+
+      /* ── Structure ─────────────────────────────────────────── */
+
+      .doc-header,
+      .doc-toc,
+      .doc-body,
+      .doc-footer {
+        max-width: var(--doc-measure);
+        margin-inline: auto;
+      }
+
+      .doc-header {
+        padding-block: clamp(2rem, 8vh, 5rem) 1.5rem;
+        border-bottom: 1px solid var(--doc-rule);
+      }
+
+      /*
+       * Painted from --doc-logo as a background image, so an unfilled brand
+       * region renders as nothing rather than a broken-image icon. The
+       * script below removes the element when no mark is set, leaving no gap.
+       */
+      .brand-mark {
+        height: 2rem;
+        margin: 0 0 1.5rem;
+        background-image: var(--doc-logo);
+        background-repeat: no-repeat;
+        background-position: left center;
+        background-size: contain;
+      }
+
+      .doc-header h1 {
+        margin: 0;
+        font-size: clamp(1.9rem, 5vw, 2.75rem);
+      }
+
+      .subtitle {
+        margin: 0.5rem 0 0;
+        font-size: 1.125rem;
+        color: var(--doc-muted);
+      }
+
+      .byline {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin: 1.25rem 0 0;
+        font-size: 0.9rem;
+        color: var(--doc-muted);
+      }
+
+      /* Opening paragraph, set slightly larger than body copy. */
+      .lede {
+        font-size: 1.125rem;
+        color: var(--doc-muted);
+      }
+
+      /* ── Table of contents ─────────────────────────────────── */
+
+      .doc-toc {
+        padding-block: 1.5rem;
+        border-bottom: 1px solid var(--doc-rule);
+        background: var(--doc-background);
+      }
+
+      .doc-toc summary {
+        margin: 0 0 0.5rem;
+        font-family: var(--doc-font-headings);
+        font-size: 0.8rem;
+        font-weight: var(--doc-heading-weight);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--doc-muted);
+        list-style: none;
+        cursor: pointer;
+      }
+
+      .doc-toc summary::-webkit-details-marker {
+        display: none;
+      }
+
+      .doc-toc summary::after {
+        content: " (show)";
+        font-weight: 400;
+        letter-spacing: 0;
+        text-transform: none;
+      }
+
+      .doc-toc details[open] > summary::after {
+        content: " (hide)";
+      }
+
+      .doc-toc ul {
+        margin: 0;
+        padding-left: 1.25rem;
+        list-style: disc;
+      }
+
+      .doc-toc li + li {
+        margin-top: 0.25rem;
+      }
+
+      /* Set by the script on the one section currently in view. */
+      .doc-toc a[aria-current] {
+        font-weight: 600;
+        color: var(--doc-primary);
+      }
+
+      /*
+       * ── Wide layout: contents as a side rail ─────────────────
+       * Narrower than this, the contents sit in the flow at the top of the
+       * document, collapsed, so they cost a small screen almost nothing.
+       * From here there is room for two columns, and the contents become a
+       * rail beside the article rather than a band across the top of it.
+       * Nothing overlays the text, so a jump target is never hidden.
+       *
+       * Scoped with :has so a document whose <nav> was deleted, or a browser
+       * without :has, keeps the centred single-column flow above.
+       */
+      @media (min-width: 64rem) {
+        body:has(.doc-toc) {
+          display: grid;
+          grid-template-columns: var(--doc-rail) minmax(0, var(--doc-measure));
+          grid-template-rows: auto auto auto;
+          column-gap: var(--doc-rail-gap);
+          justify-content: center;
+        }
+
+        /* The grid tracks own the measure and the centring from here on. */
+        body:has(.doc-toc) > .doc-header,
+        body:has(.doc-toc) > .doc-body,
+        body:has(.doc-toc) > .doc-footer {
+          grid-column: 2;
+          max-width: none;
+          margin-inline: 0;
+        }
+
+        body:has(.doc-toc) > .doc-header {
+          grid-row: 1;
+        }
+
+        body:has(.doc-toc) > .doc-body {
+          grid-row: 2;
+        }
+
+        body:has(.doc-toc) > .doc-footer {
+          grid-row: 3;
+        }
+
+        /*
+         * Spans every row, because a sticky grid item can only travel inside
+         * its own grid area — one row would unstick it at the first heading.
+         * The rail scrolls internally when the list is longer than the
+         * viewport, and the script keeps the current entry in view.
+         */
+        .doc-toc {
+          grid-column: 1;
+          grid-row: 1 / -1;
+          position: sticky;
+          top: 0;
+          align-self: start;
+          max-width: none;
+          margin-inline: 0;
+          max-height: 100vh;
+          overflow-y: auto;
+          overscroll-behavior: contain;
+          padding-block: clamp(2rem, 8vh, 5rem) 1.5rem;
+          border-bottom: none;
+        }
+
+        /*
+         * A closed <details> hides its slot in the UA stylesheet
+         * (`::details-content { content-visibility: hidden }`). A
+         * `display: block` on the <ul> never reaches the list, which is
+         * why the rail vanished after a trip through a narrow viewport:
+         * the script collapsed the panel, and this rule could not reopen
+         * it. Force the slot itself open — the rail is not collapsible
+         * at this width, and this is also the no-JS fallback.
+         */
+        .doc-toc details::details-content {
+          content-visibility: visible;
+          display: block;
+        }
+
+        .doc-toc details > ul {
+          display: block;
+        }
+
+        /* A rail reads as navigation, so the bullets and indent are noise. */
+        .doc-toc ul {
+          padding-left: 0;
+          list-style: none;
+        }
+
+        .doc-toc li + li {
+          margin-top: 0.5rem;
+        }
+
+        /*
+         * Underlines are dropped in this one nav context, where position and
+         * the rule below carry the affordance; hover and focus restore them.
+         * The transparent rule keeps the text from shifting when it lights up.
+         */
+        .doc-toc a {
+          display: block;
+          padding-left: 0.75rem;
+          border-left: 2px solid transparent;
+          text-decoration: none;
+        }
+
+        .doc-toc a:hover,
+        .doc-toc a:focus-visible {
+          text-decoration: underline;
+        }
+
+        .doc-toc a[aria-current] {
+          border-left-color: var(--doc-primary);
+        }
+
+        /* Held above the list while it scrolls under. */
+        .doc-toc summary {
+          position: sticky;
+          top: 0;
+          z-index: 1;
+          padding-block: 0 0.5rem;
+          background: var(--doc-background);
+          pointer-events: none;
+          cursor: default;
+        }
+
+        /* Not collapsible here, so drop the show/hide hint. */
+        .doc-toc summary::after,
+        .doc-toc details[open] > summary::after {
+          content: none;
+        }
+      }
+
+      /* ── Body copy ─────────────────────────────────────────── */
+
+      .doc-body > section + section {
+        margin-top: 3rem;
+      }
+
+      h1,
+      h2,
+      h3,
+      h4,
+      h5,
+      h6 {
+        font-family: var(--doc-font-headings);
+        font-weight: var(--doc-heading-weight);
+        line-height: var(--doc-heading-line-height);
+        text-wrap: balance;
+      }
+
+      h2 {
+        margin-top: 0;
+        font-size: 1.6rem;
+      }
+
+      h3 {
+        font-size: 1.25rem;
+      }
+
+      p,
+      li {
+        text-wrap: pretty;
+      }
+
+      a {
+        color: var(--doc-primary);
+      }
+
+      code,
+      pre,
+      kbd,
+      samp {
+        font-family: var(--doc-font-mono);
+        font-size: var(--doc-mono-size);
+      }
+
+      pre {
+        padding: 1rem;
+        overflow-x: auto;
+        border: 1px solid var(--doc-rule);
+        border-radius: 6px;
+      }
+
+      /* ── Figures, tables, callouts ─────────────────────────── */
+
+      figure {
+        margin: 2rem 0;
+      }
+
+      img,
+      svg,
+      video {
+        max-width: 100%;
+        height: auto;
+      }
+
+      figcaption {
+        margin-top: 0.5rem;
+        font-size: 0.875rem;
+        color: var(--doc-muted);
+      }
+
+      /* Caption above the block it names, so a command reads with its label. */
+      .code-figure {
+        margin: 1.5rem 0;
+      }
+
+      .code-figure figcaption {
+        margin: 0 0 0.4rem;
+      }
+
+      .code-figure pre {
+        margin: 0;
+      }
+
+      table {
+        width: 100%;
+        margin: 2rem 0;
+        border-collapse: collapse;
+        font-variant-numeric: tabular-nums;
+      }
+
+      /* Wrap a wide table in this so it scrolls instead of overflowing. */
+      .table-scroll {
+        margin: 2rem 0;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .table-scroll table {
+        margin: 0;
+        min-width: 36rem;
+      }
+
+      caption {
+        margin-bottom: 0.5rem;
+        font-size: 0.875rem;
+        text-align: left;
+        color: var(--doc-muted);
+      }
+
+      th,
+      td {
+        padding: 0.5rem 0.75rem;
+        text-align: left;
+        border-bottom: 1px solid var(--doc-rule);
+      }
+
+      thead th {
+        border-bottom-width: 2px;
+      }
+
+      blockquote {
+        margin: 2rem 0;
+        padding-left: 1.25rem;
+        border-left: 3px solid var(--doc-secondary);
+        color: var(--doc-muted);
+      }
+
+      .callout {
+        margin: 2rem 0;
+        padding: 1rem 1.25rem;
+        border: 1px solid var(--doc-rule);
+        border-left: 3px solid var(--doc-primary);
+        border-radius: 6px;
+      }
+
+      .callout > :first-child {
+        margin-top: 0;
+      }
+
+      .callout > :last-child {
+        margin-bottom: 0;
+      }
+
+      /* ── Footer ────────────────────────────────────────────── */
+
+      .doc-footer {
+        margin-top: 4rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--doc-rule);
+        font-size: 0.875rem;
+        color: var(--doc-muted);
+      }
+
+      /* ── Print ─────────────────────────────────────────────── */
+
+      @media print {
+        /* One column on paper: the rail is dropped, so its track would
+           otherwise leave an empty margin down every page. */
+        body:has(.doc-toc) {
+          display: block;
+        }
+
+        body {
+          padding: 0;
+          font-size: 11pt;
+        }
+
+        .skip-link,
+        .doc-toc {
+          display: none;
+        }
+
+        body:has(.doc-toc) > .doc-header,
+        body:has(.doc-toc) > .doc-body,
+        body:has(.doc-toc) > .doc-footer {
+          max-width: none;
+        }
+
+        a {
+          color: inherit;
+          text-decoration: underline;
+        }
+
+        a[href^="http"]::after {
+          content: " (" attr(href) ")";
+          font-size: 0.85em;
+          word-break: break-all;
+        }
+
+        h2,
+        h3 {
+          break-after: avoid;
+        }
+
+        figure,
+        table,
+        blockquote,
+        .callout {
+          break-inside: avoid;
+        }
+      }
+
+      /*
+       * ── Project styles ───────────────────────────────────────
+       * The one place a document may add its own CSS: a diagram, a
+       * comparison grid, something the shared rules do not cover. Keep it
+       * small, keep it here rather than in style attributes, and express
+       * colour through the --doc-* variables so it follows the brand.
+       *
+       * A rule that would help every document belongs in this template
+       * instead, above this region.
+       */
+      /* officekit:styles:start */
+      /* officekit:styles:end */
+    </style>
+  </head>
+
+  <body>
+    <a class="skip-link" href="#content">Skip to main content</a>
+
+    <header class="doc-header">
+      <div class="brand-mark" aria-hidden="true"></div>
+      <h1>{{ title }}</h1>
+      {% if subtitle %}
+      <p class="subtitle">{{ subtitle }}</p>
+      {% endif %}
+      <p class="byline">
+        <span>{{ author }}</span>
+        <time datetime="{{ date_iso }}">{{ date_human }}</time>
+      </p>
+    </header>
+
+    <!-- officekit:hint
+      Contents. The list between the markers is generated from the section
+      headings by `doc.py toc`; never hand-write it. Delete this whole <nav>
+      for a document short enough not to need it.
+    -->
+    <nav class="doc-toc" aria-labelledby="toc-heading">
+      <details open>
+        <summary id="toc-heading">Contents</summary>
+        <!-- officekit:toc:start -->
+        <ul></ul>
+        <!-- officekit:toc:end -->
+      </details>
+    </nav>
+
+    <!-- officekit:hint
+      Replace the marker below with the document's sections. Each one is:
+
+        <section id="slug" aria-labelledby="slug-heading">
+          <h2 id="slug-heading">Heading</h2>
+          …
+        </section>
+
+      Available classes, all styled above: .lede for the opening paragraph,
+      .callout for an aside, .code-figure for a captioned code block,
+      .table-scroll to wrap a wide table. Then run `doc.py toc` and
+      `doc.py check`.
+    -->
+    <main id="content" class="doc-body">
+      <!-- officekit:content -->
+    </main>
+
+    {% if footer %}
+    <footer class="doc-footer">
+      <p>{{ footer }}</p>
+    </footer>
+    {% endif %}
+
+    <script>
+      /* officekit:script:start */
+      /*
+       * Progressive enhancement. The document is fully readable with
+       * JavaScript off — nothing here is required for content or layout.
+       *
+       * This block belongs to the template and `doc.py refresh` rewrites it;
+       * put anything specific to this document in its own <script> below.
+       */
+      (() => {
+        "use strict";
+
+        const root = document.documentElement;
+
+        /*
+         * The mark is painted by CSS from --doc-logo. When the brand region
+         * carries no logo, drop the element rather than leave an empty slot.
+         */
+        const brandMark = document.querySelector(".brand-mark");
+        if (brandMark) {
+          const logo = getComputedStyle(root).getPropertyValue("--doc-logo").trim();
+          if (logo === "" || logo === "none") {
+            brandMark.remove();
+          }
+        }
+
+        const toc = document.querySelector(".doc-toc");
+        const tocDetails = document.querySelector(".doc-toc details");
+        /*
+         * Matches the rail breakpoint in the stylesheet. Below it this
+         * governs the collapsible panel. At or above it the rail must be
+         * open: a closed <details> hides its list even when CSS asks
+         * otherwise, so crossing back from a narrow viewport has to set
+         * the attribute, not just restyle the box.
+         */
+        const wideToc = window.matchMedia("(min-width: 64rem)");
+
+        /*
+         * The markup ships open, which is the right no-JS state. A
+         * manual toggle on the narrow panel wins until the viewport
+         * crosses the rail breakpoint, where the rail is not
+         * collapsible and is always reopened.
+         *
+         * `toggle` fires after `open` is assigned, not during it. A
+         * boolean flipped around the assignment is already false when
+         * the listener runs, so the first collapse to mobile used to
+         * count as a user choice and the rail never came back. Count
+         * the programmatic change and ignore that one event.
+         */
+        let tocToggledByUser = false;
+        let ignoreToggle = 0;
+        const setTocOpen = (open) => {
+          if (!tocDetails || tocDetails.open === open) return;
+          ignoreToggle += 1;
+          tocDetails.open = open;
+        };
+        const syncTocOpen = () => {
+          if (!tocDetails) return;
+          if (wideToc.matches) {
+            setTocOpen(true);
+            return;
+          }
+          if (tocToggledByUser) return;
+          setTocOpen(false);
+        };
+
+        if (tocDetails) {
+          tocDetails.addEventListener("toggle", () => {
+            if (ignoreToggle > 0) {
+              ignoreToggle -= 1;
+              return;
+            }
+            if (!wideToc.matches) tocToggledByUser = true;
+          });
+        }
+        if (wideToc.addEventListener) {
+          wideToc.addEventListener("change", syncTocOpen);
+        }
+        syncTocOpen();
+
+        const tocLinks = Array.from(
+          document.querySelectorAll(".doc-toc a[href^='#']"),
+        );
+        if (tocLinks.length > 0 && "IntersectionObserver" in window) {
+          const byId = new Map(
+            tocLinks.map((link) => [link.getAttribute("href").slice(1), link]),
+          );
+
+          /*
+           * Exactly one link is current at a time: the first section in
+           * document order inside the reading band. Marking every
+           * intersecting section would announce several at once.
+           */
+          const order = Array.from(byId.keys());
+          const visible = new Set();
+          let current = null;
+
+          /*
+           * The wide panel is height-capped, so the current entry can sit
+           * outside it. Scroll the panel itself — never an ancestor — so the
+           * page position the reader chose is left alone.
+           */
+          const revealInToc = (link) => {
+            if (!toc || toc.scrollHeight <= toc.clientHeight) return;
+            const panel = toc.getBoundingClientRect();
+            const entry = link.getBoundingClientRect();
+            if (entry.top < panel.top) {
+              toc.scrollTop -= panel.top - entry.top;
+            } else if (entry.bottom > panel.bottom) {
+              toc.scrollTop += entry.bottom - panel.bottom;
+            }
+          };
+
+          const markCurrent = () => {
+            const next = order.find((id) => visible.has(id));
+            if (!next || next === current) return;
+            if (current) byId.get(current).removeAttribute("aria-current");
+            const link = byId.get(next);
+            link.setAttribute("aria-current", "location");
+            revealInToc(link);
+            current = next;
+          };
+
+          const observer = new IntersectionObserver(
+            (entries) => {
+              for (const entry of entries) {
+                if (entry.isIntersecting) {
+                  visible.add(entry.target.id);
+                } else {
+                  visible.delete(entry.target.id);
+                }
+              }
+              markCurrent();
+            },
+            { rootMargin: "-40% 0px -55% 0px" },
+          );
+
+          for (const id of order) {
+            const section = document.getElementById(id);
+            if (section) observer.observe(section);
+          }
+        }
+      })();
+      /* officekit:script:end */
+    </script>
+  </body>
+</html>

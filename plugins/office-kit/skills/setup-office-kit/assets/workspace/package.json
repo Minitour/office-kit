@@ -1,0 +1,10 @@
+{
+  "name": "office-kit",
+  "private": true,
+  "workspaces": [
+    "projects/*"
+  ],
+  "engines": {
+    "node": ">=22"
+  }
+}

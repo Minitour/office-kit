@@ -1,0 +1,20 @@
+{
+  "name": "office-kit-local",
+  "interface": {
+    "displayName": "OfficeKit"
+  },
+  "plugins": [
+    {
+      "name": "office-kit",
+      "source": {
+        "source": "local",
+        "path": "./plugins/office-kit"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

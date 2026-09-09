@@ -69,67 +69,52 @@ video are authored here under `projects/<slug>/`. You do **not** run
 
 ### Option B — standalone plugin skills
 
-Load [`plugins/office-kit/`](plugins/office-kit/) in Cursor, Claude Code, or
-Codex, then run `setup-office-kit` in the host repository. That creates an
-isolated `office-kit/` workspace and does not merge OfficeKit into the host
-root. There are no CAPA subagents, MCP servers, or extra brand identities in
-this package.
-
-More client detail is in the [plugin README](plugins/office-kit/README.md).
-
-```bash
-git clone https://github.com/Minitour/office-kit.git
-cd office-kit
-```
-
-You only need the `plugins/office-kit/` directory to load the plugin.
+Install from the GitHub repository through your client's plugin manager—no
+clone is required. Then run `setup-office-kit` in the host repository. That
+creates an isolated `office-kit/` workspace and does not merge OfficeKit into
+the host root. There are no CAPA subagents, MCP servers, or extra brand
+identities in this package.
 
 #### Cursor
 
-```bash
-mkdir -p ~/.cursor/plugins/local
-cp -R plugins/office-kit ~/.cursor/plugins/local/office-kit
+In Cursor Agent chat:
+
+```text
+/add-plugin https://github.com/Minitour/office-kit
 ```
 
-Restart Cursor, or run **Developer: Reload Window**. Open **Customize** and
-confirm the OfficeKit skills. On Teams and Enterprise, an admin may need to
-enable **Allow Local Plugin Imports**. See [Cursor plugins](https://cursor.com/docs/plugins).
-
-For local development you can symlink instead of copy:
-
-```bash
-ln -s "$(pwd)/plugins/office-kit" ~/.cursor/plugins/local/office-kit
-```
+Then install **OfficeKit** from the imported marketplace. Teams can instead
+import `https://github.com/Minitour/office-kit` under **Dashboard → Plugins**
+and enable auto-refresh. See [Cursor plugins](https://cursor.com/docs/plugins).
 
 #### Claude Code
 
-```bash
-claude plugin validate ./plugins/office-kit --strict
-claude plugin install ./plugins/office-kit
+In Claude Code:
+
+```text
+/plugin marketplace add Minitour/office-kit
+/plugin install office-kit@office-kit
 ```
 
 Skills appear under the `office-kit` namespace, for example
 `/office-kit:setup-office-kit`. Reload with `/reload-plugins` after updates.
 
-To try the plugin for a single session without installing:
-
-```bash
-claude --plugin-dir ./plugins/office-kit
-```
-
 See [Claude Code plugins](https://code.claude.com/docs/en/plugins).
 
 #### Codex
 
-This repo includes `.agents/plugins/marketplace.json`. Register the clone as a
-marketplace, then install `office-kit` from the Plugin Directory:
+Register the GitHub repository as a marketplace:
 
 ```bash
-codex plugin marketplace add "$(pwd)"
+codex plugin marketplace add Minitour/office-kit
 ```
 
-Restart Codex or ChatGPT desktop if the listing does not appear. See
-[Codex plugin packaging](https://developers.openai.com/plugins/build/plugins).
+Then open the Plugin Directory and install **OfficeKit**. Restart Codex or
+ChatGPT desktop if the listing does not appear. See [Codex plugin
+packaging](https://developers.openai.com/plugins/build/plugins).
+
+More client detail and local development commands are in the [plugin
+README](plugins/office-kit/README.md).
 
 #### Bootstrap the host workspace
 

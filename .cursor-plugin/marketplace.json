@@ -1,0 +1,13 @@
+{
+  "name": "office-kit",
+  "owner": {
+    "name": "OfficeKit"
+  },
+  "plugins": [
+    {
+      "name": "office-kit",
+      "source": "./plugins/office-kit",
+      "description": "Create branded standalone HTML documents, Slidev decks, and HyperFrames videos in an isolated OfficeKit workspace."
+    }
+  ]
+}

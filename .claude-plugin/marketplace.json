@@ -1,0 +1,18 @@
+{
+  "name": "office-kit",
+  "description": "OfficeKit standalone skills",
+  "owner": {
+    "name": "OfficeKit"
+  },
+  "plugins": [
+    {
+      "name": "office-kit",
+      "description": "Create branded standalone HTML documents, Slidev decks, and HyperFrames videos in an isolated OfficeKit workspace.",
+      "version": "0.1.0",
+      "source": "./plugins/office-kit",
+      "author": {
+        "name": "OfficeKit"
+      }
+    }
+  ]
+}

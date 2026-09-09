@@ -1,5 +1,5 @@
 {
-  "name": "office-kit-local",
+  "name": "office-kit",
   "interface": {
     "displayName": "OfficeKit"
   },
@@ -7,8 +7,8 @@
     {
       "name": "office-kit",
       "source": {
-        "source": "local",
-        "path": "./plugins/office-kit"
+        "source": "url",
+        "url": "./plugins/office-kit"
       },
       "policy": {
         "installation": "AVAILABLE",

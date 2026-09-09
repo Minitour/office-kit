@@ -59,9 +59,60 @@ ADAPTER_MANIFEST = {
     "repository": MANIFEST["repository"],
 }
 
+CURSOR_ADAPTER_MANIFEST = {
+    **ADAPTER_MANIFEST,
+    "skills": "./skills/",
+}
+
 CODEX_ADAPTER_MANIFEST = {
     **ADAPTER_MANIFEST,
     "skills": "./skills/",
+}
+
+CLAUDE_MARKETPLACE = {
+    "name": "office-kit",
+    "description": "OfficeKit standalone skills",
+    "owner": {"name": "OfficeKit"},
+    "plugins": [
+        {
+            "name": MANIFEST["name"],
+            "description": MANIFEST["description"],
+            "version": VERSION,
+            "source": "./plugins/office-kit",
+            "author": MANIFEST["author"],
+        }
+    ],
+}
+
+CURSOR_MARKETPLACE = {
+    "name": "office-kit",
+    "owner": {"name": "OfficeKit"},
+    "plugins": [
+        {
+            "name": MANIFEST["name"],
+            "source": "./plugins/office-kit",
+            "description": MANIFEST["description"],
+        }
+    ],
+}
+
+CODEX_MARKETPLACE = {
+    "name": "office-kit",
+    "interface": {"displayName": "OfficeKit"},
+    "plugins": [
+        {
+            "name": MANIFEST["name"],
+            "source": {
+                "source": "url",
+                "url": "./plugins/office-kit",
+            },
+            "policy": {
+                "installation": "AVAILABLE",
+                "authentication": "ON_INSTALL",
+            },
+            "category": "Productivity",
+        }
+    ],
 }
 
 # Canonical workspace files copied into setup-office-kit's payload.
@@ -154,9 +205,21 @@ def _generated_files() -> dict[Path, bytes]:
     payload = PLUGIN / "skills" / "setup-office-kit" / "assets" / "workspace"
     workflow = (ROOT / "scripts" / "plugin" / "WORKFLOW.md").read_bytes()
     generated: dict[Path, bytes] = {
+        ROOT / ".agents" / "plugins" / "marketplace.json": _json_text(
+            CODEX_MARKETPLACE
+        ).encode(),
+        ROOT / ".claude-plugin" / "marketplace.json": _json_text(
+            CLAUDE_MARKETPLACE
+        ).encode(),
+        ROOT / ".cursor-plugin" / "marketplace.json": _json_text(
+            CURSOR_MARKETPLACE
+        ).encode(),
         PLUGIN / "plugin.json": _json_text(MANIFEST).encode(),
         PLUGIN / ".claude-plugin" / "plugin.json": _json_text(
             ADAPTER_MANIFEST
+        ).encode(),
+        PLUGIN / ".cursor-plugin" / "plugin.json": _json_text(
+            CURSOR_ADAPTER_MANIFEST
         ).encode(),
         PLUGIN / ".codex-plugin" / "plugin.json": _json_text(
             CODEX_ADAPTER_MANIFEST
@@ -183,7 +246,11 @@ def _all_files(root: Path) -> set[Path]:
 
 def _allowed_plugin_paths(generated: Iterable[Path]) -> set[Path]:
     allowed = {Path(path) for path in (*MANUAL_PLUGIN_FILES, *EVAL_FILES)}
-    allowed.update(path.relative_to(PLUGIN) for path in generated)
+    allowed.update(
+        path.relative_to(PLUGIN)
+        for path in generated
+        if path.is_relative_to(PLUGIN)
+    )
     return allowed
 
 

@@ -17,32 +17,135 @@ OfficeKit produces three kinds of output:
 - **Presentations** — Markdown/Slidev decks, previewed live and exportable to PDF or PowerPoint when you ask
 - **Video** — [HyperFrames](https://hyperframes.heygen.com/) compositions with **offline** narration via Hugging Face / [Kokoro](https://github.com/hexgrad/kokoro) (local inference, no TTS API key)
 
-Skills, subagents, and agent instructions are installed by [CAPA](https://github.com/infragate/capa).
+There are **two ways to install OfficeKit**. Pick one; do not mix them in the
+same working directory.
 
-## Portable plugin
+| | CAPA workspace | Standalone plugin |
+|---|---|---|
+| Use when | You are working *in this repository* (contributing, evals, the full contract) | You want OfficeKit skills inside *another* repository |
+| What you get | Skills, subagents (`research-agent`, `brand-agent`), and `WORKFLOW.md` / `AGENTS.md` via [CAPA](https://github.com/infragate/capa) | The six OfficeKit skills only (`setup-office-kit`, `init-brand`, `create-doc`, `create-slides`, `create-video`, `text-to-speech`) |
+| Where work lives | `projects/` in this clone | An isolated `office-kit/` folder created in the host repo |
+| Package | This git checkout | [`plugins/office-kit/`](plugins/office-kit/) ([Agent Plugins 1.0](https://agent-plugins.org/specification)) |
 
-The skills-only package at [`plugins/office-kit/`](plugins/office-kit/) follows
-[Agent Plugins 1.0](https://agent-plugins.org/specification) and can be loaded
-by Cursor, Codex, or Claude Code. It includes only OfficeKit-authored skills
-and workspace assets—no external skills, MCP servers, hooks, subagents,
-dependencies, or model weights.
+Plugin skills are canonical under `plugins/office-kit/skills/`. The repository
+`skills/` path is a symlink to that tree, so CAPA and the plugin share one
+source.
 
-Its `setup-office-kit` skill installs an isolated `office-kit/` workspace
-inside any repository, so the host project's package files are not modified.
-See the [plugin README](plugins/office-kit/README.md) for client-specific
-installation and first-run instructions.
+## Install
 
-Build and verify the package with:
+### Shared prerequisites
+
+- [Python](https://www.python.org/) **3.10–3.12** and [uv](https://docs.astral.sh/uv/)
+- [Node.js](https://nodejs.org/) **22+** and **npm**
+- [FFmpeg](https://ffmpeg.org/) for final video encoding
+- Network access on first run (npm, uv, and Kokoro model weights)
+
+Kokoro weights download from Hugging Face on first synthesis and then reuse the
+local cache. Some languages also need `espeak-ng`.
+
+### Option A — CAPA (this repository)
+
+Install [CAPA](https://github.com/infragate/capa) so `capa` is on your `PATH`,
+then:
+
+```bash
+git clone https://github.com/Minitour/office-kit.git
+cd office-kit
+capa install
+npm install
+uv sync
+```
+
+`capa install` resolves skills and subagents from `capabilities.yaml` into
+the agent files this checkout expects. `npm install` at the **workspace
+root** hoists Node dependencies (`package.json` workspaces: `projects/*`).
+`uv sync` creates the **single root** `.venv` from `pyproject.toml`. Do not
+create per-project `node_modules` or virtualenvs; add a project dep with
+`npm install <pkg> -w projects/<name>` from the root.
+
+Open this repository in your agent and start chatting. Documents, decks, and
+video are authored here under `projects/<slug>/`. You do **not** run
+`setup-office-kit` for this path.
+
+### Option B — standalone plugin skills
+
+Install from the GitHub repository through your client's plugin manager—no
+clone is required. Then run `setup-office-kit` in the host repository. That
+creates an isolated `office-kit/` workspace and does not merge OfficeKit into
+the host root. There are no CAPA subagents, MCP servers, or extra brand
+identities in this package.
+
+#### Cursor
+
+In Cursor Agent chat:
+
+```text
+/add-plugin https://github.com/Minitour/office-kit
+```
+
+Then install **OfficeKit** from the imported marketplace. Teams can instead
+import `https://github.com/Minitour/office-kit` under **Dashboard → Plugins**
+and enable auto-refresh. See [Cursor plugins](https://cursor.com/docs/plugins).
+
+#### Claude Code
+
+In Claude Code:
+
+```text
+/plugin marketplace add Minitour/office-kit
+/plugin install office-kit@office-kit
+```
+
+Skills appear under the `office-kit` namespace, for example
+`/office-kit:setup-office-kit`. Reload with `/reload-plugins` after updates.
+
+See [Claude Code plugins](https://code.claude.com/docs/en/plugins).
+
+#### Codex
+
+Register the GitHub repository as a marketplace:
+
+```bash
+codex plugin marketplace add Minitour/office-kit
+```
+
+Then open the Plugin Directory and install **OfficeKit**. Restart Codex or
+ChatGPT desktop if the listing does not appear. See [Codex plugin
+packaging](https://developers.openai.com/plugins/build/plugins).
+
+More client detail and local development commands are in the [plugin
+README](plugins/office-kit/README.md).
+
+#### Bootstrap the host workspace
+
+In the repository where you want documents, decks, or video (not necessarily
+this clone), ask the agent to run **`setup-office-kit`**. It writes:
+
+```text
+your-repository/
+└── office-kit/
+    ├── brands/
+    ├── projects/
+    ├── scripts/
+    ├── .templates/
+    ├── config.toml
+    ├── package.json
+    └── pyproject.toml
+```
+
+After that, OfficeKit commands run from `office-kit/` (one `node_modules`, one
+`.venv`). Setup is idempotent; it will not overwrite a file you changed unless
+you pass `--force`.
+
+### Developing the plugin package
+
+From this clone, after Option A:
 
 ```bash
 uv run python scripts/plugin/build.py
 uv run python scripts/plugin/build.py --check
 uv run python -m unittest tests.test_plugin_package
 ```
-
-Plugin skills are canonical under `plugins/office-kit/skills/`. The repository
-`skills/` path is a symlink to that tree, so CAPA, evals, and the plugin share
-one source.
 
 ## How work is organized
 
@@ -97,29 +200,6 @@ Two consumers hold *generated copies* rather than reading `brands/<id>/` live, a
 - **Video** projects need a project-local snapshot because HyperFrames cannot serve files above a project root. Scaffolding copies the files listed in `[video.brand_snapshot]` from `brands/<id>/` into the project's `brand/` directory.
 
 Operational defaults (templates, canvas size, preview ports, TTS flags, export dirs) live in `config.toml`. A project's plan may override those values for that project only.
-
-## Prerequisites
-
-- [Node.js](https://nodejs.org/) **22+** and **npm**
-- [uv](https://docs.astral.sh/uv/) (root Python environment for TTS and packaging scripts)
-- [FFmpeg](https://ffmpeg.org/) (HyperFrames render)
-- [CAPA](https://github.com/infragate/capa) (`capa` on your `PATH`)
-
-Kokoro weights download from Hugging Face on first synthesis and then reuse the local cache. Use `--offline` only after those assets are cached. Some languages also need `espeak-ng`.
-
-## Setup
-
-```bash
-git clone https://github.com/Minitour/office-kit.git
-cd office-kit
-capa install
-npm install
-uv sync
-```
-
-`capa install` resolves skills and subagents from `capabilities.yaml`. `npm install` at the **workspace root** hoists Node dependencies (`package.json` workspaces: `projects/*`). `uv sync` creates the **single root** `.venv` from `pyproject.toml`. Do not create per-project `node_modules` or virtualenvs; add a project dep with `npm install <pkg> -w projects/<name>` from the root.
-
-Then open the repo in your agent and start chatting.
 
 ## Directory layout
 

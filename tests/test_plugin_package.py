@@ -73,6 +73,9 @@ class PluginManifestTests(unittest.TestCase):
         claude = json.loads(
             (PLUGIN / ".claude-plugin" / "plugin.json").read_text(encoding="utf-8")
         )
+        cursor = json.loads(
+            (PLUGIN / ".cursor-plugin" / "plugin.json").read_text(encoding="utf-8")
+        )
         codex = json.loads(
             (PLUGIN / ".codex-plugin" / "plugin.json").read_text(encoding="utf-8")
         )
@@ -85,8 +88,45 @@ class PluginManifestTests(unittest.TestCase):
             "repository",
         ):
             self.assertEqual(claude[key], portable[key])
+            self.assertEqual(cursor[key], portable[key])
             self.assertEqual(codex[key], portable[key])
+        self.assertEqual(cursor["skills"], "./skills/")
         self.assertEqual(codex["skills"], "./skills/")
+
+    def test_repo_marketplaces_reference_the_standalone_plugin(self) -> None:
+        claude = json.loads(
+            (ROOT / ".claude-plugin" / "marketplace.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        cursor = json.loads(
+            (ROOT / ".cursor-plugin" / "marketplace.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        codex = json.loads(
+            (ROOT / ".agents" / "plugins" / "marketplace.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        for marketplace in (claude, cursor):
+            self.assertEqual(marketplace["name"], "office-kit")
+            self.assertEqual(len(marketplace["plugins"]), 1)
+            self.assertEqual(marketplace["plugins"][0]["name"], "office-kit")
+            self.assertEqual(
+                marketplace["plugins"][0]["source"],
+                "./plugins/office-kit",
+            )
+        self.assertEqual(codex["name"], "office-kit")
+        self.assertEqual(len(codex["plugins"]), 1)
+        self.assertEqual(codex["plugins"][0]["name"], "office-kit")
+        self.assertEqual(
+            codex["plugins"][0]["source"],
+            {
+                "source": "url",
+                "url": "./plugins/office-kit",
+            },
+        )
 
     def test_only_officekit_skills_are_packaged(self) -> None:
         skills = {

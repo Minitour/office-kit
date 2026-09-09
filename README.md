@@ -17,17 +17,23 @@ OfficeKit produces three kinds of output:
 - **Presentations** — Markdown/Slidev decks, previewed live and exportable to PDF or PowerPoint when you ask
 - **Video** — [HyperFrames](https://hyperframes.heygen.com/) compositions with **offline** narration via Hugging Face / [Kokoro](https://github.com/hexgrad/kokoro) (local inference, no TTS API key)
 
-The skills-only package at [`plugins/office-kit/`](plugins/office-kit/) follows
-[Agent Plugins 1.0](https://agent-plugins.org/specification). Install it in
-Cursor, Claude Code, or Codex, then run `setup-office-kit` in the repository
-where deliverables should live. That creates an isolated `office-kit/`
-workspace and leaves the host project's package files alone.
+There are **two ways to install OfficeKit**. Pick one; do not mix them in the
+same working directory.
 
-Client-specific notes also live in the [plugin README](plugins/office-kit/README.md).
+| | CAPA workspace | Standalone plugin |
+|---|---|---|
+| Use when | You are working *in this repository* (contributing, evals, the full contract) | You want OfficeKit skills inside *another* repository |
+| What you get | Skills, subagents (`research-agent`, `brand-agent`), and `WORKFLOW.md` / `AGENTS.md` via [CAPA](https://github.com/infragate/capa) | The six OfficeKit skills only (`setup-office-kit`, `init-brand`, `create-doc`, `create-slides`, `create-video`, `text-to-speech`) |
+| Where work lives | `projects/` in this clone | An isolated `office-kit/` folder created in the host repo |
+| Package | This git checkout | [`plugins/office-kit/`](plugins/office-kit/) ([Agent Plugins 1.0](https://agent-plugins.org/specification)) |
+
+Plugin skills are canonical under `plugins/office-kit/skills/`. The repository
+`skills/` path is a symlink to that tree, so CAPA and the plugin share one
+source.
 
 ## Install
 
-### Prerequisites
+### Shared prerequisites
 
 - [Python](https://www.python.org/) **3.10–3.12** and [uv](https://docs.astral.sh/uv/)
 - [Node.js](https://nodejs.org/) **22+** and **npm**
@@ -37,23 +43,48 @@ Client-specific notes also live in the [plugin README](plugins/office-kit/README
 Kokoro weights download from Hugging Face on first synthesis and then reuse the
 local cache. Some languages also need `espeak-ng`.
 
-### 1. Clone this repository
+### Option A — CAPA (this repository)
+
+Install [CAPA](https://github.com/infragate/capa) so `capa` is on your `PATH`,
+then:
+
+```bash
+git clone https://github.com/Minitour/office-kit.git
+cd office-kit
+capa install
+npm install
+uv sync
+```
+
+`capa install` resolves skills and subagents from `capabilities.yaml` into
+the agent files this checkout expects. `npm install` at the **workspace
+root** hoists Node dependencies (`package.json` workspaces: `projects/*`).
+`uv sync` creates the **single root** `.venv` from `pyproject.toml`. Do not
+create per-project `node_modules` or virtualenvs; add a project dep with
+`npm install <pkg> -w projects/<name>` from the root.
+
+Open this repository in your agent and start chatting. Documents, decks, and
+video are authored here under `projects/<slug>/`. You do **not** run
+`setup-office-kit` for this path.
+
+### Option B — standalone plugin skills
+
+Load [`plugins/office-kit/`](plugins/office-kit/) in Cursor, Claude Code, or
+Codex, then run `setup-office-kit` in the host repository. That creates an
+isolated `office-kit/` workspace and does not merge OfficeKit into the host
+root. There are no CAPA subagents, MCP servers, or extra brand identities in
+this package.
+
+More client detail is in the [plugin README](plugins/office-kit/README.md).
 
 ```bash
 git clone https://github.com/Minitour/office-kit.git
 cd office-kit
 ```
 
-You only need the `plugins/office-kit/` directory to load the plugin. Keep the
-full clone if you are developing OfficeKit itself.
-
-### 2. Load the plugin
-
-Pick the client you use.
+You only need the `plugins/office-kit/` directory to load the plugin.
 
 #### Cursor
-
-Copy the plugin into Cursor's local plugin folder, then reload:
 
 ```bash
 mkdir -p ~/.cursor/plugins/local
@@ -61,11 +92,8 @@ cp -R plugins/office-kit ~/.cursor/plugins/local/office-kit
 ```
 
 Restart Cursor, or run **Developer: Reload Window**. Open **Customize** and
-confirm the OfficeKit skills (`setup-office-kit`, `create-doc`,
-`create-slides`, `create-video`, `init-brand`).
-
-On Teams and Enterprise, an admin may need to enable **Allow Local Plugin
-Imports**. See [Cursor plugins](https://cursor.com/docs/plugins).
+confirm the OfficeKit skills. On Teams and Enterprise, an admin may need to
+enable **Allow Local Plugin Imports**. See [Cursor plugins](https://cursor.com/docs/plugins).
 
 For local development you can symlink instead of copy:
 
@@ -74,8 +102,6 @@ ln -s "$(pwd)/plugins/office-kit" ~/.cursor/plugins/local/office-kit
 ```
 
 #### Claude Code
-
-Validate, then install from the plugin directory:
 
 ```bash
 claude plugin validate ./plugins/office-kit --strict
@@ -105,10 +131,10 @@ codex plugin marketplace add "$(pwd)"
 Restart Codex or ChatGPT desktop if the listing does not appear. See
 [Codex plugin packaging](https://developers.openai.com/plugins/build/plugins).
 
-### 3. Bootstrap a workspace
+#### Bootstrap the host workspace
 
-In the repository where you want documents, decks, or video, ask the agent to
-run **`setup-office-kit`**. It writes:
+In the repository where you want documents, decks, or video (not necessarily
+this clone), ask the agent to run **`setup-office-kit`**. It writes:
 
 ```text
 your-repository/
@@ -126,27 +152,9 @@ After that, OfficeKit commands run from `office-kit/` (one `node_modules`, one
 `.venv`). Setup is idempotent; it will not overwrite a file you changed unless
 you pass `--force`.
 
-## This repository
+### Developing the plugin package
 
-Skills, subagents, and agent instructions in this clone are also installed by
-[CAPA](https://github.com/infragate/capa). Plugin skills are canonical under
-`plugins/office-kit/skills/`; the repository `skills/` path is a symlink to
-that tree.
-
-```bash
-capa install
-npm install
-uv sync
-```
-
-`capa install` resolves skills and subagents from `capabilities.yaml`.
-`npm install` at the **workspace root** hoists Node dependencies
-(`package.json` workspaces: `projects/*`). `uv sync` creates the **single
-root** `.venv` from `pyproject.toml`. Do not create per-project `node_modules`
-or virtualenvs; add a project dep with
-`npm install <pkg> -w projects/<name>` from the root.
-
-Rebuild and check the plugin package with:
+From this clone, after Option A:
 
 ```bash
 uv run python scripts/plugin/build.py

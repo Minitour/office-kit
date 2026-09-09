@@ -1,9 +1,13 @@
 # OfficeKit Agent Plugin
 
+This is the **standalone plugin** install path: six OfficeKit-authored Agent
+Skills, with no CAPA, subagents, or MCP. If you are working *in the
+office-kit git checkout* itself, use [CAPA](https://github.com/infragate/capa)
+on that repository instead — see the [root README](../../README.md#install).
+
 OfficeKit creates branded standalone HTML documents, Slidev decks, and
 HyperFrames videos. This package follows
-[Agent Plugins 1.0](https://agent-plugins.org/specification) and contains six
-OfficeKit-authored Agent Skills.
+[Agent Plugins 1.0](https://agent-plugins.org/specification).
 
 ## What is included
 

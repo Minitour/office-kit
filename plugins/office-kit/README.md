@@ -37,27 +37,46 @@ the generated workspace by npm and uv; their source is not bundled here.
 - ffmpeg for final video encoding
 - network access for initial package/model resolution
 
-## Load in Claude Code
+## Load in Cursor
+
+From a clone of this repository:
+
+```bash
+mkdir -p ~/.cursor/plugins/local
+cp -R plugins/office-kit ~/.cursor/plugins/local/office-kit
+```
+
+Restart Cursor, or run **Developer: Reload Window**. Open **Customize** and
+confirm the OfficeKit skills. On Teams and Enterprise, an admin may need to
+enable **Allow Local Plugin Imports**.
 
 For local development:
 
 ```bash
+ln -s /absolute/path/to/office-kit/plugins/office-kit ~/.cursor/plugins/local/office-kit
+```
+
+See [Cursor plugins](https://cursor.com/docs/plugins).
+
+## Load in Claude Code
+
+From a clone of this repository:
+
+```bash
 claude plugin validate ./plugins/office-kit --strict
-claude --plugin-dir ./plugins/office-kit
+claude plugin install ./plugins/office-kit
 ```
 
 Skills appear under the `office-kit` namespace, for example
-`/office-kit:setup-office-kit`.
+`/office-kit:setup-office-kit`. Reload with `/reload-plugins` after updates.
 
-See [Claude Code plugins](https://code.claude.com/docs/en/plugins) for
-marketplace distribution and installation.
+To load the plugin for a single session without installing:
 
-## Load in Cursor
+```bash
+claude --plugin-dir ./plugins/office-kit
+```
 
-In Cursor's plugin/customization interface, install or import the
-`plugins/office-kit` directory (or this repository and select that path).
-Cursor reads the root Agent Plugins manifest and discovers immediate child
-skills under `skills/`.
+See [Claude Code plugins](https://code.claude.com/docs/en/plugins).
 
 ## Load in Codex
 
@@ -68,9 +87,9 @@ local `plugins/office-kit` directory. Add the repository as a marketplace:
 codex plugin marketplace add /absolute/path/to/office-kit
 ```
 
-Then install `office-kit` from the Plugins Directory or the Codex plugin
-commands. The `.codex-plugin/plugin.json` adapter supports clients that still
-expect Codex's client-specific entry point.
+Then install `office-kit` from the Plugin Directory. The
+`.codex-plugin/plugin.json` adapter supports clients that still expect Codex's
+client-specific entry point.
 
 See [Codex plugin packaging](https://developers.openai.com/plugins/build/plugins)
 for personal and repository marketplace alternatives.

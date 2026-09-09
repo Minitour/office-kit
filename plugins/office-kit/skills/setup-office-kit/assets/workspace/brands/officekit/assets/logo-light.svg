@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="ok-title-light">
+  <title id="ok-title-light">OfficeKit Logo (light variant)</title>
+
+  <!-- Back layer: landscape rectangle (presentation) — rotated -8° -->
+  <rect
+    x="88" y="128" width="336" height="240" rx="24"
+    fill="#C4B5FD"
+    transform="rotate(-8, 256, 256)"
+  />
+
+  <!-- Front layer: portrait rectangle (document) — rotated +6° -->
+  <rect
+    x="152" y="80" width="224" height="320" rx="24"
+    fill="#FFFFFF"
+    transform="rotate(6, 256, 256)"
+  />
+
+  <!-- Accent diamond at the intersection center -->
+  <rect
+    x="232" y="216" width="48" height="48" rx="8"
+    fill="#7C3AED"
+    transform="rotate(45, 256, 240)"
+  />
+</svg>

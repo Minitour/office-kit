@@ -1,0 +1,19 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "office-kit",
+  "version": "0.1.0",
+  "description": "Create branded standalone HTML documents, Slidev decks, and HyperFrames videos in an isolated OfficeKit workspace.",
+  "author": {
+    "name": "OfficeKit"
+  },
+  "homepage": "https://github.com/Minitour/office-kit",
+  "repository": "https://github.com/Minitour/office-kit",
+  "keywords": [
+    "documents",
+    "presentations",
+    "slides",
+    "video",
+    "branding",
+    "office-kit"
+  ]
+}

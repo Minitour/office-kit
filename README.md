@@ -19,6 +19,31 @@ OfficeKit produces three kinds of output:
 
 Skills, subagents, and agent instructions are installed by [CAPA](https://github.com/infragate/capa).
 
+## Portable plugin
+
+The skills-only package at [`plugins/office-kit/`](plugins/office-kit/) follows
+[Agent Plugins 1.0](https://agent-plugins.org/specification) and can be loaded
+by Cursor, Codex, or Claude Code. It includes only OfficeKit-authored skills
+and workspace assets—no external skills, MCP servers, hooks, subagents,
+dependencies, or model weights.
+
+Its `setup-office-kit` skill installs an isolated `office-kit/` workspace
+inside any repository, so the host project's package files are not modified.
+See the [plugin README](plugins/office-kit/README.md) for client-specific
+installation and first-run instructions.
+
+Build and verify the package with:
+
+```bash
+uv run python scripts/plugin/build.py
+uv run python scripts/plugin/build.py --check
+uv run python -m unittest tests.test_plugin_package
+```
+
+Plugin skills are canonical under `plugins/office-kit/skills/`. The repository
+`skills/` path is a symlink to that tree, so CAPA, evals, and the plugin share
+one source.
+
 ## How work is organized
 
 Process is matched to the cost of the deliverable.
@@ -103,12 +128,13 @@ office-kit/
 ├── brands/<id>/           # One identity per directory (default: officekit)
 ├── config.toml            # Operational defaults plus [brand] default
 ├── capabilities.yaml      # CAPA skills and subagents
+├── plugins/office-kit/    # Portable Agent Plugin; canonical skills live here
+├── skills/                # Symlink → plugins/office-kit/skills
 ├── WORKFLOW.md            # Orchestration contract (primary context)
 ├── .templates/
 │   ├── document-html/     # Standalone HTML document
 │   ├── presentation/      # Slidev
 │   └── video/             # HyperFrames
-├── skills/                # Local entry skills + TTS
 ├── scripts/
 │   ├── common.py          # config, brand, Jinja render used by all scaffolders
 │   ├── brand/             # catalog + brand.json → derivatives

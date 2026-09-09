@@ -72,21 +72,18 @@ class WorkspaceContractTests(unittest.TestCase):
 
         slides = read(ROOT / "skills/create-slides/SKILL.md")
         video = read(ROOT / "skills/create-video/SKILL.md")
-        self.assertIn("Write the deck yourself", slides)
-        self.assertIn("Write the video yourself", video)
-        self.assertIn("research-agent", slides)
-        self.assertIn("research-agent", video)
-        self.assertIn("slidev-layouts", slides)
-        self.assertIn("slidev-themes", slides)
+        self.assertIn("Author in the\nmain agent", slides)
+        self.assertIn("Author the\nvideo in the main agent", video)
+        self.assertIn("Research claims directly", slides)
+        self.assertIn("Research factual claims\ndirectly", video)
+        self.assertIn("two-cols-header", slides)
         self.assertIn("scripts/presentation/deck.py", slides)
         self.assertIn("scripts/video/video.py", video)
         self.assertIn("tell the user the url", slides.lower())
         self.assertIn("deck.py audit", slides)
         self.assertIn("node_modules", slides)
-        self.assertIn("@iconify-json/lucide", slides)
-        self.assertIn("Do not wait for", slides)
+        self.assertIn("Lucide", slides)
         self.assertIn("PLAN.md", slides)
-        self.assertIn("before this step", slides)
 
         brand_start = capabilities.index("  - id: brand-agent")
         brand_next = capabilities.find("\n  - id: ", brand_start + 1)
@@ -96,8 +93,8 @@ class WorkspaceContractTests(unittest.TestCase):
     def test_delivery_is_request_only(self) -> None:
         slides = read(ROOT / "skills/create-slides/SKILL.md")
         video = read(ROOT / "skills/create-video/SKILL.md")
-        self.assertIn("Export only when the user names", slides)
-        self.assertIn("only when the user names it", video)
+        self.assertIn("Export only when requested", slides)
+        self.assertIn("Render only when the user names", video)
 
     def test_legacy_contracts_are_absent(self) -> None:
         checked = [
@@ -195,7 +192,7 @@ class DocumentPipelineContractTests(unittest.TestCase):
         # It must name the pipeline it actually drives.
         for command in ("doc.py new", "doc.py toc", "doc.py check", "NOTES.md"):
             self.assertIn(command, skill, command)
-        self.assertIn("one pass", skill)
+        self.assertIn("one file", skill)
 
     def test_workflow_sends_documents_straight_through(self) -> None:
         workflow = read(ROOT / "WORKFLOW.md")
@@ -232,14 +229,13 @@ class DocumentPipelineContractTests(unittest.TestCase):
 class SkillInvocationContractTests(unittest.TestCase):
     """Skills run Python through the workspace uv env, never a bare interpreter."""
 
-    _BARE_PYTHON = re.compile(r"(?<!uv run )(?<!/)python(?:3)?\s")
-
     def test_skills_invoke_python_through_uv(self) -> None:
         for path in sorted((ROOT / "skills").glob("*/SKILL.md")):
             hits = [
                 line.strip()
                 for line in read(path).splitlines()
-                if self._BARE_PYTHON.search(line)
+                if re.search(r"\bpython(?:3)?\s", line)
+                and "uv run" not in line
                 and not line.lstrip().startswith("#!")
             ]
             self.assertEqual(hits, [], f"{path.relative_to(ROOT)} still calls python directly")

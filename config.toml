@@ -77,11 +77,11 @@ target_dir = "brand"
 files = ["tokens.css", "frame.md"]
 directories = ["assets"]
 
-# ── Audio (offline narration) ────────────────────────────────
-# Narration is synthesised locally by the text-to-speech skill,
-# which runs Kokoro from the Hugging Face cache. Nothing leaves the
-# machine and no API key is involved. Keys below map onto that
-# skill's flags.
+# ── Audio (offline narration + music bed) ────────────────────
+# Narration is synthesised locally by the text-to-speech skill
+# (Kokoro). The music bed is rendered locally by strudel-offline
+# (Dough) into media/music-bed.wav. Nothing leaves the machine.
+# Keys below map onto those skills' flags.
 [audio]
 provider = "huggingface"       # Local inference only — no hosted TTS
 model = "hexgrad/Kokoro-82M"

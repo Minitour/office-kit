@@ -1,0 +1,17 @@
+{
+  "skill_name": "strudel-offline",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "The workspace explainer video is 16s with voiceover. Generate the music bed into projects/workspace-explainer/media/ using the bundled renderer.",
+      "expected_output": "Treats this as a create-video music bed, not a standalone track. Writes media/music-bed.js (restrained, Dough-safe) and renders media/music-bed.wav for ~16s. Does not open strudel.cc. Does not default to phonk/house.",
+      "files": ["scripts/examples/video-bed.js"],
+      "expectations": [
+        "Writes projects/<slug>/media/music-bed.js and music-bed.wav",
+        "Invokes skills/strudel-offline/scripts/render.mjs",
+        "Keeps the bed understated for voiceover rather than a dance-floor arrangement",
+        "Does not treat the request as a standalone music-producer job"
+      ]
+    }
+  ]
+}

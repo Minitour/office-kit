@@ -15,7 +15,7 @@ OfficeKit produces three kinds of output:
 
 - **Documents** — one self-contained HTML file, written in a single pass and opened straight from disk
 - **Presentations** — Markdown/Slidev decks, previewed live and exportable to PDF or PowerPoint when you ask
-- **Video** — [HyperFrames](https://hyperframes.heygen.com/) compositions with **offline** narration via Hugging Face / [Kokoro](https://github.com/hexgrad/kokoro) (local inference, no TTS API key)
+- **Video** — [HyperFrames](https://hyperframes.heygen.com/) compositions with **offline** narration via Hugging Face / [Kokoro](https://github.com/hexgrad/kokoro) and an optional **offline music bed** via Strudel/Dough (local render, no browser)
 
 There are **two ways to install OfficeKit**. Pick one; do not mix them in the
 same working directory.
@@ -23,7 +23,7 @@ same working directory.
 | | CAPA workspace | Standalone plugin |
 |---|---|---|
 | Use when | You are working *in this repository* (contributing, evals, the full contract) | You want OfficeKit skills inside *another* repository |
-| What you get | Skills, subagents (`research-agent`, `brand-agent`), and `WORKFLOW.md` / `AGENTS.md` via [CAPA](https://github.com/infragate/capa) | The six OfficeKit skills only (`setup-office-kit`, `init-brand`, `create-doc`, `create-slides`, `create-video`, `text-to-speech`) |
+| What you get | Skills, subagents (`research-agent`, `brand-agent`), and `WORKFLOW.md` / `AGENTS.md` via [CAPA](https://github.com/infragate/capa) | The OfficeKit skills (`setup-office-kit`, `init-brand`, `create-doc`, `create-slides`, `create-video`, plus `text-to-speech` and `strudel-offline` used by video) |
 | Where work lives | `projects/` in this clone | An isolated `office-kit/` folder created in the host repo |
 | Package | This git checkout | [`plugins/office-kit/`](plugins/office-kit/) ([Agent Plugins 1.0](https://agent-plugins.org/specification)) |
 
@@ -163,10 +163,12 @@ That is a **workflow contract**, not a hard sandbox. CAPA and the host provider 
 |---|---|---|
 | `create-doc` | Reports, proposals, memos, briefs, articles, letters, whitepapers | Direct, one pass |
 | `create-slides` | Pitches, lectures, talks, kickoffs → Slidev | Direct, in this conversation |
-| `create-video` | Explainers, motion pieces, narrated walkthroughs → HyperFrames + local TTS | Direct, in this conversation |
+| `create-video` | Explainers, motion pieces, narrated walkthroughs → HyperFrames + local TTS + Dough music bed | Direct, in this conversation |
 | `init-brand` | Create or revise a visual identity under `brands/<id>/` | Routed, proposal-gated |
 
-Supporting skill: `text-to-speech` (Kokoro clips and timing manifests; used by video, not a user-facing entry point).
+Supporting skills used by video: `text-to-speech` (Kokoro), plus
+`music-composition` → `strudel` → `strudel-offline` for the music bed
+(theory, pattern language, Dough WAV). None of those is a standalone producer.
 
 **Two subagents:** `research-agent` (opt-in fact checking for any modality) and `brand-agent` (identity writes, behind a proposal gate). Planning, Slidev, HyperFrames, review, and export happen in the primary conversation.
 

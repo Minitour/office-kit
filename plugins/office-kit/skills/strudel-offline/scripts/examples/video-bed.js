@@ -1,0 +1,22 @@
+// Cheerful explainer bed — C major, I–IV–V–I. Pads only.
+setcpm(96 / 4)
+
+$: note("<c2 f1 g1 c2>/2")
+  .s("sine")
+  .clip(1)
+  .attack(1.1)
+  .decay(0.25)
+  .sustain(0.8)
+  .release(1.1)
+  .lpf(180)
+  .gain(0.15)
+
+$: note("<[c4,e4,g4] [f3,a3,c4] [g3,b3,d4] [c4,e4,g4]>/2")
+  .s("triangle")
+  .clip(1)
+  .attack(1.4)
+  .decay(0.3)
+  .sustain(0.7)
+  .release(1.3)
+  .lpf(1400)
+  .gain(0.09)

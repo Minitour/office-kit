@@ -1,6 +1,6 @@
 # OfficeKit Agent Plugin
 
-This is the **standalone plugin** install path: six OfficeKit-authored Agent
+This is the **standalone plugin** install path: OfficeKit-authored Agent
 Skills, with no CAPA, subagents, or MCP. If you are working *in the
 office-kit git checkout* itself, use [CAPA](https://github.com/infragate/capa)
 on that repository instead — see the [root README](../../README.md#install).
@@ -16,7 +16,8 @@ HyperFrames videos. This package follows
 - `create-doc` — author and audit one-file HTML documents
 - `create-slides` — scaffold, preview, author, audit, and export Slidev decks
 - `create-video` — scaffold, preview, author, and audit HyperFrames videos
-- `text-to-speech` — local segmented Kokoro narration and timing manifests
+- `text-to-speech` — local segmented Kokoro narration (used by create-video)
+- `strudel-offline` — local Dough music bed under narration (used by create-video)
 
 The root `plugin.json` is authoritative. `.claude-plugin/plugin.json` and
 `.codex-plugin/plugin.json` are metadata-only compatibility adapters.

@@ -1,0 +1,17 @@
+{
+  "name": "strudel-offline-render",
+  "private": true,
+  "type": "module",
+  "license": "AGPL-3.0-or-later",
+  "description": "Evaluate a Strudel pattern and render WAV offline via Dough",
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@strudel/core": "^1.2.6",
+    "@strudel/mini": "^1.2.6",
+    "@strudel/tonal": "^1.2.6",
+    "@strudel/transpiler": "^1.2.6",
+    "supradough": "^1.2.4"
+  }
+}

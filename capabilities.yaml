@@ -2,7 +2,7 @@
 # OfficeKit — capa capabilities
 #
 # Pipelines: standalone HTML documents, Slidev decks, HyperFrames
-# video with offline narration.
+# video with offline narration and a Dough-rendered music bed.
 #
 # Brand contract: each identity lives under brands/<id>/. That
 # directory's brand.json is canonical. BRAND.md, tokens.css, and
@@ -59,9 +59,9 @@ skills:
       path: skills/create-video
       description: >-
         The /create-video command — write a HyperFrames video in primary
-        context (plan → scenes → narration → review) with per-segment offline
-        narration. No authoring subagent; research-agent only when claims need
-        checking
+        context (plan → scenes → narration → music bed → review) with
+        per-segment offline narration and a Dough-rendered music bed. No
+        authoring subagent; research-agent only when claims need checking
   - id: text-to-speech
     type: local
     def:
@@ -70,6 +70,13 @@ skills:
         Synthesize offline narration locally with Kokoro — one WAV clip per
         approved script segment — and build measured timing manifests for video
         or slide composition
+  - id: strudel-offline
+    type: local
+    def:
+      path: skills/strudel-offline
+      description: >-
+        Supporting skill for create-video — render a Strudel music bed to WAV
+        with Dough and place it under narration. Not a standalone music producer
 
   # ── Engines ────────────────────────────────────────────────
   - id: html
@@ -142,6 +149,22 @@ skills:
         whenever create-slides authors a deck; OfficeKit keeps the config.toml
         theme and brands/<id>/tokens.css, and does not install a new theme to
         restyle a deck
+  - id: strudel
+    type: github
+    def:
+      repo: bfollington/terma@strudel
+      description: >-
+        Strudel.cc pattern language — mini-notation, stacks, pads, genre
+        templates. Used by create-video as syntax reference; the WAV is
+        rendered by strudel-offline, not a browser URL
+  - id: music-composition
+    type: github
+    def:
+      repo: sjy051/music-composition::.
+      description: >-
+        Harmony, progression, and commercial-underscore craft. Used by
+        create-video to choose key and chords before writing a Strudel bed.
+        Not a DAW, MIDI, or audio renderer
 
 servers: []
 tools: []

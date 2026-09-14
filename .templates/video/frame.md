@@ -73,6 +73,12 @@ One row per beat. Durations must sum to the root `data-duration`.
 - **Narration:** segment JSON and generated speech in `narration/`. Synthesise
   offline with the text-to-speech skill using the voice, speed, and padding in
   `config.toml` `[audio]`; mix to the targets in `[audio.levels]`.
+- **Music bed:** `music-composition` (harmony) → `strudel` (pattern) →
+  `strudel-offline` (WAV) into `media/music-bed.js` + `media/music-bed.wav`
+  for the root `data-duration`. Place
+  `<audio id="music-bed">` only after the WAV exists. Mix to
+  `[audio.levels] music_bed_lufs` and duck by `duck_db` under speech. Skip
+  if the brief is silent or a licensed file is already in `media/`.
 
 ## Claims
 

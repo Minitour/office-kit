@@ -30,7 +30,10 @@ writing; that goes to `research-agent`, and the writing still happens here.
 
 Load `create-slides` or `create-video` and do the work yourself: write the
 plan, scaffold with `scripts/presentation/deck.py` or
-`scripts/video/video.py`, and author in this conversation.
+`scripts/video/video.py`, and author in this conversation. For video, load
+`text-to-speech` for VO and, for the music bed, `music-composition` →
+`strudel` → `strudel-offline` (theory, pattern language, WAV). Those are
+supporting skills, not separate jobs.
 For a deck: `deck.py new` (scaffold + install), then `deck.py dev` (owns the
 port and health-checks before printing the URL), then author in place, then
 `deck.py audit` before calling it done. For video: the same shape via

@@ -12,6 +12,7 @@ agent; no external skill, MCP server, hook, or subagent is required.
 - Narrated motion/video → `create-video`
 - New or revised identity → `init-brand`
 - Offline narration → `text-to-speech`
+- Video music bed → `music-composition` → `strudel` → `strudel-offline`
 
 Ask one routing question only when the requested medium is ambiguous.
 

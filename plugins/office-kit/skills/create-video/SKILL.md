@@ -55,6 +55,8 @@ For the **music bed** (not a standalone track), load three skills in order:
 2. `strudel` — mini-notation and pad patterns (`assets/patterns/ambient-pad.js`).
    Do not ship a strudel.cc URL as the video deliverable.
 3. `strudel-offline` — Dough-safe rewrite and local WAV.
+   Strudel/Dough are **AGPL-3.0-or-later**; see the repository `LICENSE`
+   and `plugins/office-kit/skills/strudel-offline/LICENSE`.
 
 Render `projects/<slug>/media/music-bed.wav` to the root `data-duration` (plus
 a short tail). Keep the source pattern beside it as `media/music-bed.js`.

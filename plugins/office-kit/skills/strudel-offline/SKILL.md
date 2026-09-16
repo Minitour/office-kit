@@ -94,4 +94,5 @@ Place `<audio id="music-bed">` only after the WAV exists. Mix to
 `[audio.levels] music_bed_lufs` / `duck_db`. Skip if the user asked for
 silence or supplied `media/` music.
 
-Strudel/Dough are **AGPL-3.0**. Engine notes: [reference.md](reference.md).
+Strudel/Dough and this renderer are **AGPL-3.0-or-later**. The full license
+is in [`LICENSE`](LICENSE). Engine notes: [reference.md](reference.md).

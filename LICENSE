@@ -1,0 +1,34 @@
+Licensing
+=========
+
+This repository is OfficeKit: a workspace and portable plugin for branded
+documents, slide decks, and narrated video.
+
+AGPL-3.0-or-later — Strudel / Dough music bed
+---------------------------------------------
+
+The optional video music-bed renderer at
+
+    plugins/office-kit/skills/strudel-offline/
+
+is licensed under the GNU Affero General Public License, version 3 or
+later (AGPL-3.0-or-later). That tree vendors Dough and depends on AGPL
+npm packages published by uzu/strudel:
+
+    @strudel/core
+    @strudel/mini
+    @strudel/tonal
+    @strudel/transpiler
+    supradough
+
+Using that skill — including evaluating Strudel patterns and writing WAV
+files with Dough — is subject to AGPL-3.0-or-later. The complete license
+text is in plugins/office-kit/skills/strudel-offline/LICENSE.
+
+Upstream: https://codeberg.org/uzu/strudel
+
+This notice discloses that component. It does not relicense the rest of
+OfficeKit as AGPL. Combining this repository with that skill in a product
+may still trigger AGPL obligations for the combined work; read the AGPL
+and get counsel if you ship a closed-source service that includes the
+renderer.

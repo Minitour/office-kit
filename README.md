@@ -271,3 +271,10 @@ Verify a document with `uv run python scripts/document/doc.py check projects/<sl
 Verify a deck with `uv run python scripts/presentation/deck.py audit <slug>` (static; must pass before you call the deck done). Verify a video with `uv run python scripts/video/video.py audit <slug>`.
 
 For decks and video, do not treat a live preview or a leftover `dist/` / `renders/` file as the requested delivery. Ports and default export dirs are in `config.toml`. There is one `node_modules` at the workspace root (npm workspaces); never install per-project.
+
+## License
+
+See [`LICENSE`](LICENSE). The optional Strudel/Dough music-bed renderer
+(`plugins/office-kit/skills/strudel-offline/`, including vendored Dough and
+the `@strudel/*` / `supradough` packages) is **AGPL-3.0-or-later**. The
+complete text is in that skill's [`LICENSE`](plugins/office-kit/skills/strudel-offline/LICENSE).

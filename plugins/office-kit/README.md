@@ -17,7 +17,7 @@ HyperFrames videos. This package follows
 - `create-slides` — scaffold, preview, author, audit, and export Slidev decks
 - `create-video` — scaffold, preview, author, and audit HyperFrames videos
 - `text-to-speech` — local segmented Kokoro narration (used by create-video)
-- `strudel-offline` — local Dough music bed under narration (used by create-video)
+- `strudel-offline` — local Dough music bed under narration (used by create-video; **AGPL-3.0-or-later**, see that skill's `LICENSE`)
 
 The root `plugin.json` is authoritative. `.claude-plugin/plugin.json` and
 `.codex-plugin/plugin.json` are metadata-only compatibility adapters.

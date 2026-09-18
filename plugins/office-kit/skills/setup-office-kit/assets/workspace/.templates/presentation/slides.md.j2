@@ -8,6 +8,9 @@ transition: slide-left
 # aspectRatio and canvasWidth default from config.toml [presentation].
 aspectRatio: "{{ aspect_ratio }}"
 canvasWidth: {{ canvas_width }}
+# A branded deck has one designed scheme. `auto` would follow the viewer's OS
+# and half-switch the theme's element styles (dark code chips on white slides).
+colorSchema: light
 # Colours, fonts, and the logo all come from the shared token sheet, imported
 # by style.css. Do not add a `fonts:` block here: tokens.css already loads the
 # brand webfonts, and restating a family in the headmatter hardcodes a brand

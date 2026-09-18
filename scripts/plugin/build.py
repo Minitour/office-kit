@@ -128,6 +128,7 @@ WORKSPACE_FILES = (
     ".templates/presentation/plan/.gitkeep",
     ".templates/presentation/public/.gitkeep",
     ".templates/presentation/layouts/.gitkeep",
+    ".templates/presentation/layouts/end.vue",
     ".templates/presentation/components/.gitkeep",
     ".templates/presentation/slides.md.j2",
     ".templates/presentation/style.css.j2",

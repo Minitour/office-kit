@@ -33,7 +33,10 @@ onMounted(() => {
 
 <style scoped>
 .brand-footer {
-  position: fixed;
+  /* absolute, not fixed: the layer mounts inside the slide box, and in
+   * export `fixed` resolves against the printed page, which clipped the
+   * left third of the mark on every default-layout slide. */
+  position: absolute;
   bottom: 1rem;
   left: 1.5rem;
   display: flex;

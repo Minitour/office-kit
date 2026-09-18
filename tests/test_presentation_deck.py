@@ -3,6 +3,7 @@ from __future__ import annotations
 import contextlib
 import importlib.util
 import io
+import json
 import shutil
 import sys
 import tempfile
@@ -58,6 +59,52 @@ class PresentationTemplateContractTests(unittest.TestCase):
             ".ok-icon-line",
         ):
             self.assertIn(name, css)
+
+    def test_template_carries_the_review_fixes(self) -> None:
+        """Each of these was a filed issue against a real deck."""
+        template = ROOT / ".templates" / "presentation"
+        css = (template / "styles" / "brand.css").read_text(encoding="utf-8")
+        # #24 the brand accent is reachable from ok-* classes.
+        self.assertIn("--ok-accent: var(--color-accent, var(--ok-secondary))", css)
+        # #19 icons follow the ground of inverted containers.
+        self.assertRegex(css, r"\.ok-band \.ok-icon[^{]*\{[^}]*currentColor")
+        # #25 / #22 inline code is pinned to tokens in every scheme.
+        self.assertIn(".slidev-layout :not(pre) > code", css)
+        # #22 hero number has a display scale without a <span>.
+        self.assertRegex(css, r"\.ok-hero-num \{[^}]*font-size: 3\.1rem")
+        # #22 the rule centres under centred type.
+        self.assertIn(".slidev-layout.statement .ok-rule", css)
+        # #18 the end layout is replaced, not out-specificity-ed.
+        end = template / "layouts" / "end.vue"
+        self.assertTrue(end.is_file())
+        self.assertIn('class="slidev-layout end ok-end"', end.read_text(encoding="utf-8"))
+        self.assertIn(".slidev-layout.end.ok-end", css)
+        # #25 the scaffold pins the colour scheme.
+        slides = (template / "slides.md.j2").read_text(encoding="utf-8")
+        self.assertIn("colorSchema: light", slides)
+        # #22 the watermark is positioned inside the slide box.
+        footer = (template / "global-bottom.vue").read_text(encoding="utf-8")
+        self.assertIn("position: absolute", footer)
+        self.assertNotIn("position: fixed", footer)
+        # #27 floating-vue is pinned for the twoslash client patch.
+        package = json.loads((ROOT / "package.json").read_text(encoding="utf-8"))
+        self.assertEqual(package["overrides"]["floating-vue"], "5.2.2")
+
+    def test_log_errors_dedupes_and_strips_ansi(self) -> None:
+        text = (
+            "  \x1b[32m➜\x1b[39m  Local: http://localhost:3030/\n"
+            "[vite] (client) [console.error] Failed to patch FloatingVue TypeError: x\n"
+            "    at app.component (…/client.mjs:27:42)\n"
+            "[vite] (client) [console.error] Failed to patch FloatingVue TypeError: x\n"
+            "[vite] Internal server error: Failed to resolve import\n"
+        )
+        self.assertEqual(
+            deck.log_errors(text),
+            [
+                "[vite] (client) [console.error] Failed to patch FloatingVue TypeError: x",
+                "[vite] Internal server error: Failed to resolve import",
+            ],
+        )
 
     def test_template_vocabulary_covers_core_layouts(self) -> None:
         slides = (ROOT / ".templates" / "presentation" / "slides.md.j2").read_text(
@@ -330,6 +377,24 @@ canvasWidth: 980
         code, output = run("audit", "bad-deck", "--workspace-root", str(self.root))
         self.assertEqual(code, 0, output)
         self.assertIn("heading + bullets", output)
+
+    def test_auto_color_scheme_warns(self) -> None:
+        self._write_deck(
+            """---
+theme: default
+title: Warn
+aspectRatio: "16/9"
+canvasWidth: 980
+---
+
+# Hi
+
+<lucide-eye class="ok-icon" />
+"""
+        )
+        code, output = run("audit", "bad-deck", "--workspace-root", str(self.root))
+        self.assertEqual(code, 0, output)
+        self.assertIn("colorSchema", output)
 
     def test_missing_required_headmatter_fails(self) -> None:
         self._write_deck(

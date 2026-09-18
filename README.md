@@ -5,180 +5,182 @@
 <h1 align="center">OfficeKit</h1>
 
 <p align="center">
-  An AI-powered workspace for branded documents, slide decks, and narrated video.<br/>
-  You describe the deliverable; the agent routes work and builds it. Revisions come from follow-up requests.
+  An AI-agent workspace for branded documents, slide decks, and narrated video.<br/>
+  You describe the deliverable; the agent scaffolds, builds, audits, and revises it on request.
+</p>
+
+<p align="center">
+  <a href="https://github.com/Minitour/office-kit/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/Minitour/office-kit?display_name=tag&sort=semver" /></a>
+  <a href="https://github.com/Minitour/office-kit/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/Minitour/office-kit/actions/workflows/ci.yml/badge.svg" /></a>
+  <img alt="Platforms" src="https://img.shields.io/badge/platforms-macOS%20%7C%20Linux%20%7C%20Windows-informational" />
+  <a href="CHANGELOG.md"><img alt="Changelog" src="https://img.shields.io/badge/changelog-keep%20a%20changelog-orange" /></a>
 </p>
 
 ---
 
-OfficeKit produces three kinds of output:
+## What you get
 
-- **Documents** — one self-contained HTML file, written in a single pass and opened straight from disk
-- **Presentations** — Markdown/Slidev decks, previewed live and exportable to PDF or PowerPoint when you ask
-- **Video** — [HyperFrames](https://hyperframes.heygen.com/) compositions with **offline** narration via Hugging Face / [Kokoro](https://github.com/hexgrad/kokoro) and an optional **offline music bed** via Strudel/Dough (local render, no browser)
-
-There are **two ways to install OfficeKit**. Pick one; do not mix them in the
-same working directory.
-
-| | CAPA workspace | Standalone plugin |
+| Output | Engine | What lands on disk |
 |---|---|---|
-| Use when | You are working *in this repository* (contributing, evals, the full contract) | You want OfficeKit skills inside *another* repository |
-| What you get | Skills, subagents (`research-agent`, `brand-agent`), and `WORKFLOW.md` / `AGENTS.md` via [CAPA](https://github.com/infragate/capa) | The OfficeKit skills (`setup-office-kit`, `init-brand`, `create-doc`, `create-slides`, `create-video`, plus `text-to-speech` and `strudel-offline` used by video) |
-| Where work lives | `projects/` in this clone | An isolated `.office-kit/` folder created in the host repo |
-| Package | This git checkout | [`plugins/office-kit/`](plugins/office-kit/) ([Agent Plugins 1.0](https://agent-plugins.org/specification)) |
+| **Documents** | Standalone HTML | One self-contained `.html` file (styles, brand tokens, marks, and images inlined). Opens straight from disk, prints to PDF from the browser. |
+| **Presentations** | [Slidev](https://sli.dev/) | A Markdown deck with a branded template, live preview, a render-based audit, and PDF / PPTX / PNG export on request. |
+| **Video** | [HyperFrames](https://hyperframes.heygen.com/) | A composition with **offline** narration ([Kokoro](https://github.com/hexgrad/kokoro)) and an optional **offline** music bed (Strudel / Dough). Nothing leaves your machine. |
 
-Plugin skills are canonical under `plugins/office-kit/skills/`; `capabilities.yaml`
-points CAPA at that same tree, so both install paths share one source.
+Every output is styled from one **brand catalog** (`brands/<id>/brand.json`), so a palette or logo change flows into documents, decks, and video alike.
 
-## Install
+Things you can say to the agent:
 
-### Shared prerequisites
+- "Write a two-page product brief for engineering leads as a standalone HTML doc."
+- "Build a 12-slide kickoff deck for the Q3 launch, with the results table as a chart."
+- "Turn this script into a 60-second branded explainer with voiceover."
+- "Set up our brand from this logo and palette."
 
-- [Python](https://www.python.org/) **3.10–3.12** and [uv](https://docs.astral.sh/uv/)
-- [Node.js](https://nodejs.org/) **22+** and **npm**
-- [FFmpeg](https://ffmpeg.org/) for final video encoding
-- Network access on first run (npm, uv, and Kokoro model weights)
+## Quick start
 
-Kokoro weights download from Hugging Face on first synthesis and then reuse the
-local cache. Some languages also need `espeak-ng`.
+There are two ways to run OfficeKit. Pick one per working directory.
 
-### Option A — CAPA (this repository)
+| | **Plugin** (use OfficeKit in your own repo) | **This repository** (develop OfficeKit, full CAPA workflow) |
+|---|---|---|
+| Install | Through your agent client's plugin manager, no clone | `git clone` + [CAPA](https://github.com/infragate/capa) |
+| Workspace | An isolated `.office-kit/` directory that `setup-office-kit` creates | This checkout; deliverables under `projects/` |
+| Extras | The seven OfficeKit skills | Plus `research-agent`, `brand-agent`, and the `WORKFLOW.md` contract |
 
-Install [CAPA](https://github.com/infragate/capa) so `capa` is on your `PATH`,
-then:
+### Prerequisites (both paths)
 
-```bash
-git clone https://github.com/Minitour/office-kit.git
-cd office-kit
-capa install
-npm install
-uv sync
-```
+- [Python](https://www.python.org/) 3.10–3.12 and [uv](https://docs.astral.sh/uv/)
+- [Node.js](https://nodejs.org/) 22+ with npm
+- [FFmpeg](https://ffmpeg.org/) for final video encoding (`brew install ffmpeg`, `winget install Gyan.FFmpeg`, or your distro package)
+- Network access on first run (npm packages, Python packages, Kokoro weights, a Chromium build for the render audit and export)
 
-`capa install` resolves skills and subagents from `capabilities.yaml` into
-the agent files this checkout expects. `npm install` at the **workspace
-root** hoists Node dependencies (`package.json` workspaces: `projects/*`).
-`uv sync` creates the **single root** `.venv` from `pyproject.toml`. Do not
-create per-project `node_modules` or virtualenvs; add a project dep with
-`npm install <pkg> -w projects/<name>` from the root.
+macOS, Linux, and Windows are supported. On Windows use PowerShell, cmd, or Git Bash; the scripts locate `npm.cmd` / `npx.cmd` themselves and switch the console to UTF-8.
 
-Open this repository in your agent and start chatting. Documents, decks, and
-video are authored here under `projects/<slug>/`. You do **not** run
-`setup-office-kit` for this path.
+### Option A: the plugin, inside another repository
 
-### Option B — standalone plugin skills
+Install the plugin, then ask the agent to run `setup-office-kit` from the repository where the deliverables belong.
 
-Install from the GitHub repository through your client's plugin manager—no
-clone is required. Then run `setup-office-kit` in the host repository. That
-creates an isolated `.office-kit/` workspace and does not merge OfficeKit into
-the host root. There are no CAPA subagents, MCP servers, or extra brand
-identities in this package.
-
-#### Cursor
-
-In Cursor Agent chat:
-
-```text
-/add-plugin https://github.com/Minitour/office-kit
-```
-
-Then install **OfficeKit** from the imported marketplace. Teams can instead
-import `https://github.com/Minitour/office-kit` under **Dashboard → Plugins**
-and enable auto-refresh. See [Cursor plugins](https://cursor.com/docs/plugins).
-
-#### Claude Code
-
-In Claude Code:
+<details>
+<summary><strong>Claude Code</strong></summary>
 
 ```text
 /plugin marketplace add Minitour/office-kit
 /plugin install office-kit@office-kit
 ```
 
-Skills appear under the `office-kit` namespace, for example
-`/office-kit:setup-office-kit`. Reload with `/reload-plugins` after updates.
+Skills appear under the `office-kit` namespace, for example `/office-kit:setup-office-kit`. Reload with `/reload-plugins` after updates.
+</details>
 
-See [Claude Code plugins](https://code.claude.com/docs/en/plugins).
+<details>
+<summary><strong>Cursor</strong></summary>
 
-#### Codex
+In Agent chat:
 
-Register the GitHub repository as a marketplace:
+```text
+/add-plugin https://github.com/Minitour/office-kit
+```
+
+Then install **OfficeKit** from the imported marketplace. Teams can import the same URL under **Dashboard → Plugins** with auto-refresh. See [Cursor plugins](https://cursor.com/docs/plugins).
+</details>
+
+<details>
+<summary><strong>Codex</strong></summary>
 
 ```bash
 codex plugin marketplace add Minitour/office-kit
 ```
 
-Then open the Plugin Directory and install **OfficeKit**. Restart Codex or
-ChatGPT desktop if the listing does not appear. See [Codex plugin
-packaging](https://developers.openai.com/plugins/build/plugins).
+Then install **OfficeKit** from the Plugin Directory. See [Codex plugin packaging](https://developers.openai.com/plugins/build/plugins).
+</details>
 
-More client detail and local development commands are in the [plugin
-README](plugins/office-kit/README.md).
-
-#### Bootstrap the host workspace
-
-In the repository where you want documents, decks, or video (not necessarily
-this clone), ask the agent to run **`setup-office-kit`**. It writes:
+`setup-office-kit` writes:
 
 ```text
 your-repository/
 └── .office-kit/
-    ├── brands/
-    ├── projects/
-    ├── scripts/
-    ├── .templates/
+    ├── brands/            # identities (officekit by default)
+    ├── projects/          # one deliverable per directory
+    ├── scripts/           # doc.py, deck.py, video.py, brand generator
+    ├── .templates/        # document, presentation, video scaffolds
     ├── config.toml
-    ├── package.json
-    └── pyproject.toml
+    ├── package.json       # one shared node_modules
+    └── pyproject.toml     # one shared .venv
 ```
 
-After that, OfficeKit commands run from `.office-kit/` (one `node_modules`, one
-`.venv`). Setup is idempotent; it will not overwrite a file you changed unless
-you pass `--force`.
+Setup is idempotent: it records the hash of every file it manages and refuses to overwrite one you changed unless you pass `--force`. A workspace installed as `office-kit/` by an earlier version keeps being updated in place.
 
-### Developing the plugin package
+More client detail lives in the [plugin README](plugins/office-kit/README.md).
 
-From this clone, after Option A:
+### Option B: this repository, with CAPA
 
 ```bash
-uv run python scripts/plugin/build.py
-uv run python scripts/plugin/build.py --check
-uv run python -m unittest tests.test_plugin_package
+git clone https://github.com/Minitour/office-kit.git
+cd office-kit
+capa install      # skills + subagents from capabilities.yaml into your agent's files
+uv sync           # one root .venv
 ```
 
-## How work is organized
+Open the checkout in your agent and start chatting. Decks and video install their Node dependencies into the root `node_modules` the first time they are scaffolded (npm workspaces). You do **not** run `setup-office-kit` here.
+
+Plugin skills are canonical under `plugins/office-kit/skills/`; `capabilities.yaml` points CAPA at that same tree, so the two install paths never drift.
+
+## How the work is organised
 
 Process is matched to the cost of the deliverable.
 
-**A document is written directly**, in the chat context, in one pass: scaffold, author, verify, hand over. No subagent, no plan file, no approval gate, no preview server, no packaging step. Budget is three minutes. The output is `projects/<slug>/<slug>.html` — styles, brand tokens, marks, and images all inlined — plus a short `NOTES.md`.
+- **A document is written directly**, in the conversation, in one pass: scaffold, author, verify, hand over. No plan file, no approval gate, no preview server. The output is `projects/<slug>/<slug>.html` plus a short `NOTES.md`.
+- **A deck or a video is authored in the same conversation.** The agent writes a short `plan/PLAN.md`, starts the live preview, builds in groups while you watch, and runs the audit before calling it done. Export and final render happen only when you ask for a named deliverable.
+- **Brand work is proposal-gated.** `init-brand` shows you the identity before any brand file is written, because a revision changes every deliverable that uses that id.
 
-**A deck or a video is authored in the same conversation**, so the prefix stays warm. For a deck, the preview starts from the scaffolded template so you can watch it get built. The agent should not spawn a subagent to author slides, scenes, or narration. The only production subagent is `research-agent`, and only when claims need checking.
-
-That is a **workflow contract**, not a hard sandbox. CAPA and the host provider (Cursor, Claude Code, and others) may restrict tools, but enforcement varies.
-
-**Four primary skills:**
-
-| Skill | Use for | Shape |
-|---|---|---|
-| `create-doc` | Reports, proposals, memos, briefs, articles, letters, whitepapers | Direct, one pass |
-| `create-slides` | Pitches, lectures, talks, kickoffs → Slidev | Direct, in this conversation |
-| `create-video` | Explainers, motion pieces, narrated walkthroughs → HyperFrames + local TTS + Dough music bed | Direct, in this conversation |
-| `init-brand` | Create or revise a visual identity under `brands/<id>/` | Routed, proposal-gated |
-
-Supporting skills used by video: `text-to-speech` (Kokoro), plus
-`music-composition` → `strudel` → `strudel-offline` for the music bed
-(theory, pattern language, Dough WAV). None of those is a standalone producer.
-
-**Two subagents:** `research-agent` (opt-in fact checking for any modality) and `brand-agent` (identity writes, behind a proposal gate). Planning, Slidev, HyperFrames, review, and export happen in the primary conversation.
-
-**Durable state** lives on disk under `projects/<slug>/`, not only in chat:
-
-| Modality | State |
+| Skill | Use for |
 |---|---|
-| Document | `<slug>.html` (the deliverable itself) and `NOTES.md` |
-| Deck, video | `plan/PLAN.md` plus `reports/build.md` and `reports/review.md` (and `research.md` / `delivery.md` when those stages run) |
+| `create-doc` | Reports, proposals, memos, briefs, articles, letters, whitepapers |
+| `create-slides` | Pitches, lectures, talks, kickoffs, workshops |
+| `create-video` | Explainers, motion pieces, narrated walkthroughs |
+| `init-brand` | Create or revise an identity under `brands/<id>/` |
+| `setup-office-kit` | Install or update the `.office-kit/` workspace (plugin path only) |
+| `text-to-speech` | Offline Kokoro narration, one WAV per segment, measured timing manifest |
+| `strudel-offline` | Offline Strudel / Dough music bed under narration |
 
-**Decks and video start as soon as you ask.** The same agent writes the plan and the slides or scenes, then you say what to change. Export and final render happen only when you request a specific deliverable. Brand-only work (`init-brand`) still uses a brand-proposal gate.
+In the CAPA path two subagents exist: `research-agent` (opt-in fact checking with recorded sources) and `brand-agent` (identity writes behind the proposal gate). Authoring never leaves the primary conversation.
+
+**Durable state** lives on disk, not only in chat: a document keeps its HTML and `NOTES.md`; a deck or video keeps `plan/PLAN.md`, `reports/build.md`, `reports/review.md`, and `research.md` / `delivery.md` when those stages run. Resuming a project means reading those files.
+
+## Commands
+
+The Python scripts own install, preview, audit, stop, and export. Agents never run Slidev, Vite, or HyperFrames by hand. From the workspace root:
+
+```bash
+# Documents: one file, no server
+uv run python scripts/document/doc.py new <slug> --title "…"
+uv run python scripts/document/doc.py check projects/<slug>/<slug>.html
+uv run python scripts/document/doc.py refresh --all        # re-apply brand + template shell
+
+# Presentations
+uv run python scripts/presentation/deck.py new <slug> --title "…"   # scaffold + npm install
+uv run python scripts/presentation/deck.py dev <slug>              # live preview, health-checked
+uv run python scripts/presentation/deck.py audit <slug>            # static + render pass (see below)
+uv run python scripts/presentation/deck.py export <slug> --format pdf|pptx|png
+uv run python scripts/presentation/deck.py stop <slug>
+
+# Video
+uv run python scripts/video/video.py new <slug> --title "…"
+uv run python scripts/video/video.py dev <slug>
+uv run python scripts/video/video.py audit <slug>
+uv run python scripts/video/video.py refresh <slug>                # re-copy the brand snapshot
+uv run python scripts/video/video.py stop <slug>
+
+# Brand
+uv run python scripts/brand/generate.py <id>                       # brand.json → BRAND.md, tokens.css, frame.md
+```
+
+### The deck audit
+
+`deck.py audit` is the guardrail an agent trusts before telling you a deck is done, so it checks what actually breaks decks:
+
+- Headmatter (`theme`, `aspectRatio`, `canvasWidth`, a pinned `colorSchema`), layout names against the installed Slidev, Lucide icon names, tag balance.
+- The `ok-*` component contracts that fail silently in CSS: `ok-flow` holds exactly three steps, `ok-band` holds a mark plus one wrapper, `ok-hero-num` holds text.
+- Every `src="/…"` and `image: /…` resolves under `public/`; every `<img>` has `alt`.
+- **Render pass**: with the preview running, every slide is loaded at the canvas size in Chromium; content past the slide box or an image that failed to load is an error, and one PNG per slide lands in `reports/render/`. `--render` starts a preview if none is running, `--no-render` skips the pass, `--dark` adds a `prefers-color-scheme: dark` run.
+- Distinct console errors from the preview log, so a component error is not buried in plugin noise.
 
 ## Brand contract
 
@@ -186,93 +188,63 @@ The workspace can hold several identities. Each one is a directory:
 
 | Path | Role |
 |---|---|
-| `brands/<id>/brand.json` | Canonical, machine-readable source of truth for that identity |
+| `brands/<id>/brand.json` | Canonical, machine-readable source of truth |
 | `brands/<id>/BRAND.md` | Generated usage rules |
 | `brands/<id>/tokens.css` | Generated CSS custom properties (documents and decks) |
-| `brands/<id>/frame.md` | Generated HyperFrames framing / safe areas |
+| `brands/<id>/frame.md` | Generated HyperFrames framing and safe areas |
 | `brands/<id>/assets/` | Supplied logos and marks, preserved byte-for-byte |
 | `config.toml` `[brand] default` | Identity used when a project does not name one |
 
-This repo ships `brands/officekit/` as the default. Add another identity with `init-brand` rather than overwriting an existing one. Change an identity by updating that `brand.json` (via `init-brand` / `brand-agent`) and regenerating derivatives. Do not hand-edit generated files or copy colors/fonts into `config.toml` or project sources.
+Change an identity by editing its `brand.json` (through `init-brand`) and regenerating. Never hand-edit a generated file and never copy colours or fonts into `config.toml` or a project. Two consumers hold generated copies and must be refreshed after a brand changes: documents (`doc.py refresh --all`; `doc.py check` fails on drift) and video projects (`video.py refresh`, because HyperFrames cannot serve files above the project root). Decks read `tokens.css` live.
 
-Two consumers hold *generated copies* rather than reading `brands/<id>/` live, and both must be refreshed after that identity changes:
-
-- **Documents** embed the token sheet and the marks so the file stands alone. The file records which brand it used. Run `uv run python scripts/document/doc.py refresh --all`; `doc.py check` fails on a document whose brand region has drifted, so staleness cannot pass silently. The same command re-applies the template's shell CSS and script, which is how a fix to `.templates/document-html/document.html` reaches documents that already exist — `check` reports an older shell as a warning.
-- **Video** projects need a project-local snapshot because HyperFrames cannot serve files above a project root. Scaffolding copies the files listed in `[video.brand_snapshot]` from `brands/<id>/` into the project's `brand/` directory.
-
-Operational defaults (templates, canvas size, preview ports, TTS flags, export dirs) live in `config.toml`. A project's plan may override those values for that project only.
+Operational defaults (templates, canvas size, preview ports, TTS flags, export directories) live in `config.toml`; a project's plan may override them for that project only.
 
 ## Directory layout
 
-```
-office-kit/                # this repository (the plugin installs the same layout as .office-kit/ in a host repo)
-├── brands/<id>/           # One identity per directory (default: officekit)
-├── config.toml            # Operational defaults plus [brand] default
-├── capabilities.yaml      # CAPA skills and subagents
-├── plugins/office-kit/    # Portable Agent Plugin; canonical skills live here
-├── WORKFLOW.md            # Orchestration contract (primary context)
+```text
+office-kit/                       # this repository; the plugin installs the same layout as .office-kit/
+├── brands/<id>/                  # one identity per directory (default: officekit)
+├── config.toml                   # operational defaults plus [brand] default
+├── capabilities.yaml             # CAPA skills and subagents
+├── WORKFLOW.md                   # orchestration contract (primary context)
+├── plugins/office-kit/           # the portable Agent Plugin; canonical skills live here
+│   └── skills/<name>/SKILL.md
 ├── .templates/
-│   ├── document-html/     # Standalone HTML document
-│   ├── presentation/      # Slidev
-│   └── video/             # HyperFrames
+│   ├── document-html/            # standalone HTML document
+│   ├── presentation/             # Slidev: slides.md.j2, styles/brand.css, components/, layouts/, public/
+│   └── video/                    # HyperFrames
 ├── scripts/
-│   ├── common.py          # config, brand, Jinja render used by all scaffolders
-│   ├── brand/             # catalog + brand.json → derivatives
-│   ├── document/
-│   │   ├── doc.py         # new | toc | check | refresh | embed
-│   │   └── package.py     # asset-inlining library used by `doc.py embed`
-│   ├── presentation/deck.py  # new | dev | audit | export | stop
-│   └── video/video.py     # new | dev | audit | refresh | stop
-├── package.json           # npm workspaces (root node_modules)
-├── pyproject.toml         # Root uv / Python tooling
-└── projects/<slug>/       # One deliverable per directory
-    ├── <slug>.html        # a document: the whole deliverable
-    ├── NOTES.md           # a document: the whole durable state
-    ├── plan/PLAN.md       # a deck or video
-    ├── reports/           # a deck or video
-    └── …source, dist/ or renders/
+│   ├── common.py                 # config, brand, Jinja, cross-platform process helpers
+│   ├── brand/                    # catalog + generator
+│   ├── document/doc.py           # new | toc | check | refresh | embed
+│   ├── presentation/deck.py      # new | dev | audit | export | stop
+│   ├── presentation/render-audit.mjs
+│   ├── video/video.py            # new | dev | audit | refresh | stop
+│   └── plugin/build.py           # regenerates the plugin payload and manifests
+├── tests/
+├── package.json                  # npm workspaces (projects/*), one root node_modules
+├── pyproject.toml                # one root .venv
+└── projects/<slug>/              # deliverables (gitignored)
 ```
-
-Documents, decks, and video are scaffolded by scripts that render Jinja templates (`*.j2`, or `document.html`) and bind a brand id:
-
-- `uv run python scripts/document/doc.py new <slug>`
-- `uv run python scripts/presentation/deck.py new <slug>`  # also runs npm install -w
-- `uv run python scripts/video/video.py new <slug>`
-
-Then start the live preview with `deck.py dev <slug>` / `video.py dev <slug>`, and gate completion with `deck.py audit` / `video.py audit`. Never run `npx slidev` from the workspace root.
 
 Add a custom template under `.templates/` and point `config.toml` at its directory name.
 
-## Quick usage
+## What OfficeKit builds on
 
-Examples of what to say:
+- [Slidev](https://sli.dev/) and [Lucide](https://lucide.dev/) icons for presentations, with [Playwright](https://playwright.dev/) for the render audit and export
+- [HyperFrames](https://hyperframes.heygen.com/) for video composition and rendering
+- [Kokoro](https://github.com/hexgrad/kokoro) (via Hugging Face) for offline narration
+- [Strudel](https://strudel.cc/) and Dough for the offline music bed (**AGPL-3.0-or-later**, see below)
+- [CAPA](https://github.com/infragate/capa) for the in-repo agent workflow, and the [Agent Plugins 1.0](https://agent-plugins.org/specification) packaging for everything else
 
-- “Write a two-page product brief for engineering leads as a standalone HTML doc.”
-- “Build a 12-slide kickoff deck for the Q3 launch.”
-- “Turn this script into a 60-second branded explainer with voiceover.”
-- “Set up our brand from this logo and palette.”
+Bugs inside those tools belong with their projects; a note here is welcome when OfficeKit should work around one.
 
-For a **document**, you get the finished file back in about three minutes, then say what to change. For a **deck or video**, a plan is written and the same agent starts building in a live preview — then you ask for a named export when you want one.
+## Contributing
 
-If modality is unclear, you should get one routing question — not a mixed project. One directory is one engine.
+Issues and pull requests are welcome. Start with [CONTRIBUTING.md](CONTRIBUTING.md) for the local setup, the generated-files rule, and the test suite; templates for [bug reports and feature requests](https://github.com/Minitour/office-kit/issues/new/choose) ask for what makes a report actionable. The project follows a [Code of Conduct](CODE_OF_CONDUCT.md), and security reports go through [SECURITY.md](SECURITY.md).
 
-## Working with the output
-
-| Kind | Look at it | Export |
-|---|---|---|
-| Document | `open projects/<slug>/<slug>.html` — no server; it is already one file | Nothing to export. Print to PDF from the browser if you need paper |
-| Presentation | `uv run python scripts/presentation/deck.py dev <slug>` | `uv run python scripts/presentation/deck.py export <slug>` → PDF/PPTX/PNG under `dist/`, only when requested |
-| Video | `uv run python scripts/video/video.py dev <slug>` | `npx hyperframes render` from the project (via `video.py` workflow) → file under `renders/`, only when requested |
-
-Verify a document with `uv run python scripts/document/doc.py check projects/<slug>/<slug>.html`: it proves the file is self-contained, brand-current, and accessible without opening a browser.
-
-Verify a deck with `uv run python scripts/presentation/deck.py audit <slug>` (static; must pass before you call the deck done). Verify a video with `uv run python scripts/video/video.py audit <slug>`.
-
-For decks and video, do not treat a live preview or a leftover `dist/` / `renders/` file as the requested delivery. Ports and default export dirs are in `config.toml`. There is one `node_modules` at the workspace root (npm workspaces); never install per-project.
+Releases are tagged `vX.Y.Z` and published on the [Releases](https://github.com/Minitour/office-kit/releases) page with notes from [CHANGELOG.md](CHANGELOG.md).
 
 ## License
 
-See [`LICENSE`](LICENSE). The optional Strudel/Dough music-bed renderer
-(`plugins/office-kit/skills/strudel-offline/`, including vendored Dough and
-the `@strudel/*` / `supradough` packages) is **AGPL-3.0-or-later**. The
-complete text is in that skill's [`LICENSE`](plugins/office-kit/skills/strudel-offline/LICENSE).
+See [`LICENSE`](LICENSE). The optional Strudel / Dough music-bed renderer (`plugins/office-kit/skills/strudel-offline/`, including vendored Dough and the `@strudel/*` / `supradough` packages) is **AGPL-3.0-or-later**; the complete text is in that skill's [`LICENSE`](plugins/office-kit/skills/strudel-offline/LICENSE).

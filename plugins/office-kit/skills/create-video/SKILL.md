@@ -4,7 +4,7 @@ description: Create or revise a branded narrated video with OfficeKit and HyperF
 compatibility: Requires an OfficeKit workspace, Node.js 22+, npm, Python 3.10+, uv, ffmpeg, and network access for uncached HyperFrames/Kokoro/Strudel dependencies.
 metadata:
   author: OfficeKit
-  version: "0.1.0"
+  version: "0.2.0"
 ---
 
 # Create an OfficeKit video

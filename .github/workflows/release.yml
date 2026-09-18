@@ -1,0 +1,58 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+
+      - name: Check the version matches the tag
+        run: |
+          uv venv --python 3.12
+          uv pip install pyyaml
+          TAG="${GITHUB_REF_NAME#v}"
+          VERSION=$(uv run --no-sync python - <<'EOF'
+          import re, pathlib
+          print(re.search(r'^VERSION = "([^"]+)"', pathlib.Path("scripts/plugin/build.py").read_text(), re.M).group(1))
+          EOF
+          )
+          echo "tag=$TAG version=$VERSION"
+          test "$TAG" = "$VERSION"
+
+      - name: Extract this version's changelog section
+        id: notes
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          uv run --no-sync python - "$TAG" > release-notes.md <<'EOF'
+          import re, sys, pathlib
+          version = sys.argv[1]
+          text = pathlib.Path("CHANGELOG.md").read_text(encoding="utf-8")
+          match = re.search(r"^## \[" + re.escape(version) + r"\][^\n]*\n(.*?)(?=^## \[|\Z)", text, re.S | re.M)
+          print(match.group(1).strip() if match else f"OfficeKit {version}")
+          EOF
+          cat release-notes.md
+
+      - name: Package the plugin
+        run: |
+          mkdir -p dist
+          (cd plugins && zip -qr "../dist/office-kit-plugin-${GITHUB_REF_NAME}.zip" office-kit)
+          ls -l dist
+
+      - name: Publish the GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --title "OfficeKit ${GITHUB_REF_NAME#v}" \
+            --notes-file release-notes.md \
+            dist/office-kit-plugin-${GITHUB_REF_NAME}.zip

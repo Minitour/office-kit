@@ -4,7 +4,7 @@ description: Render an offline Strudel music bed for an OfficeKit HyperFrames vi
 compatibility: Requires Node.js 18+. First render runs npm install in this skill's scripts directory (network once). Later renders are offline.
 metadata:
   author: OfficeKit
-  version: "0.1.0"
+  version: "0.2.0"
 ---
 
 # Video music bed (Strudel / Dough)

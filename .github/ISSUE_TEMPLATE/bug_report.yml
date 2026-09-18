@@ -1,0 +1,65 @@
+name: Bug report
+description: Something in a script, template, skill, or install path does not work as documented.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. The issues that get fixed fastest name the file and line, show what was expected, and show what actually happened.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Install (capa install, setup-office-kit, bootstrap)
+        - Documents (doc.py, document template)
+        - Presentations (deck.py, Slidev template, audit)
+        - Video (video.py, HyperFrames template)
+        - Narration / music (text-to-speech, strudel-offline)
+        - Brand (init-brand, generate.py)
+        - Plugin packaging (build.py, marketplaces)
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: One or two sentences on what is wrong and what you expected.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Commands you ran, and the minimal slide/document/brand snippet if a template is involved.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: Output
+      description: The exact error, traceback, or `deck.py audit` / `doc.py check` output. For visual bugs attach a screenshot or `reports/render/slide-NN.png`.
+      render: text
+  - type: input
+    id: version
+    attributes:
+      label: OfficeKit version
+      description: Release tag, or the commit on main.
+      placeholder: v0.2.0
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: OS, Python, Node, and (if relevant) agent client.
+      placeholder: Windows 11, Python 3.12, Node 22.11, Claude Code
+    validations:
+      required: true
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: Suggested fix
+      description: If you already see where it goes wrong, say so. A pointer to the line is plenty.

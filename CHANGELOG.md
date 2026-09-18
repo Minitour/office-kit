@@ -64,5 +64,5 @@ video with offline Kokoro narration and a Strudel/Dough music bed, brand
 catalog, CAPA workflow, and the portable Agent Plugin.
 
 [Unreleased]: https://github.com/Minitour/office-kit/compare/v0.2.0...HEAD
-[0.2.0]: https://github.com/Minitour/office-kit/compare/v0.1.0...v0.2.0
-[0.1.0]: https://github.com/Minitour/office-kit/releases/tag/v0.1.0
+[0.2.0]: https://github.com/Minitour/office-kit/compare/083f1dc...v0.2.0
+[0.1.0]: https://github.com/Minitour/office-kit/commit/083f1dc

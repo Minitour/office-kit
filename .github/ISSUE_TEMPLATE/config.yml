@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Security report
+    url: https://github.com/Minitour/office-kit/security/advisories/new
+    about: Report a vulnerability privately instead of opening an issue.
+  - name: Upstream engines
+    url: https://github.com/Minitour/office-kit#what-officekit-builds-on
+    about: Problems inside Slidev, HyperFrames, Kokoro, or Strudel belong with those projects.

@@ -18,7 +18,7 @@ from typing import Iterable
 
 ROOT = Path(__file__).resolve().parents[2]
 PLUGIN = ROOT / "plugins" / "office-kit"
-VERSION = "0.1.0"
+VERSION = "0.2.0"
 
 SKILLS = (
     "setup-office-kit",

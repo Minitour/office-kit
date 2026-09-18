@@ -1,0 +1,29 @@
+name: Feature request
+description: A new affordance, check, skill behaviour, or workflow change.
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What is missing
+      description: What were you trying to produce, and where did the template, script, or skill fall short? A concrete deck, document, or video helps more than a general wish.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: What you would add or change. Template CSS, an audit rule, a script flag, skill text; include a snippet if you have one working locally.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Other ways to get the same result, and why they are worse.
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Scope
+      options:
+        - label: I am willing to open a PR for this.

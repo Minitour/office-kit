@@ -4,7 +4,7 @@ description: Create or revise a branded, self-contained HTML document with Offic
 compatibility: Requires an OfficeKit workspace created by setup-office-kit and Python 3.10+ with uv.
 metadata:
   author: OfficeKit
-  version: "0.1.0"
+  version: "0.2.0"
 ---
 
 # Create an OfficeKit document

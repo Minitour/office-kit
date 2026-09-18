@@ -4,7 +4,7 @@ description: Generate local Kokoro narration as one WAV file per JSON segment an
 compatibility: Requires an OfficeKit workspace with uv. Initial Kokoro model/voice downloads need network access; some languages require espeak-ng or Misaki extras.
 metadata:
   author: OfficeKit
-  version: "0.1.0"
+  version: "0.2.0"
 ---
 
 # OfficeKit text to speech

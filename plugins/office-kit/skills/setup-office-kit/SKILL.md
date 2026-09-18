@@ -4,7 +4,7 @@ description: Install or update an isolated OfficeKit workspace inside the curren
 compatibility: Requires Python 3.10+, Node.js 22+, npm, and uv. ffmpeg is required for final video encoding. Initial dependency setup needs network access.
 metadata:
   author: OfficeKit
-  version: "0.1.0"
+  version: "0.2.0"
 ---
 
 # Set up OfficeKit

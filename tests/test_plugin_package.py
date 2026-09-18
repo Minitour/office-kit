@@ -196,6 +196,23 @@ class PluginManifestTests(unittest.TestCase):
             )
         )
 
+    def test_versions_agree(self) -> None:
+        """One version everywhere: pyproject, build, bootstrap, every skill, the manifest."""
+        version = build.VERSION
+        self.assertRegex(version, r"^\d+\.\d+\.\d+$")
+        pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
+        self.assertIn(f'version = "{version}"', pyproject)
+        self.assertEqual(bootstrap.VERSION, version)
+        for skill in sorted((PLUGIN / "skills").glob("*/SKILL.md")):
+            _, raw, _ = skill.read_text(encoding="utf-8").split("---", 2)
+            self.assertEqual(
+                str(yaml.safe_load(raw)["metadata"]["version"]), version, skill
+            )
+        manifest = json.loads((PLUGIN / "plugin.json").read_text(encoding="utf-8"))
+        self.assertEqual(manifest["version"], version)
+        changelog = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
+        self.assertIn(f"## [{version}]", changelog)
+
     def test_build_check_passes(self) -> None:
         code, output = capture_main(build, ["--check"])
         self.assertEqual(code, 0, output)

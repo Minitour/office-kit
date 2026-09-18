@@ -4,7 +4,7 @@ description: Create or revise a branded Slidev presentation with OfficeKit. Use 
 compatibility: Requires an OfficeKit workspace created by setup-office-kit, Node.js 22+, npm, Python 3.10+, and uv.
 metadata:
   author: OfficeKit
-  version: "0.1.0"
+  version: "0.2.0"
 ---
 
 # Create OfficeKit slides

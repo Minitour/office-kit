@@ -11,7 +11,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-VERSION = "0.1.0"
+VERSION = "0.2.0"
 MARKER = ".officekit-managed.json"
 WORKSPACE_DIR = ".office-kit"
 LEGACY_WORKSPACE_DIR = "office-kit"

@@ -155,6 +155,7 @@ WORKSPACE_FILES = (
     "scripts/document/doc.py",
     "scripts/document/package.py",
     "scripts/presentation/deck.py",
+    "scripts/presentation/render-audit.mjs",
     "scripts/video/video.py",
 )
 

@@ -83,9 +83,14 @@ Build in logical groups while the live preview updates, recording progress in
 uv run python scripts/presentation/deck.py audit <slug>
 ```
 
-Audit must exit 0. Review narrative, overflow, readability, accessibility,
-brand fidelity, visual variety, speaker flow, and acceptance criteria; fix
-findings and write `reports/review.md`.
+Audit must exit 0. While the preview runs, audit also renders every slide
+at the canvas size, fails on content that extends past the slide or an image
+that did not load, and writes one PNG per slide to `reports/render/`
+(`--render` starts a preview if needed, `--no-render` skips the pass,
+`--dark` adds a dark-scheme pass). Look at those PNGs; a static pass cannot
+judge a visual medium. Review narrative, overflow, readability,
+accessibility, brand fidelity, visual variety, speaker flow, and acceptance
+criteria; fix findings and write `reports/review.md`.
 
 Export only when requested:
 

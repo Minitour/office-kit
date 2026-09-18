@@ -9,7 +9,8 @@ npm workspace install and the Slidev preview lifecycle so agents never run
 Usage:
     uv run python scripts/presentation/deck.py new kickoff --title "Q3 Kickoff"
     uv run python scripts/presentation/deck.py dev kickoff
-    uv run python scripts/presentation/deck.py audit kickoff
+    uv run python scripts/presentation/deck.py audit kickoff          # static + render if a preview runs
+    uv run python scripts/presentation/deck.py audit kickoff --render # start a preview if needed
     uv run python scripts/presentation/deck.py export kickoff --format pdf
     uv run python scripts/presentation/deck.py stop kickoff
 """
@@ -49,9 +50,13 @@ ScaffoldError = _common.ScaffoldError
 PIDFILE_NAME = ".slidev-dev.pid"
 LOGFILE_NAME = ".slidev-dev.log"
 RECLAIMABLE = ("slidev", "vite")
-OVERFLOW_CHARS = 1800
+RENDER_SCRIPT = Path(__file__).resolve().parent / "render-audit.mjs"
+RENDER_DIR = Path("reports") / "render"
 ANSI_RE = re.compile(r"\x1b\[[0-9;]*[A-Za-z]")
 LOG_ERROR_MARKERS = ("console.error", "[vite] error", "internal server error", "error:")
+# Headless browsers (the render pass, export) trip these; they say nothing about the deck.
+LOG_IGNORE_MARKERS = ("wake lock permission",)
+LOG_TIMESTAMP_RE = re.compile(r"^\d{1,2}:\d{2}:\d{2}\s*(?:AM|PM)?\s+", re.IGNORECASE)
 
 # Headmatter keys Slidev accepts; anything else is still allowed but we
 # require the OfficeKit baseline and reject brand-breaking blocks.
@@ -116,9 +121,12 @@ LOGO_URL_RE = re.compile(r"""--ok-logo(?:-on-dark)?\s*:\s*url\(\s*['"]?([^'")]+)
 BULLET_RE = re.compile(r"^\s*[-*+]\s+\S", re.MULTILINE)
 HEADING_RE = re.compile(r"^#{1,6}\s+\S", re.MULTILINE)
 ICON_MARK_RE = re.compile(
-    r"(?:lucide-[a-z0-9-]+|class=[\"'][^\"']*\bok-(?:icon|kicker|icon-row|hero|band|step|outcome))",
+    r"(?:lucide-[a-z0-9-]+|class=[\"'][^\"']*\bok-(?:icon|kicker|icon-row|hero|band|step|outcome|figure|shot|split|table|code|bars))",
     re.IGNORECASE,
 )
+PUBLIC_SRC_RE = re.compile(r"\bsrc\s*=\s*[\"'](/[^\"'?#]*)", re.IGNORECASE)
+IMG_TAG_RE = re.compile(r"<img\b[^>]*>", re.IGNORECASE | re.DOTALL)
+ALT_RE = re.compile(r"\balt\s*=\s*(?:\"([^\"]*)\"|'([^']*)')", re.IGNORECASE)
 
 
 def _workspace_root(explicit: Path | None, start: Path) -> Path:
@@ -181,9 +189,11 @@ def log_errors(text: str, *, limit: int = 3) -> list[str]:
     seen: set[str] = set()
     found: list[str] = []
     for raw in text.splitlines():
-        line = ANSI_RE.sub("", raw).strip()
+        line = LOG_TIMESTAMP_RE.sub("", ANSI_RE.sub("", raw).strip())
         lowered = line.lower()
         if not line or not any(marker in lowered for marker in LOG_ERROR_MARKERS):
+            continue
+        if any(marker in lowered for marker in LOG_IGNORE_MARKERS):
             continue
         key = line[:120]
         if key in seen:
@@ -253,6 +263,31 @@ def cmd_dev(args: argparse.Namespace) -> int:
     if args.port is not None:
         preferred = int(args.port)
 
+    _pid, _port, url, log_path = start_preview(
+        root, dest, slug, preferred=preferred, timeout=args.timeout
+    )
+
+    try:
+        problems = log_errors(log_path.read_text(encoding="utf-8", errors="replace"))
+    except OSError:
+        problems = []
+    for line in problems:
+        print(f"  warn:  dev log: {line}")
+
+    print(f"  open:  {url}")
+    print(f"  stop:  uv run python scripts/presentation/deck.py stop {slug}")
+    return 0
+
+
+def start_preview(
+    root: Path,
+    dest: Path,
+    slug: str,
+    *,
+    preferred: int,
+    timeout: float,
+) -> tuple[int, int, str, Path]:
+    """Start (or restart) the managed Slidev preview; return pid, port, url, log."""
     # Stop a previous deck.py-managed server for this project first.
     existing = _common.read_pidfile(_pidfile(dest))
     if existing.get("pid"):
@@ -274,23 +309,26 @@ def cmd_dev(args: argparse.Namespace) -> int:
     print(f"Starting Slidev for {slug} (pid {pid}, port {port})")
     print(f"  log:   {_common.relative_to(log_path, root)}")
 
-    if not _common.wait_http_ok(url, timeout_seconds=args.timeout):
+    if not _common.wait_http_ok(url, timeout_seconds=timeout):
         # Leave the process running so the log is inspectable, but fail hard.
         raise ScaffoldError(
-            f"Slidev did not become healthy at {url} within {args.timeout:.0f}s; "
+            f"Slidev did not become healthy at {url} within {timeout:.0f}s; "
             f"see {log_path}"
         )
+    return pid, port, url, log_path
 
-    try:
-        problems = log_errors(log_path.read_text(encoding="utf-8", errors="replace"))
-    except OSError:
-        problems = []
-    for line in problems:
-        print(f"  warn:  dev log: {line}")
 
-    print(f"  open:  {url}")
-    print(f"  stop:  uv run python scripts/presentation/deck.py stop {slug}")
-    return 0
+def live_preview_url(dest: Path) -> str | None:
+    """URL of this project's managed preview when it is up, else None."""
+    data = _common.read_pidfile(_pidfile(dest))
+    pid = data.get("pid") or ""
+    port = data.get("port") or ""
+    if not (pid.isdigit() and port.isdigit()):
+        return None
+    if not _common.pid_alive(int(pid)):
+        return None
+    url = f"http://localhost:{port}/"
+    return url if _common.wait_http_ok(url, timeout_seconds=3.0) else None
 
 
 def cmd_stop(args: argparse.Namespace) -> int:
@@ -339,6 +377,9 @@ class AuditResult:
     errors: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
     slide_count: int = 0
+    headmatter: dict[str, Any] = field(default_factory=dict)
+    visible_slides: int = 0
+    rendered: bool = False
 
 
 class _TagBalanceParser(HTMLParser):
@@ -586,6 +627,233 @@ def _check_tag_balance(body: str) -> list[str]:
     return findings
 
 
+@dataclass
+class _Node:
+    tag: str
+    attrs: dict[str, str]
+    children: list["_Node"] = field(default_factory=list)
+    text: str = ""
+
+    def classes(self) -> set[str]:
+        return set((self.attrs.get("class") or "").split())
+
+    def walk(self):
+        yield self
+        for child in self.children:
+            yield from child.walk()
+
+
+class _TreeParser(HTMLParser):
+    """Element tree of a slide body; text nodes fold into ``text``."""
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.root = _Node("#root", {})
+        self.stack: list[_Node] = [self.root]
+
+    def _open(self, tag: str, attrs) -> _Node:
+        node = _Node(tag.lower(), {key: (value or "") for key, value in attrs})
+        self.stack[-1].children.append(node)
+        return node
+
+    def handle_starttag(self, tag: str, attrs) -> None:
+        node = self._open(tag, attrs)
+        if tag.lower() not in VOID_TAGS:
+            self.stack.append(node)
+
+    def handle_startendtag(self, tag: str, attrs) -> None:
+        self._open(tag, attrs)
+
+    def handle_endtag(self, tag: str) -> None:
+        name = tag.lower()
+        for index in range(len(self.stack) - 1, 0, -1):
+            if self.stack[index].tag == name:
+                del self.stack[index:]
+                return
+
+    def handle_data(self, data: str) -> None:
+        self.stack[-1].text += data
+
+
+def check_component_contracts(body: str) -> tuple[list[str], list[str]]:
+    """Markup contracts of the ok-* components that fail silently in CSS.
+
+    ``.ok-flow`` is a ``1fr auto 1fr auto 1fr`` grid: exactly three steps.
+    ``.ok-band`` is a ``3.2rem 1fr`` grid: a mark plus one wrapper, or the
+    paragraph lands in the 3.2rem column. ``.ok-hero-num`` is a text panel.
+    """
+    if not any(token in body for token in ("ok-flow", "ok-band", "ok-hero-num")):
+        return [], []
+    parser = _TreeParser()
+    try:
+        parser.feed(body)
+        parser.close()
+    except Exception:  # noqa: BLE001 - tag balance is reported elsewhere
+        return [], []
+    errors: list[str] = []
+    warnings: list[str] = []
+    for node in parser.root.walk():
+        classes = node.classes()
+        if "ok-flow" in classes:
+            steps = [c for c in node.children if "ok-step" in c.classes()]
+            joins = [c for c in node.children if "ok-flow-join" in c.classes()]
+            if len(steps) != 3:
+                errors.append(
+                    f"ok-flow holds {len(steps)} ok-step child(ren); the grid is built "
+                    "for exactly 3 (a fourth wraps and collapses every column)"
+                )
+            elif len(joins) != 2:
+                warnings.append(
+                    f"ok-flow has {len(joins)} ok-flow-join(s); expected 2, one between each step"
+                )
+        if "ok-band" in classes:
+            if len(node.children) > 2:
+                errors.append(
+                    f"ok-band has {len(node.children)} element children; the 2-column grid "
+                    "takes a mark plus one wrapper holding h3 + p"
+                )
+        if "ok-hero-num" in classes:
+            odd = [c for c in node.children if c.tag not in ("span", "p")]
+            has_text = bool(node.text.strip()) or any(c.text.strip() for c in node.children)
+            if odd:
+                warnings.append(
+                    f"ok-hero-num contains <{odd[0].tag}>; it is a text panel, put the "
+                    "figure in a <span> and the icon elsewhere"
+                )
+            elif not has_text:
+                warnings.append("ok-hero-num has no text; the figure goes in a <span>")
+    return errors, warnings
+
+
+def check_assets(slide: Slide, dest: Path) -> tuple[list[str], list[str]]:
+    """Every ``/path`` reference resolves under public/; every <img> has alt."""
+    errors: list[str] = []
+    warnings: list[str] = []
+    public = dest / "public"
+    seen: set[str] = set()
+
+    def check_public(ref: str) -> None:
+        if ref in seen or ref.startswith("//"):
+            return
+        seen.add(ref)
+        if not (public / ref.lstrip("/")).is_file():
+            errors.append(f"{ref} is not a file under public/")
+
+    for match in PUBLIC_SRC_RE.finditer(slide.body):
+        check_public(match.group(1))
+    for key in ("image", "background"):
+        value = slide.frontmatter.get(key)
+        if isinstance(value, str) and value.startswith("/") and not value.startswith("//"):
+            check_public(value.split("?", 1)[0].split("#", 1)[0])
+    for match in IMG_TAG_RE.finditer(slide.body):
+        alt = ALT_RE.search(match.group(0))
+        if alt is None or not (alt.group(1) or alt.group(2) or "").strip():
+            warnings.append(
+                "<img> without alt text; describe the figure for readers who cannot see it"
+            )
+    return errors, warnings
+
+
+def canvas_size(headmatter: dict[str, Any]) -> tuple[int, int]:
+    width = int(headmatter.get("canvasWidth") or 980)
+    ratio = str(headmatter.get("aspectRatio") or "16/9")
+    try:
+        if "/" in ratio:
+            num, den = ratio.split("/", 1)
+            value = float(num) / float(den)
+        else:
+            value = float(ratio)
+    except (ValueError, ZeroDivisionError):
+        value = 16 / 9
+    return width, int(round(width / value))
+
+
+def visible_slide_count(slides: list[Slide]) -> int:
+    return sum(
+        1
+        for slide in slides
+        if not slide.frontmatter.get("hide") and not slide.frontmatter.get("disabled")
+    )
+
+
+def render_findings(data: dict[str, Any]) -> tuple[list[str], list[str]]:
+    """Turn render-audit.mjs output into audit errors and warnings."""
+    errors: list[str] = []
+    warnings: list[str] = []
+    scheme = str(data.get("scheme") or "light")
+    prefix = "dark scheme: " if scheme == "dark" else ""
+    for entry in data.get("slides") or []:
+        no = entry.get("no")
+        label = f"slide {no}"
+        if not entry.get("found"):
+            errors.append(f"{label}: {prefix}did not render (no .slidev-page-{no} element)")
+            continue
+        if entry.get("overflow"):
+            errors.append(
+                f"{label}: {prefix}content extends {entry.get('by', 0)} px past the canvas "
+                f"({entry.get('element') or 'unknown element'})"
+            )
+        for src in entry.get("brokenImages") or []:
+            errors.append(f"{label}: {prefix}image failed to load: {src}")
+        if scheme == "dark" and entry.get("dark"):
+            warnings.append(
+                f"{label}: deck switched to Slidev's dark theme under prefers-color-scheme: dark; "
+                "pin `colorSchema: light`"
+            )
+    return errors, warnings
+
+
+def render_audit(
+    root: Path,
+    dest: Path,
+    *,
+    url: str,
+    slide_count: int,
+    canvas: tuple[int, int],
+    out_dir: Path,
+    dark: bool = False,
+) -> dict[str, Any]:
+    """Run render-audit.mjs against a live preview; return its JSON."""
+    width, height = canvas
+    command = [
+        _common.node_bin("node"),
+        str(RENDER_SCRIPT),
+        "--base",
+        url,
+        "--count",
+        str(slide_count),
+        "--width",
+        str(width),
+        "--height",
+        str(height),
+        "--out",
+        str(out_dir),
+    ]
+    if dark:
+        command.append("--dark")
+    result = subprocess.run(command, cwd=dest, check=False, capture_output=True, text=True)
+    payload = (result.stdout or "").strip().splitlines()
+    data: dict[str, Any] = {}
+    if payload:
+        try:
+            data = json.loads(payload[-1])
+        except json.JSONDecodeError:
+            data = {}
+    if result.returncode == 3 or data.get("error"):
+        raise ScaffoldError(
+            f"{data.get('error') or 'render audit failed'}; install it with "
+            f"`npm install -w {_common.relative_to(dest, root)} playwright-chromium` "
+            "from the workspace root"
+        )
+    if result.returncode != 0 or not isinstance(data.get("slides"), list):
+        detail = (result.stderr or result.stdout or "").strip().splitlines()
+        raise ScaffoldError(
+            "render audit failed"
+            + (f": {detail[-1]}" if detail else f" with exit {result.returncode}")
+        )
+    return data
+
+
 def _is_bare_bullet_slide(body: str) -> bool:
     stripped = body.strip()
     if not stripped:
@@ -615,11 +883,13 @@ def audit_deck(root: Path, dest: Path) -> AuditResult:
         return result
 
     result.slide_count = len(slides)
+    result.visible_slides = visible_slide_count(slides)
     if not slides:
         result.errors.append("slides.md has no slides")
         return result
 
     head = slides[0]
+    result.headmatter = dict(head.frontmatter)
     if head.frontmatter_error:
         result.errors.append(f"slide 1 (line {head.start_line}): {head.frontmatter_error}")
     for key in REQUIRED_HEADMATTER:
@@ -682,10 +952,12 @@ def audit_deck(root: Path, dest: Path) -> AuditResult:
             result.warnings.append(
                 f"{label}: heading + bullets with no icon/mark — add a lucide-* or ok-* mark"
             )
-        if len(slide.body) > OVERFLOW_CHARS:
-            result.warnings.append(
-                f"{label}: body is {len(slide.body)} chars — may overflow the canvas"
-            )
+        contract_errors, contract_warnings = check_component_contracts(slide.body)
+        result.errors.extend(f"{label}: {finding}" for finding in contract_errors)
+        result.warnings.extend(f"{label}: {finding}" for finding in contract_warnings)
+        asset_errors, asset_warnings = check_assets(slide, dest)
+        result.errors.extend(f"{label}: {finding}" for finding in asset_errors)
+        result.warnings.extend(f"{label}: {finding}" for finding in asset_warnings)
 
     _check_style_imports(dest, result.errors, result.warnings)
 
@@ -702,27 +974,80 @@ def audit_deck(root: Path, dest: Path) -> AuditResult:
     return result
 
 
+def _render_pass(
+    args: argparse.Namespace, root: Path, dest: Path, slug: str, result: AuditResult
+) -> None:
+    """Render every slide when a preview runs (or --render starts one)."""
+    mode = getattr(args, "render", "auto")
+    if mode == "off" or not result.visible_slides:
+        return
+    url = live_preview_url(dest)
+    started = False
+    if url is None:
+        if mode != "on":
+            print("  note:  no preview running; `--render` starts one and checks every slide")
+            return
+        config = _common.load_config(root)
+        preferred = int((config.get("preview") or {}).get("presentation_port") or 3030)
+        _pid, _port, url, _log = start_preview(
+            root, dest, slug, preferred=preferred, timeout=float(args.timeout)
+        )
+        started = True
+    out_dir = dest / Path(getattr(args, "render_dir", None) or RENDER_DIR)
+    canvas = canvas_size(result.headmatter)
+    try:
+        passes = [("light", out_dir, False)]
+        if getattr(args, "dark", False):
+            passes.append(("dark", out_dir / "dark", True))
+        for name, directory, dark in passes:
+            print(
+                f"  render: {result.visible_slides} slide(s) at {canvas[0]}x{canvas[1]} "
+                f"({name}) → {_common.relative_to(directory, root)}/"
+            )
+            data = render_audit(
+                root,
+                dest,
+                url=url,
+                slide_count=result.visible_slides,
+                canvas=canvas,
+                out_dir=directory,
+                dark=dark,
+            )
+            errors, warnings = render_findings(data)
+            result.errors.extend(errors)
+            result.warnings.extend(warnings)
+        result.rendered = True
+    finally:
+        if started:
+            for note in _common.stop_pidfile(_pidfile(dest)):
+                print(f"  {note}")
+
+
 def cmd_audit(args: argparse.Namespace) -> int:
     root = _workspace_root(args.workspace_root, Path.cwd())
     slug, dest = _resolve_project(root, args.slug)
     result = audit_deck(root, dest)
     rel = _common.relative_to(dest / "slides.md", root)
 
+    if not result.errors or getattr(args, "render", "auto") == "on":
+        _render_pass(args, root, dest, slug, result)
+
     for message in result.warnings:
         print(f"  warn:  {message}")
     for message in result.errors:
         print(f"  error: {message}")
 
+    checked = "static + render" if result.rendered else "static"
     if result.errors:
         print(
             f"FAIL {rel} — {result.slide_count} slide(s), "
-            f"{len(result.errors)} error(s), {len(result.warnings)} warning(s)"
+            f"{len(result.errors)} error(s), {len(result.warnings)} warning(s) [{checked}]"
         )
         return 1
 
     print(
         f"PASS {rel} — {result.slide_count} slide(s), "
-        f"{len(result.warnings)} warning(s)"
+        f"{len(result.warnings)} warning(s) [{checked}]"
     )
     return 0
 
@@ -823,8 +1148,44 @@ def _parser() -> argparse.ArgumentParser:
     )
     stop.set_defaults(handler=cmd_stop)
 
-    audit = sub.add_parser("audit", parents=[common], help="static-check slides.md")
+    audit = sub.add_parser(
+        "audit",
+        parents=[common],
+        help="check slides.md, and render every slide when a preview is running",
+    )
     audit.add_argument("slug", help="project slug or path under projects/")
+    render_group = audit.add_mutually_exclusive_group()
+    render_group.add_argument(
+        "--render",
+        dest="render",
+        action="store_const",
+        const="on",
+        default="auto",
+        help="render every slide, starting a preview if none is running",
+    )
+    render_group.add_argument(
+        "--no-render",
+        dest="render",
+        action="store_const",
+        const="off",
+        help="skip the render pass even when a preview is running",
+    )
+    audit.add_argument(
+        "--dark",
+        action="store_true",
+        help="also render under prefers-color-scheme: dark (into reports/render/dark/)",
+    )
+    audit.add_argument(
+        "--render-dir",
+        default=None,
+        help=f"directory under the project for the PNGs (default: {RENDER_DIR.as_posix()})",
+    )
+    audit.add_argument(
+        "--timeout",
+        type=float,
+        default=45.0,
+        help="seconds to wait for a preview started by --render",
+    )
     audit.set_defaults(handler=cmd_audit)
 
     export = sub.add_parser("export", parents=[common], help="export PDF/PPTX/PNG")

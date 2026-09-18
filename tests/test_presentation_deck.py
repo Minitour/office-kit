@@ -93,9 +93,10 @@ class PresentationTemplateContractTests(unittest.TestCase):
     def test_log_errors_dedupes_and_strips_ansi(self) -> None:
         text = (
             "  \x1b[32m➜\x1b[39m  Local: http://localhost:3030/\n"
-            "[vite] (client) [console.error] Failed to patch FloatingVue TypeError: x\n"
+            "4:10:20 AM [vite] (client) [console.error] Failed to patch FloatingVue TypeError: x\n"
             "    at app.component (…/client.mjs:27:42)\n"
-            "[vite] (client) [console.error] Failed to patch FloatingVue TypeError: x\n"
+            "4:10:24 AM [vite] (client) [console.error] Failed to patch FloatingVue TypeError: x\n"
+            "4:10:21 AM [vite] (client) [Unhandled rejection] NotAllowedError: Wake Lock permission request denied\n"
             "[vite] Internal server error: Failed to resolve import\n"
         )
         self.assertEqual(
@@ -452,6 +453,161 @@ theme: default
         code, output = run("audit", "bad-deck", "--workspace-root", str(self.root))
         self.assertEqual(code, 1, output)
         self.assertIn("missing required key", output)
+
+    def test_four_step_flow_fails(self) -> None:
+        step = '<div class="ok-step"><h3>S</h3><p>x</p></div>'
+        self._write_deck(
+            """---
+theme: default
+title: Bad
+aspectRatio: "16/9"
+canvasWidth: 980
+colorSchema: light
+---
+
+# Hi
+
+<div class="ok-flow">
+  %s
+  <div class="ok-flow-join" aria-hidden="true"></div>
+  %s
+  <div class="ok-flow-join" aria-hidden="true"></div>
+  %s
+  <div class="ok-flow-join" aria-hidden="true"></div>
+  %s
+</div>
+"""
+            % (step, step, step, step)
+        )
+        code, output = run("audit", "bad-deck", "--workspace-root", str(self.root))
+        self.assertEqual(code, 1, output)
+        self.assertIn("ok-flow holds 4 ok-step", output)
+
+    def test_unwrapped_band_children_fail(self) -> None:
+        self._write_deck(
+            """---
+theme: default
+title: Bad
+aspectRatio: "16/9"
+canvasWidth: 980
+colorSchema: light
+---
+
+# Hi
+
+<div class="ok-bands">
+  <div class="ok-band a">
+    <lucide-users class="ok-icon" />
+    <h3>Heading</h3>
+    <p>Body copy that lands in the 3.2rem column.</p>
+  </div>
+</div>
+"""
+        )
+        code, output = run("audit", "bad-deck", "--workspace-root", str(self.root))
+        self.assertEqual(code, 1, output)
+        self.assertIn("ok-band has 3 element children", output)
+
+    def test_icon_in_hero_num_warns(self) -> None:
+        self._write_deck(
+            """---
+theme: default
+title: Warn
+aspectRatio: "16/9"
+canvasWidth: 980
+colorSchema: light
+---
+
+# Hi
+
+<div class="ok-hero">
+  <div class="ok-hero-num"><lucide-eye class="ok-icon" /></div>
+  <div class="ok-hero-copy"><p>Copy</p></div>
+</div>
+"""
+        )
+        code, output = run("audit", "bad-deck", "--workspace-root", str(self.root))
+        self.assertEqual(code, 0, output)
+        self.assertIn("ok-hero-num contains <lucide-eye>", output)
+
+    def test_missing_public_asset_fails_and_missing_alt_warns(self) -> None:
+        dest = self._write_deck(
+            """---
+theme: default
+title: Bad
+aspectRatio: "16/9"
+canvasWidth: 980
+colorSchema: light
+---
+
+# Hi
+
+<img src="/figs/present.png" alt="" />
+<img src="/figs/missing.png" alt="A missing figure" />
+
+---
+layout: image-right
+image: /figs/also-missing.png
+---
+
+# Two
+"""
+        )
+        (dest / "public" / "figs").mkdir(parents=True)
+        (dest / "public" / "figs" / "present.png").write_bytes(b"x")
+        code, output = run("audit", "bad-deck", "--workspace-root", str(self.root))
+        self.assertEqual(code, 1, output)
+        self.assertIn("/figs/missing.png is not a file under public/", output)
+        self.assertIn("/figs/also-missing.png is not a file under public/", output)
+        self.assertNotIn("/figs/present.png is not", output)
+        self.assertIn("<img> without alt text", output)
+
+    def test_static_audit_notes_that_no_preview_ran(self) -> None:
+        self._write_deck(
+            """---
+theme: default
+title: Ok
+aspectRatio: "16/9"
+canvasWidth: 980
+colorSchema: light
+---
+
+# Hi
+
+<lucide-eye class="ok-icon" />
+"""
+        )
+        code, output = run("audit", "bad-deck", "--workspace-root", str(self.root))
+        self.assertEqual(code, 0, output)
+        self.assertIn("[static]", output)
+        self.assertIn("--render", output)
+        self.assertFalse(hasattr(deck, "OVERFLOW_CHARS"))
+
+    def test_render_findings_map_to_errors_and_warnings(self) -> None:
+        data = {
+            "scheme": "light",
+            "slides": [
+                {"no": 1, "found": True, "overflow": False, "by": 0, "element": None, "brokenImages": []},
+                {"no": 2, "found": True, "overflow": True, "by": 14, "element": "div.ok-flow", "brokenImages": []},
+                {"no": 3, "found": True, "overflow": False, "by": 0, "element": None, "brokenImages": ["/gone.png"]},
+                {"no": 4, "found": False},
+            ],
+        }
+        errors, warnings = deck.render_findings(data)
+        self.assertEqual(warnings, [])
+        self.assertEqual(len(errors), 3)
+        self.assertIn("slide 2: content extends 14 px past the canvas (div.ok-flow)", errors)
+        self.assertIn("slide 3: image failed to load: /gone.png", errors)
+        self.assertIn("slide 4: did not render", errors[2])
+        dark = {"scheme": "dark", "slides": [{"no": 1, "found": True, "overflow": False, "dark": True, "brokenImages": []}]}
+        errors, warnings = deck.render_findings(dark)
+        self.assertEqual(errors, [])
+        self.assertIn("colorSchema: light", warnings[0])
+
+    def test_canvas_size_follows_headmatter(self) -> None:
+        self.assertEqual(deck.canvas_size({"canvasWidth": 980, "aspectRatio": "16/9"}), (980, 551))
+        self.assertEqual(deck.canvas_size({"canvasWidth": 1200, "aspectRatio": "4/3"}), (1200, 900))
+        self.assertEqual(deck.canvas_size({}), (980, 551))
 
     def test_split_slides_handles_bare_separators(self) -> None:
         slides = deck.split_slides(

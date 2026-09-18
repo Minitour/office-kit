@@ -4,6 +4,7 @@ import contextlib
 import importlib.util
 import io
 import json
+import re
 import shutil
 import subprocess
 import sys
@@ -246,7 +247,7 @@ class BootstrapTests(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
         self.host = Path(self.temp.name)
-        self.target = self.host / "office-kit"
+        self.target = self.host / ".office-kit"
 
     def install(self, *extra: str) -> tuple[int, str]:
         return capture_main(
@@ -265,6 +266,27 @@ class BootstrapTests(unittest.TestCase):
         code, output = self.install()
         self.assertEqual(code, 0, output)
         self.assertIn("0 changed", output)
+
+    def test_default_target_is_a_dot_directory_unless_a_legacy_install_exists(self) -> None:
+        self.assertEqual(bootstrap.default_target(self.host), self.host / ".office-kit")
+        legacy = self.host / "office-kit"
+        legacy.mkdir()
+        self.assertEqual(bootstrap.default_target(self.host), self.host / ".office-kit")
+        (legacy / bootstrap.MARKER).write_text("{}", encoding="utf-8")
+        buffer = io.StringIO()
+        with contextlib.redirect_stdout(buffer):
+            self.assertEqual(bootstrap.default_target(self.host), legacy)
+        self.assertIn("legacy", buffer.getvalue())
+        (self.host / ".office-kit").mkdir()
+        self.assertEqual(bootstrap.default_target(self.host), self.host / ".office-kit")
+
+    def test_skills_and_docs_name_the_dot_workspace(self) -> None:
+        pattern = re.compile(r"(?<![\w./-])office-kit/")
+        for path in sorted((PLUGIN / "skills").glob("*/SKILL.md")) + [PLUGIN / "README.md"]:
+            text = path.read_text(encoding="utf-8")
+            self.assertIsNone(pattern.search(text), f"{path} still names office-kit/")
+            if path.name == "SKILL.md" and path.parent.name != "strudel-offline":
+                self.assertIn(".office-kit", text, path)
 
     def test_bootstrap_refuses_unrelated_nonempty_target(self) -> None:
         self.target.mkdir()

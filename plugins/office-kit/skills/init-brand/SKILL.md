@@ -9,13 +9,13 @@ metadata:
 
 # Initialize an OfficeKit brand
 
-Work in the repository's `office-kit/` workspace. If it does not exist, use
+Work in the repository's `.office-kit/` workspace. If it does not exist, use
 `setup-office-kit` first. Perform this workflow in the main agent; do not
 depend on a client-specific subagent.
 
 ## Contract
 
-Each identity lives at `office-kit/brands/<id>/`:
+Each identity lives at `.office-kit/brands/<id>/`:
 
 - `brand.json` is canonical and machine-readable.
 - `BRAND.md`, `tokens.css`, and `frame.md` are generated from `brand.json`.
@@ -23,7 +23,7 @@ Each identity lives at `office-kit/brands/<id>/`:
 - a second company, client, or product is a new identity, never an overwrite.
 
 Brand IDs use lowercase letters, digits, and hyphens. The fallback identity is
-`[brand].default` in `office-kit/config.toml`.
+`[brand].default` in `.office-kit/config.toml`.
 
 ## Approval gate
 
@@ -41,8 +41,8 @@ an MCP server or another plugin.
 After approval:
 
 1. Preserve supplied assets without modification.
-2. Write `office-kit/brands/<id>/brand.json`.
-3. Generate and validate derivatives from `office-kit/`:
+2. Write `.office-kit/brands/<id>/brand.json`.
+3. Generate and validate derivatives from `.office-kit/`:
 
    ```bash
    uv run python scripts/brand/generate.py <id>

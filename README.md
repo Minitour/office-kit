@@ -24,7 +24,7 @@ same working directory.
 |---|---|---|
 | Use when | You are working *in this repository* (contributing, evals, the full contract) | You want OfficeKit skills inside *another* repository |
 | What you get | Skills, subagents (`research-agent`, `brand-agent`), and `WORKFLOW.md` / `AGENTS.md` via [CAPA](https://github.com/infragate/capa) | The OfficeKit skills (`setup-office-kit`, `init-brand`, `create-doc`, `create-slides`, `create-video`, plus `text-to-speech` and `strudel-offline` used by video) |
-| Where work lives | `projects/` in this clone | An isolated `office-kit/` folder created in the host repo |
+| Where work lives | `projects/` in this clone | An isolated `.office-kit/` folder created in the host repo |
 | Package | This git checkout | [`plugins/office-kit/`](plugins/office-kit/) ([Agent Plugins 1.0](https://agent-plugins.org/specification)) |
 
 Plugin skills are canonical under `plugins/office-kit/skills/`; `capabilities.yaml`
@@ -70,7 +70,7 @@ video are authored here under `projects/<slug>/`. You do **not** run
 
 Install from the GitHub repository through your client's plugin manager—no
 clone is required. Then run `setup-office-kit` in the host repository. That
-creates an isolated `office-kit/` workspace and does not merge OfficeKit into
+creates an isolated `.office-kit/` workspace and does not merge OfficeKit into
 the host root. There are no CAPA subagents, MCP servers, or extra brand
 identities in this package.
 
@@ -122,7 +122,7 @@ this clone), ask the agent to run **`setup-office-kit`**. It writes:
 
 ```text
 your-repository/
-└── office-kit/
+└── .office-kit/
     ├── brands/
     ├── projects/
     ├── scripts/
@@ -132,7 +132,7 @@ your-repository/
     └── pyproject.toml
 ```
 
-After that, OfficeKit commands run from `office-kit/` (one `node_modules`, one
+After that, OfficeKit commands run from `.office-kit/` (one `node_modules`, one
 `.venv`). Setup is idempotent; it will not overwrite a file you changed unless
 you pass `--force`.
 
@@ -205,7 +205,7 @@ Operational defaults (templates, canvas size, preview ports, TTS flags, export d
 ## Directory layout
 
 ```
-office-kit/
+office-kit/                # this repository (the plugin installs the same layout as .office-kit/ in a host repo)
 ├── brands/<id>/           # One identity per directory (default: officekit)
 ├── config.toml            # Operational defaults plus [brand] default
 ├── capabilities.yaml      # CAPA skills and subagents

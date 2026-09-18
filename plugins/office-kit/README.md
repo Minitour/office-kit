@@ -92,7 +92,7 @@ From the repository where deliverables should be associated, invoke
 
 ```text
 your-repository/
-└── office-kit/
+└── .office-kit/
     ├── brands/
     ├── projects/
     ├── scripts/
@@ -103,11 +103,11 @@ your-repository/
 ```
 
 The dedicated subdirectory avoids collisions with the host repository.
-Deliverables live in `office-kit/projects/`; Node packages share the single
-`office-kit/node_modules/`.
+Deliverables live in `.office-kit/projects/`; Node packages share the single
+`.office-kit/node_modules/`.
 
 Setup is idempotent. Updates compare hashes in
-`office-kit/.officekit-managed.json` and refuse to overwrite a user-modified
+`.office-kit/.officekit-managed.json` and refuse to overwrite a user-modified
 managed file. Back up intentional changes before using `--force`.
 
 ## Updating and developing

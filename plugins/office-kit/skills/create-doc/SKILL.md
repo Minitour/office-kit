@@ -9,14 +9,14 @@ metadata:
 
 # Create an OfficeKit document
 
-Work in `office-kit/`. If that workspace is absent, use `setup-office-kit`
+Work in `.office-kit/`. If that workspace is absent, use `setup-office-kit`
 first. Write the document in the main agent; research directly with whatever
 read/search tools the client provides when claims need verification.
 
 ## Output and boundary
 
 The deliverable is one file:
-`office-kit/projects/<slug>/<slug>.html`. It opens directly from disk and
+`.office-kit/projects/<slug>/<slug>.html`. It opens directly from disk and
 contains its styles, behavior, brand tokens, logo, and embedded images.
 
 Edit only that HTML file and its short `NOTES.md`. Do not create a preview
@@ -25,7 +25,7 @@ packaging step. Never edit the generated brand region by hand.
 
 ## Pass
 
-From `office-kit/`:
+From `.office-kit/`:
 
 ```bash
 uv run python scripts/document/doc.py new <slug> --title "…" \

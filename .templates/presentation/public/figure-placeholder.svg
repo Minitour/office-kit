@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" width="800" height="450" role="img" aria-labelledby="t">
+  <title id="t">Placeholder figure: replace with a real image under public/</title>
+  <rect width="800" height="450" rx="16" fill="#F1F5F9"/>
+  <g fill="none" stroke="#94A3B8" stroke-width="2" stroke-dasharray="8 8">
+    <rect x="1" y="1" width="798" height="448" rx="16"/>
+  </g>
+  <g stroke="#CBD5E1" stroke-width="2">
+    <line x1="120" y1="360" x2="700" y2="360"/>
+    <line x1="120" y1="80" x2="120" y2="360"/>
+  </g>
+  <g fill="#94A3B8">
+    <rect x="170" y="230" width="70" height="130" rx="6"/>
+    <rect x="290" y="170" width="70" height="190" rx="6"/>
+    <rect x="410" y="120" width="70" height="240" rx="6"/>
+    <rect x="530" y="200" width="70" height="160" rx="6"/>
+  </g>
+  <text x="400" y="420" text-anchor="middle" font-family="ui-sans-serif, system-ui, sans-serif" font-size="22" fill="#64748B">
+    Replace with your figure (public/)
+  </text>
+</svg>

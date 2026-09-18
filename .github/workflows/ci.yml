@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: tests (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      # The full `uv sync` pulls Kokoro and therefore torch. The test suite
+      # only needs the light runtime deps, so install those into the venv and
+      # skip the lock for CI.
+      - name: Install Python test dependencies
+        run: |
+          uv venv --python 3.12
+          uv pip install jinja2 pyyaml soundfile tomli pytest
+
+      # Scaffolding a deck installs Slidev into the shared workspace
+      # node_modules (npm workspaces) and exercises the npm shim resolution on
+      # Windows. The audit tests read layouts and icons from that install.
+      - name: Scaffold a deck to populate node_modules
+        run: uv run --no-sync python scripts/presentation/deck.py new ci-smoke --title "CI Smoke"
+
+      - name: Audit the scaffolded deck
+        run: uv run --no-sync python scripts/presentation/deck.py audit ci-smoke
+
+      - name: Plugin package check
+        run: uv run --no-sync python scripts/plugin/build.py --check
+
+      - name: Run tests
+        run: uv run --no-sync python -m pytest -q

@@ -36,6 +36,7 @@ TEXT_SUFFIXES = {
     ".yml",
 }
 HTML_SUFFIXES = {".html", ".htm", ".xml"}
+IS_WINDOWS = sys.platform.startswith("win")
 
 
 class ScaffoldError(Exception):
@@ -64,6 +65,41 @@ def _toml_module():
     import tomli
 
     return tomli
+
+
+def configure_console() -> None:
+    """Make stdout/stderr UTF-8 so ``→`` and ``—`` survive a cp1252 console.
+
+    Windows consoles default to a legacy code page; printing a non-ASCII glyph
+    then raises ``UnicodeEncodeError``. Reconfiguring once at CLI entry keeps
+    the nicer output everywhere. Streams without ``reconfigure`` (a redirected
+    ``StringIO`` in tests) are left alone.
+    """
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is None:
+            continue
+        try:
+            reconfigure(encoding="utf-8", errors="replace")
+        except (ValueError, OSError):  # pragma: no cover - closed or exotic stream
+            pass
+
+
+def node_bin(name: str) -> str:
+    """Resolve ``npm``/``npx``/``node`` to a path ``subprocess`` can launch.
+
+    Windows ``CreateProcess`` resolves only ``.exe`` from ``PATH``; npm and npx
+    ship as ``npm.cmd``/``npx.cmd`` shims, so a bare name raises
+    ``FileNotFoundError`` even when ``npm --version`` works in the same shell.
+    ``shutil.which`` honours ``PATHEXT`` and returns the full path.
+    """
+    found = shutil.which(name)
+    if found is None:
+        raise ScaffoldError(
+            f"{name} is not installed or not on PATH; install Node.js 22+ "
+            "from https://nodejs.org/ and reopen the shell"
+        )
+    return found
 
 
 def find_workspace_root(start: Path | None = None) -> Path:
@@ -261,9 +297,10 @@ def npm_install_workspace(root: Path, workspace_rel: str) -> None:
     package = root / "package.json"
     if not package.is_file():
         raise ScaffoldError(f"workspace package.json is missing at {package}")
+    npm = node_bin("npm")
     try:
         result = subprocess.run(
-            ["npm", "install", "-w", workspace_rel, "--no-fund", "--no-audit"],
+            [npm, "install", "-w", workspace_rel, "--no-fund", "--no-audit"],
             cwd=root,
             check=False,
             capture_output=True,
@@ -289,8 +326,14 @@ def port_is_free(port: int, host: str = "127.0.0.1") -> bool:
     return True
 
 
+def _no_window_flags() -> int:
+    return int(getattr(subprocess, "CREATE_NO_WINDOW", 0)) if IS_WINDOWS else 0
+
+
 def pids_listening_on(port: int) -> list[int]:
-    """Return PIDs holding TCP ``port`` (best-effort via ``lsof``)."""
+    """Return PIDs holding TCP ``port`` (best-effort: ``lsof`` or ``netstat``)."""
+    if IS_WINDOWS:
+        return _pids_listening_on_windows(port)
     try:
         result = subprocess.run(
             ["lsof", "-nP", f"-iTCP:{port}", "-sTCP:LISTEN", "-t"],
@@ -310,7 +353,35 @@ def pids_listening_on(port: int) -> list[int]:
     return pids
 
 
+def _pids_listening_on_windows(port: int) -> list[int]:
+    try:
+        result = subprocess.run(
+            ["netstat", "-ano"],
+            check=False,
+            capture_output=True,
+            text=True,
+            creationflags=_no_window_flags(),
+        )
+    except FileNotFoundError:
+        return []
+    pids: set[int] = set()
+    for line in result.stdout.splitlines():
+        parts = line.split()
+        # TCP  0.0.0.0:3030  0.0.0.0:0  LISTENING  1234   (IPv6 shows [::]:3030)
+        if len(parts) < 5 or parts[0].upper() != "TCP":
+            continue
+        if parts[3].upper() != "LISTENING":
+            continue
+        local_port = parts[1].rsplit(":", 1)[-1]
+        if local_port == str(port) and parts[4].isdigit():
+            pids.add(int(parts[4]))
+    return sorted(pids)
+
+
 def process_command(pid: int) -> str:
+    """Return the command line of ``pid`` (empty when unknown)."""
+    if IS_WINDOWS:
+        return _process_command_windows(pid)
     try:
         result = subprocess.run(
             ["ps", "-p", str(pid), "-o", "command="],
@@ -325,36 +396,114 @@ def process_command(pid: int) -> str:
     return result.stdout.strip()
 
 
+def _process_command_windows(pid: int) -> str:
+    script = (
+        f"(Get-CimInstance Win32_Process -Filter 'ProcessId = {int(pid)}')"
+        ".CommandLine"
+    )
+    try:
+        result = subprocess.run(
+            ["powershell", "-NoProfile", "-NonInteractive", "-Command", script],
+            check=False,
+            capture_output=True,
+            text=True,
+            creationflags=_no_window_flags(),
+        )
+    except FileNotFoundError:
+        return ""
+    if result.returncode != 0:
+        return ""
+    return result.stdout.strip()
+
+
+def pid_alive(pid: int) -> bool:
+    """True when ``pid`` still runs. Never signals the process."""
+    if pid <= 0:
+        return False
+    if IS_WINDOWS:
+        return _pid_alive_windows(pid)
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    # A child we spawned stays a zombie (kill(pid, 0) succeeds) until reaped;
+    # reap it if it has exited. ChildProcessError means it is not our child.
+    try:
+        reaped, _status = os.waitpid(pid, os.WNOHANG)
+    except ChildProcessError:
+        return True
+    except OSError:  # pragma: no cover
+        return True
+    return reaped == 0
+
+
+def _pid_alive_windows(pid: int) -> bool:
+    # os.kill(pid, 0) would TerminateProcess on Windows, so query the handle.
+    import ctypes
+    from ctypes import wintypes
+
+    process_query_limited_information = 0x1000
+    still_active = 259
+    kernel32 = ctypes.windll.kernel32  # type: ignore[attr-defined]
+    handle = kernel32.OpenProcess(process_query_limited_information, False, int(pid))
+    if not handle:
+        return False
+    try:
+        code = wintypes.DWORD()
+        if not kernel32.GetExitCodeProcess(handle, ctypes.byref(code)):
+            return False
+        return code.value == still_active
+    finally:
+        kernel32.CloseHandle(handle)
+
+
 def kill_pids(pids: Sequence[int], *, grace_seconds: float = 1.5) -> None:
-    alive = [pid for pid in pids if pid > 0]
-    for pid in alive:
-        try:
-            os.kill(pid, signal.SIGTERM)
-        except ProcessLookupError:
-            continue
-        except PermissionError as exc:
-            raise ScaffoldError(f"cannot stop pid {pid}: {exc}") from exc
-    deadline = time.monotonic() + grace_seconds
-    while time.monotonic() < deadline:
-        remaining = []
+    """Stop ``pids`` (and, on Windows, their process trees)."""
+    alive = [pid for pid in pids if pid > 0 and pid_alive(pid)]
+    if not alive:
+        return
+    if IS_WINDOWS:
+        _kill_pids_windows(alive)
+    else:
         for pid in alive:
             try:
-                os.kill(pid, 0)
+                os.kill(pid, signal.SIGTERM)
             except ProcessLookupError:
                 continue
-            except PermissionError:
-                remaining.append(pid)
-            else:
-                remaining.append(pid)
-        if not remaining:
+            except PermissionError as exc:
+                raise ScaffoldError(f"cannot stop pid {pid}: {exc}") from exc
+    deadline = time.monotonic() + grace_seconds
+    while time.monotonic() < deadline:
+        alive = [pid for pid in alive if pid_alive(pid)]
+        if not alive:
             return
         time.sleep(0.1)
-        alive = remaining
+    if IS_WINDOWS:
+        _kill_pids_windows(alive)
+        return
     for pid in alive:
         try:
             os.kill(pid, signal.SIGKILL)
         except ProcessLookupError:
             continue
+
+
+def _kill_pids_windows(pids: Sequence[int]) -> None:
+    # The recorded pid is usually the npx.cmd shim (cmd.exe); /T takes the
+    # node child with it, /F because dev servers ignore a polite close.
+    for pid in pids:
+        try:
+            subprocess.run(
+                ["taskkill", "/PID", str(int(pid)), "/T", "/F"],
+                check=False,
+                capture_output=True,
+                text=True,
+                creationflags=_no_window_flags(),
+            )
+        except FileNotFoundError as exc:  # pragma: no cover - taskkill is core
+            raise ScaffoldError(f"cannot stop pid {pid}: {exc}") from exc
 
 
 def claim_port(
@@ -451,13 +600,23 @@ def spawn_detached(
     """Start ``command`` detached; return its PID. Logs go to ``log_path``."""
     log_path.parent.mkdir(parents=True, exist_ok=True)
     log_handle = log_path.open("w", encoding="utf-8")
+    popen_kwargs: dict[str, Any] = {}
+    if IS_WINDOWS:
+        # A new process group so Ctrl+C in this shell does not reach the
+        # server, and no console window so the shim runs silently. The child
+        # outlives this interpreter; ``kill_pids`` tears the tree down later.
+        popen_kwargs["creationflags"] = int(
+            getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
+        ) | _no_window_flags()
+    else:
+        popen_kwargs["start_new_session"] = True
     try:
         process = subprocess.Popen(
             list(command),
             cwd=cwd,
             stdout=log_handle,
             stderr=subprocess.STDOUT,
-            start_new_session=True,
+            **popen_kwargs,
         )
     except OSError as exc:
         log_handle.close()
@@ -473,12 +632,8 @@ def stop_pidfile(path: Path) -> list[str]:
     raw_pid = data.get("pid")
     if raw_pid and raw_pid.isdigit():
         pid = int(raw_pid)
-        try:
-            os.kill(pid, 0)
-        except ProcessLookupError:
+        if not pid_alive(pid):
             notes.append(f"pid {pid} already stopped")
-        except PermissionError as exc:
-            raise ScaffoldError(f"cannot stop pid {pid}: {exc}") from exc
         else:
             kill_pids([pid])
             notes.append(f"stopped pid {pid}")

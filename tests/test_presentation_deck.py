@@ -155,7 +155,7 @@ class DeckScaffoldTests(unittest.TestCase):
         self.assertEqual(code, 0, output)
         self.assertIn(
             "title: Retitled",
-            (self.root / "projects" / "kickoff" / "slides.md").read_text(),
+            (self.root / "projects" / "kickoff" / "slides.md").read_text(encoding="utf-8"),
         )
 
 

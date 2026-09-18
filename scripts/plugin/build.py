@@ -27,6 +27,7 @@ SKILLS = (
     "create-slides",
     "create-video",
     "text-to-speech",
+    "strudel-offline",
 )
 
 MANIFEST = {
@@ -166,6 +167,23 @@ MANUAL_PLUGIN_FILES = (
     "skills/text-to-speech/scripts/synthesize.py",
     "skills/text-to-speech/scripts/tts_manifest.py",
     "skills/text-to-speech/voices.json",
+    # Strudel/Dough music bed (AGPL-3.0-or-later; see that skill's LICENSE).
+    # Its scripts/ tree carries its own npm lock so an offline render is
+    # reproducible; it has no workspace dependencies.
+    "skills/strudel-offline/SKILL.md",
+    "skills/strudel-offline/LICENSE",
+    "skills/strudel-offline/reference.md",
+    "skills/strudel-offline/scripts/.gitignore",
+    "skills/strudel-offline/scripts/package.json",
+    "skills/strudel-offline/scripts/package-lock.json",
+    "skills/strudel-offline/scripts/render.mjs",
+    "skills/strudel-offline/scripts/lib.mjs",
+    "skills/strudel-offline/scripts/examples/offline-safe.js",
+    "skills/strudel-offline/scripts/examples/video-bed.js",
+    "skills/strudel-offline/scripts/hooks/kabelsalat-stub.mjs",
+    "skills/strudel-offline/scripts/hooks/register.mjs",
+    "skills/strudel-offline/scripts/hooks/resolve.mjs",
+    "skills/strudel-offline/scripts/vendor/dough.mjs",
 )
 
 EVAL_FILES = (
@@ -183,6 +201,7 @@ EVAL_FILES = (
     "skills/init-brand/evals/evals.json",
     "skills/init-brand/evals/files/stale-derivatives/brand.json",
     "skills/init-brand/evals/files/stale-derivatives/tokens.css",
+    "skills/strudel-offline/evals/evals.json",
     "skills/text-to-speech/evals/evals.json",
     "skills/text-to-speech/evals/files/mixed-voices.json",
     "skills/text-to-speech/evals/files/protected-clip/intro.wav",
@@ -318,7 +337,20 @@ def check() -> int:
     return 0
 
 
+def _configure_console() -> None:
+    """UTF-8 stdout/stderr so non-ASCII output survives a cp1252 console."""
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is None:
+            continue
+        try:
+            reconfigure(encoding="utf-8", errors="replace")
+        except (ValueError, OSError):  # pragma: no cover
+            pass
+
+
 def main(argv: list[str] | None = None) -> int:
+    _configure_console()
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--check",

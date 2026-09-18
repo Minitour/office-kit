@@ -40,7 +40,12 @@ ScaffoldError = _common.ScaffoldError
 PIDFILE_NAME = ".hyperframes-dev.pid"
 LOGFILE_NAME = ".hyperframes-dev.log"
 RECLAIMABLE = ("hyperframes", "vite")
-HYPERFRAMES_BIN = ("npx", "--yes", "hyperframes@0.8.30")
+HYPERFRAMES_PACKAGE = "hyperframes@0.8.30"
+
+
+def _hyperframes_command(*args: str) -> list[str]:
+    """``npx --yes hyperframes@<pin> …`` with npx resolved for this platform."""
+    return [_common.node_bin("npx"), "--yes", HYPERFRAMES_PACKAGE, *args]
 
 
 def _workspace_root(explicit: Path | None, start: Path) -> Path:
@@ -215,7 +220,7 @@ def cmd_dev(args: argparse.Namespace) -> int:
 
     log_path = _logfile(dest)
     pid = _common.spawn_detached(
-        [*HYPERFRAMES_BIN, "preview", "--port", str(port)],
+        _hyperframes_command("preview", "--port", str(port)),
         cwd=dest,
         log_path=log_path,
     )
@@ -270,7 +275,7 @@ def cmd_audit(args: argparse.Namespace) -> int:
 
     failures = 0
     for subcommand in ("lint", "check"):
-        command = [*HYPERFRAMES_BIN, subcommand]
+        command = _hyperframes_command(subcommand)
         print(f"  run:   {' '.join(command)} ({rel})")
         try:
             result = subprocess.run(command, cwd=dest, check=False)
@@ -356,6 +361,7 @@ def _parser() -> argparse.ArgumentParser:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
+    _common.configure_console()
     args = _parser().parse_args(argv)
     try:
         return int(args.handler(args))

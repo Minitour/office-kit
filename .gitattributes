@@ -1,0 +1,18 @@
+# Normalise line endings so templates, scripts, and generated payloads hash the
+# same on every platform (the plugin build compares bytes).
+* text=auto eol=lf
+
+# Binary payloads.
+*.wav binary
+*.mp3 binary
+*.mp4 binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.otf binary
+*.ico binary

@@ -242,7 +242,7 @@ def cmd_dev(args: argparse.Namespace) -> int:
 
     log_path = _logfile(dest)
     pid = _common.spawn_detached(
-        ["npx", "slidev", "--port", str(port)],
+        [_common.node_bin("npx"), "slidev", "--port", str(port)],
         cwd=dest,
         log_path=log_path,
     )
@@ -699,7 +699,15 @@ def cmd_export(args: argparse.Namespace) -> int:
     out_path = dest / output_dir / f"slides.{fmt}"
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
-    command = ["npx", "slidev", "export", "--output", str(out_path), "--format", fmt]
+    command = [
+        _common.node_bin("npx"),
+        "slidev",
+        "export",
+        "--output",
+        str(out_path),
+        "--format",
+        fmt,
+    ]
     if export_cfg.get("with_clicks"):
         command.append("--with-clicks")
     if export_cfg.get("dark"):
@@ -791,6 +799,7 @@ def _parser() -> argparse.ArgumentParser:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
+    _common.configure_console()
     args = _parser().parse_args(argv)
     try:
         return int(args.handler(args))

@@ -381,7 +381,20 @@ def _parser() -> argparse.ArgumentParser:
     return parser
 
 
+def configure_console() -> None:
+    """UTF-8 stdout/stderr so non-ASCII output survives a cp1252 console."""
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is None:
+            continue
+        try:
+            reconfigure(encoding="utf-8", errors="replace")
+        except (ValueError, OSError):  # pragma: no cover
+            pass
+
+
 def main(argv: Sequence[str] | None = None) -> int:
+    configure_console()
     args = _parser().parse_args(argv)
     try:
         segments = load_segments(args.segments)

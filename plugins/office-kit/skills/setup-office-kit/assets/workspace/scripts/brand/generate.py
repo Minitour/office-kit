@@ -672,7 +672,8 @@ def check(brand_dir: Path) -> list[tuple[str, Path]]:
         if not path.is_file():
             problems.append(("missing", path))
             continue
-        actual = path.read_bytes()
+        # A checkout with core.autocrlf=true holds CRLF; the render is LF.
+        actual = path.read_bytes().replace(b"\r\n", b"\n")
         if actual != expected[name].encode("utf-8"):
             problems.append(("stale", path))
     return problems
@@ -727,7 +728,20 @@ def resolve_brand_dirs(root: Path, args: argparse.Namespace) -> list[Path]:
     return [_catalog.brand_dir(root, brand_id) for brand_id in ids]
 
 
+def _configure_console() -> None:
+    """UTF-8 stdout/stderr so non-ASCII output survives a cp1252 console."""
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is None:
+            continue
+        try:
+            reconfigure(encoding="utf-8", errors="replace")
+        except (ValueError, OSError):  # pragma: no cover
+            pass
+
+
 def main(argv: list[str] | None = None) -> int:
+    _configure_console()
     args = parse_args(sys.argv[1:] if argv is None else argv)
     try:
         directories = resolve_brand_dirs(repo_root(), args)

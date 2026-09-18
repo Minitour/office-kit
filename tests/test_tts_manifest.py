@@ -9,7 +9,9 @@ import wave
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-MODULE_PATH = ROOT / "skills" / "text-to-speech" / "scripts" / "tts_manifest.py"
+MODULE_PATH = (
+    ROOT / "plugins" / "office-kit" / "skills" / "text-to-speech" / "scripts" / "tts_manifest.py"
+)
 SPEC = importlib.util.spec_from_file_location("tts_manifest", MODULE_PATH)
 assert SPEC is not None and SPEC.loader is not None
 tts_manifest = importlib.util.module_from_spec(SPEC)
@@ -129,7 +131,7 @@ class TtsManifestTests(unittest.TestCase):
 
             replacement = {"schema_version": 1, "segments": [{"id": "new"}]}
             tts_manifest.write_manifest(replacement, output, overwrite=True)
-            self.assertEqual(json.loads(output.read_text()), replacement)
+            self.assertEqual(json.loads(output.read_text(encoding="utf-8")), replacement)
 
     def test_voice_catalog_covers_english_and_other_locales(self) -> None:
         catalog = tts_manifest.load_voice_catalog()

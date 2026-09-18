@@ -1,5 +1,9 @@
 # Node
 node_modules/
+# The npm lock is per-machine: workspaces live under the gitignored projects/
+# tree, so a committed lock names directories a fresh clone does not have and
+# `npm ci` fails. Each checkout resolves its own.
+package-lock.json
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*

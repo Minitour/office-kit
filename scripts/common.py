@@ -428,7 +428,15 @@ def pid_alive(pid: int) -> bool:
         return False
     except PermissionError:
         return True
-    return True
+    # A child we spawned stays a zombie (kill(pid, 0) succeeds) until reaped;
+    # reap it if it has exited. ChildProcessError means it is not our child.
+    try:
+        reaped, _status = os.waitpid(pid, os.WNOHANG)
+    except ChildProcessError:
+        return True
+    except OSError:  # pragma: no cover
+        return True
+    return reaped == 0
 
 
 def _pid_alive_windows(pid: int) -> bool:

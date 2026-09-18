@@ -9,7 +9,7 @@ metadata:
 
 # Create OfficeKit slides
 
-Work in `office-kit/`. If absent, use `setup-office-kit` first. Author in the
+Work in `.office-kit/`. If absent, use `setup-office-kit` first. Author in the
 main agent. Research claims directly with host-provided tools when necessary;
 write verified sources to `projects/<slug>/reports/research.md`.
 
@@ -28,7 +28,7 @@ preview, audit, stop, and export.
 
 ## Pass
 
-From `office-kit/`, scaffold and immediately start a verified preview:
+From `.office-kit/`, scaffold and immediately start a verified preview:
 
 ```bash
 uv run python scripts/presentation/deck.py new <slug> --title "…" \

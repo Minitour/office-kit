@@ -13,6 +13,8 @@ from pathlib import Path
 
 VERSION = "0.1.0"
 MARKER = ".officekit-managed.json"
+WORKSPACE_DIR = ".office-kit"
+LEGACY_WORKSPACE_DIR = "office-kit"
 
 
 class BootstrapError(Exception):
@@ -199,14 +201,33 @@ def _configure_console() -> None:
             pass
 
 
+def default_target(host: Path) -> Path:
+    """``host/.office-kit``, unless an earlier install left ``host/office-kit``.
+
+    The workspace moved to a dot-directory so it stays out of the host
+    project's own tree and tooling. A legacy ``office-kit/`` that carries the
+    managed-files marker keeps being updated in place rather than being
+    duplicated beside a new one.
+    """
+    preferred = host / WORKSPACE_DIR
+    legacy = host / LEGACY_WORKSPACE_DIR
+    if not preferred.exists() and (legacy / MARKER).is_file():
+        print(
+            f"note: updating the legacy workspace at {legacy}; rename it to "
+            f"{WORKSPACE_DIR}/ to adopt the current default"
+        )
+        return legacy
+    return preferred
+
+
 def main(argv: list[str] | None = None) -> int:
     _configure_console()
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--target",
         type=Path,
-        default=Path.cwd() / "office-kit",
-        help="workspace destination (default: ./office-kit)",
+        default=None,
+        help=f"workspace destination (default: ./{WORKSPACE_DIR}, or a legacy ./{LEGACY_WORKSPACE_DIR} that already holds one)",
     )
     parser.add_argument(
         "--force",
@@ -219,9 +240,10 @@ def main(argv: list[str] | None = None) -> int:
         help="copy files without running uv sync or npm install",
     )
     args = parser.parse_args(argv)
+    target = args.target if args.target is not None else default_target(Path.cwd())
     try:
         install_workspace(
-            args.target,
+            target,
             force=args.force,
             install=not args.no_install,
         )

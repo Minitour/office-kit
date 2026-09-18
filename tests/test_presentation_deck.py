@@ -106,6 +106,26 @@ class PresentationTemplateContractTests(unittest.TestCase):
             ],
         )
 
+    def test_template_ships_evidence_affordances(self) -> None:
+        """#23: figures, screenshots, splits, tables, excerpts, charts."""
+        template = ROOT / ".templates" / "presentation"
+        css = (template / "styles" / "brand.css").read_text(encoding="utf-8")
+        for name in (".ok-figure", ".ok-shot", ".ok-split", ".ok-code", ".ok-table", ".ok-s0", ".ok-s3"):
+            self.assertIn(name, css)
+        component = template / "components" / "OkBars.vue"
+        self.assertTrue(component.is_file())
+        self.assertIn("ok-s${Math.min(si, 3)}", component.read_text(encoding="utf-8"))
+        self.assertTrue((template / "public" / "figure-placeholder.svg").is_file())
+        slides = (template / "slides.md.j2").read_text(encoding="utf-8")
+        self.assertIn('<figure class="ok-figure"', slides)
+        self.assertIn("<OkBars", slides)
+        self.assertNotIn("https://cover.sli.dev", slides)
+        skill = (ROOT / "plugins" / "office-kit" / "skills" / "create-slides" / "SKILL.md").read_text(
+            encoding="utf-8"
+        )
+        for name in ("ok-figure", "ok-split", "ok-table", "<OkBars>", "public/"):
+            self.assertIn(name, skill)
+
     def test_template_vocabulary_covers_core_layouts(self) -> None:
         slides = (ROOT / ".templates" / "presentation" / "slides.md.j2").read_text(
             encoding="utf-8"

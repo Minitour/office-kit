@@ -62,6 +62,20 @@ Content slides should not be only a heading and bullets; use a meaningful
 diagram, comparison, number, image, flow, or icon structure. Never hardcode
 brand colors, fonts, or logo paths. Preserve user assets under `public/`.
 
+For evidence, reach for the template's figure vocabulary before another icon
+card: `ok-figure` (image plus `figcaption`), `ok-shot` (framed screenshot),
+`ok-split` / `ok-split-1-1` / `ok-split-2-3` (figure beside copy), `ok-table`
+on a table, `ok-code` for a literal excerpt, and the bundled `<OkBars>`
+component for a grouped bar chart drawn from literal numbers (series colours
+`.ok-s0`…`.ok-s3` map to primary, accent, secondary, muted). Put images under
+`public/`, reference them as `/name.ext`, and give every `<img>` a non-empty
+`alt`; prefer a local file to a remote URL.
+
+Component contracts the audit checks: `ok-flow` holds exactly three
+`ok-step` children with `ok-flow-join` between them; each `ok-band` has at
+most two element children (the mark, then one wrapper holding `h3` + `p`);
+`ok-hero-num` holds text, not an element.
+
 Build in logical groups while the live preview updates, recording progress in
 `reports/build.md`. Then run:
 

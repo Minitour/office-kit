@@ -18,9 +18,9 @@ root, run them with the generated workspace's Python environment (replace the
 skill-root placeholder with the resolved path):
 
 ```bash
-uv run --project office-kit python \
+uv run --project .office-kit python \
   <text-to-speech-skill-root>/scripts/synthesize.py \
-  segments.json office-kit/projects/<slug>/narration \
+  segments.json .office-kit/projects/<slug>/narration \
   --model hexgrad/Kokoro-82M \
   --voice af_heart \
   --padding 0.25
@@ -44,7 +44,7 @@ voice prefix unless `--lang-code` is explicitly supplied.
 List known voices without loading the model:
 
 ```bash
-uv run --project office-kit python \
+uv run --project .office-kit python \
   <text-to-speech-skill-root>/scripts/synthesize.py --list-voices
 ```
 
@@ -56,9 +56,9 @@ padding metadata.
 To build or refresh timing from existing PCM WAV files without inference:
 
 ```bash
-uv run --project office-kit python \
+uv run --project .office-kit python \
   <text-to-speech-skill-root>/scripts/tts_manifest.py \
-  segments.json office-kit/projects/<slug>/narration \
+  segments.json .office-kit/projects/<slug>/narration \
   --padding 0.25
 ```
 

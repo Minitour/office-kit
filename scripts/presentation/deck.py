@@ -688,6 +688,17 @@ def audit_deck(root: Path, dest: Path) -> AuditResult:
             )
 
     _check_style_imports(dest, result.errors, result.warnings)
+
+    # Client console errors are forwarded into the dev log by Vite, so a
+    # running preview's log is the cheapest view of what a browser hit.
+    log_path = dest / LOGFILE_NAME
+    if log_path.is_file():
+        try:
+            text = log_path.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            text = ""
+        for line in log_errors(text):
+            result.warnings.append(f"dev log: {line}")
     return result
 
 

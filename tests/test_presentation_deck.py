@@ -378,6 +378,30 @@ canvasWidth: 980
         self.assertEqual(code, 0, output)
         self.assertIn("heading + bullets", output)
 
+    def test_dev_log_errors_surface_as_audit_warnings(self) -> None:
+        dest = self._write_deck(
+            """---
+theme: default
+title: Log
+aspectRatio: "16/9"
+canvasWidth: 980
+colorSchema: light
+---
+
+# Hi
+
+<lucide-eye class="ok-icon" />
+"""
+        )
+        (dest / deck.LOGFILE_NAME).write_text(
+            "[vite] (client) [console.error] Failed to patch FloatingVue TypeError: x\n" * 3,
+            encoding="utf-8",
+        )
+        code, output = run("audit", "bad-deck", "--workspace-root", str(self.root))
+        self.assertEqual(code, 0, output)
+        self.assertEqual(output.count("Failed to patch FloatingVue"), 1)
+        self.assertIn("dev log:", output)
+
     def test_auto_color_scheme_warns(self) -> None:
         self._write_deck(
             """---

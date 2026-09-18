@@ -23,6 +23,7 @@
   --ok-muted: var(--color-muted, GrayText);
   --ok-panel: var(--color-panel, color-mix(in srgb, var(--ok-foreground) 6%, var(--ok-background)));
   --ok-green: var(--color-green, var(--ok-primary));
+  --ok-accent: var(--color-accent, var(--ok-secondary));
 
   --ok-font-sans: var(--font-sans, ui-sans-serif, system-ui, sans-serif);
   --ok-font-heading: var(--font-heading, var(--ok-font-sans));
@@ -62,6 +63,30 @@
   font-family: var(--ok-font-mono);
 }
 
+/*
+ * Inline code is pinned to tokens so it reads the same in every colour
+ * scheme. The theme's own chip follows html.dark and produced navy-on-black
+ * when a viewer's OS was in dark mode; on light panels the dark chip fought
+ * the surrounding copy. Inverted containers get a translucent chip instead.
+ */
+.slidev-layout :not(pre) > code {
+  background: color-mix(in srgb, var(--ok-foreground) 8%, var(--ok-background));
+  color: var(--ok-foreground);
+  border-radius: 0.3em;
+  padding: 0.1em 0.35em;
+  font-size: 0.88em;
+}
+
+.slidev-layout .ok-band :not(pre) > code,
+.slidev-layout .ok-hero-num :not(pre) > code,
+.slidev-layout.ok-cover :not(pre) > code,
+.slidev-layout.ok-section :not(pre) > code,
+.slidev-layout.ok-section-alt :not(pre) > code,
+.slidev-layout.ok-end :not(pre) > code {
+  background: color-mix(in srgb, var(--ok-background) 18%, transparent);
+  color: var(--ok-background);
+}
+
 .slidev-layout th {
   border-bottom-color: var(--ok-secondary);
 }
@@ -76,6 +101,21 @@
   width: 1.35em;
   height: 1.35em;
   flex-shrink: 0;
+}
+
+/*
+ * A container that paints its own ground also sets `color`; the icon must
+ * follow it or it vanishes (primary-on-primary on `.ok-band.a`). currentColor
+ * tracks whichever ground the variant paints, for any brand.
+ */
+.ok-band .ok-icon,
+.ok-hero-num .ok-icon,
+.ok-cover .ok-icon,
+.ok-section .ok-icon,
+.ok-section-alt .ok-icon,
+.ok-end .ok-icon {
+  color: currentColor;
+  opacity: 0.92;
 }
 
 .ok-kicker,
@@ -146,6 +186,17 @@
   border-radius: 999px;
 }
 
+/* Layouts that centre their type centre the rule too. */
+.slidev-layout.statement .ok-rule,
+.slidev-layout.fact .ok-rule,
+.slidev-layout.section .ok-rule,
+.slidev-layout.end .ok-rule,
+.slidev-layout.text-center .ok-rule,
+.slidev-layout .text-center .ok-rule {
+  margin-left: auto;
+  margin-right: auto;
+}
+
 .ok-sub {
   font-size: 1.35rem;
   font-weight: 400;
@@ -183,7 +234,7 @@
 }
 
 .ok-pill.alt {
-  background: var(--ok-secondary);
+  background: var(--ok-accent);
 }
 
 .ok-note {
@@ -230,6 +281,13 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
+  align-items: center;
+  text-align: center;
+  /* The panel's own text is the figure: a bare number without a <span>
+   * still renders at display scale instead of body size. */
+  font-size: 3.1rem;
+  font-weight: 700;
+  line-height: 1;
 }
 
 .ok-hero-num span {
@@ -242,6 +300,7 @@
 .ok-hero-num p {
   margin: 0.85rem 0 0;
   font-size: 1rem;
+  font-weight: 400;
   line-height: 1.4;
   opacity: 0.9;
 }
@@ -329,7 +388,7 @@
 
 .ok-step:nth-child(3) .ok-step-n,
 .ok-step:nth-child(3) .ok-icon {
-  color: var(--ok-secondary);
+  color: var(--ok-accent);
 }
 
 .ok-step:nth-child(5) .ok-step-n,
@@ -379,7 +438,7 @@
 
 .ok-outcome.alt .ok-outcome-kicker,
 .ok-outcome.alt .ok-outcome-kicker .ok-icon {
-  color: var(--ok-secondary);
+  color: var(--ok-accent);
 }
 
 .ok-outcome-num {
@@ -426,6 +485,197 @@
   background: var(--ok-secondary);
 }
 
+/*
+ * Evidence: figures, screenshots, splits, tables, excerpts, charts.
+ * A research or product deck is made of these; without them every slide
+ * becomes an icon card. All of it resolves through --ok-* tokens.
+ */
+
+/* A figure lifted from a paper: image plus a muted caption. */
+.ok-figure {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  flex: 1;
+  margin: 0;
+}
+
+.ok-figure img {
+  max-width: 100%;
+  max-height: var(--fig-h, 360px);
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: 0.5rem;
+}
+
+.ok-figure figcaption,
+.ok-caption {
+  margin-top: 0.45rem;
+  font-size: 0.82rem;
+  line-height: 1.35;
+  color: var(--ok-muted);
+  text-align: center;
+}
+
+/* A screenshot: framed, clipped to a fixed height so long pages stay put. */
+.ok-shot {
+  overflow: hidden;
+  border-radius: 0.6rem;
+  border: 1px solid color-mix(in srgb, var(--ok-foreground) 14%, var(--ok-background));
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--ok-foreground) 12%, transparent);
+  max-height: var(--shot-h, 330px);
+}
+
+.ok-shot img {
+  width: 100%;
+  display: block;
+}
+
+/* Figure beside copy. */
+.ok-split {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  gap: 1.4rem;
+  align-items: center;
+  flex: 1;
+  min-height: 0;
+}
+
+.ok-split-1-1 {
+  grid-template-columns: 1fr 1fr;
+}
+
+.ok-split-2-3 {
+  grid-template-columns: 2fr 3fr;
+}
+
+.ok-split > * {
+  min-width: 0;
+}
+
+/* Literal excerpts: a tool call, a query, a log line. */
+.ok-code {
+  margin: 0;
+  padding: 0.75rem 0.9rem;
+  background: var(--ok-panel);
+  border-left: 4px solid var(--ok-secondary);
+  border-radius: 0.5rem;
+  font-family: var(--ok-font-mono);
+  font-size: 0.72rem;
+  line-height: 1.42;
+  white-space: pre;
+  overflow: hidden;
+  color: var(--ok-foreground);
+}
+
+/* Compact data table: `<table class="ok-table">` or a markdown table inside
+ * `<div class="ok-table">`. */
+.slidev-layout table.ok-table,
+.slidev-layout .ok-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+  line-height: 1.3;
+  margin: 0;
+}
+
+.slidev-layout table.ok-table th,
+.slidev-layout table.ok-table td,
+.slidev-layout .ok-table th,
+.slidev-layout .ok-table td {
+  padding: 0.28rem 0.5rem;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid color-mix(in srgb, var(--ok-foreground) 12%, transparent);
+}
+
+.slidev-layout table.ok-table th,
+.slidev-layout .ok-table th {
+  font-size: 0.74rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ok-secondary);
+  border-bottom: 2px solid var(--ok-secondary);
+}
+
+/* Chart series (components/OkBars.vue): primary, accent, secondary, muted. */
+.ok-s0 { fill: var(--ok-primary); background: var(--ok-primary); }
+.ok-s1 { fill: var(--ok-accent); background: var(--ok-accent); }
+.ok-s2 { fill: var(--ok-secondary); background: var(--ok-secondary); }
+.ok-s3 { fill: var(--ok-muted); background: var(--ok-muted); }
+
+.ok-bars {
+  margin: 0;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.ok-bars svg {
+  width: 100%;
+  height: auto;
+  max-height: var(--chart-h, 340px);
+  font-family: var(--ok-font-sans);
+}
+
+.ok-bars text {
+  fill: var(--ok-foreground);
+  font-size: 15px;
+}
+
+.ok-bars .ok-bars-value {
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.ok-bars .ok-bars-label {
+  fill: var(--ok-muted);
+}
+
+.ok-bars .ok-bars-axis {
+  stroke: color-mix(in srgb, var(--ok-foreground) 25%, transparent);
+  stroke-width: 2;
+}
+
+.ok-bars .ok-bars-error {
+  stroke: var(--ok-foreground);
+  stroke-width: 2;
+  opacity: 0.7;
+}
+
+.ok-bars .ok-bars-reference {
+  stroke: var(--ok-foreground);
+  stroke-width: 2;
+  stroke-dasharray: 6 6;
+  opacity: 0.6;
+}
+
+.ok-bars .ok-bars-reference-label {
+  fill: var(--ok-muted);
+  font-size: 13px;
+}
+
+.ok-bars-legend {
+  display: flex;
+  gap: 1.2rem;
+  justify-content: center;
+  margin-top: 0.4rem;
+  font-size: 0.82rem;
+  color: var(--ok-muted);
+}
+
+.ok-bars-legend i {
+  display: inline-block;
+  width: 0.7em;
+  height: 0.7em;
+  border-radius: 2px;
+  margin-right: 0.4em;
+}
+
 /* Section dividers. */
 .slidev-layout.section.ok-section {
   background: var(--ok-primary);
@@ -445,17 +695,32 @@
   opacity: 1;
 }
 
-.slidev-layout.end {
+/*
+ * Closing slide. Slidev's built-in `end` layout styles itself in a scoped
+ * block (bg-black, tracking-widest) that no deck selector can outrank, so the
+ * template ships layouts/end.vue, which replaces it and adds `.ok-end`.
+ */
+.slidev-layout.end.ok-end {
+  height: 100%;
+  display: grid;
+  place-content: center;
+  text-align: center;
   background: var(--ok-foreground);
   color: var(--ok-background);
+  letter-spacing: normal;
+  font-size: 1rem;
 }
 
-.slidev-layout.end h1 {
+.slidev-layout.end.ok-end h1 {
   color: var(--ok-background);
 }
 
-.slidev-layout.end p {
+.slidev-layout.end.ok-end p {
   color: color-mix(in srgb, var(--ok-background) 82%, var(--ok-foreground));
+}
+
+.slidev-layout.end.ok-end .ok-kicker {
+  justify-content: center;
 }
 
 /*

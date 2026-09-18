@@ -50,6 +50,8 @@ PIDFILE_NAME = ".slidev-dev.pid"
 LOGFILE_NAME = ".slidev-dev.log"
 RECLAIMABLE = ("slidev", "vite")
 OVERFLOW_CHARS = 1800
+ANSI_RE = re.compile(r"\x1b\[[0-9;]*[A-Za-z]")
+LOG_ERROR_MARKERS = ("console.error", "[vite] error", "internal server error", "error:")
 
 # Headmatter keys Slidev accepts; anything else is still allowed but we
 # require the OfficeKit baseline and reject brand-breaking blocks.
@@ -170,6 +172,27 @@ def _pidfile(dest: Path) -> Path:
     return dest / PIDFILE_NAME
 
 
+def log_errors(text: str, *, limit: int = 3) -> list[str]:
+    """Distinct error lines from a dev-server log, oldest first.
+
+    A real error in a deck component must not drown in a plugin's repeated
+    console noise, so lines are de-duplicated on their first 120 characters.
+    """
+    seen: set[str] = set()
+    found: list[str] = []
+    for raw in text.splitlines():
+        line = ANSI_RE.sub("", raw).strip()
+        lowered = line.lower()
+        if not line or not any(marker in lowered for marker in LOG_ERROR_MARKERS):
+            continue
+        key = line[:120]
+        if key in seen:
+            continue
+        seen.add(key)
+        found.append(line[:200])
+    return found[:limit]
+
+
 def _logfile(dest: Path) -> Path:
     return dest / LOGFILE_NAME
 
@@ -257,6 +280,13 @@ def cmd_dev(args: argparse.Namespace) -> int:
             f"Slidev did not become healthy at {url} within {args.timeout:.0f}s; "
             f"see {log_path}"
         )
+
+    try:
+        problems = log_errors(log_path.read_text(encoding="utf-8", errors="replace"))
+    except OSError:
+        problems = []
+    for line in problems:
+        print(f"  warn:  dev log: {line}")
 
     print(f"  open:  {url}")
     print(f"  stop:  uv run python scripts/presentation/deck.py stop {slug}")
@@ -604,6 +634,11 @@ def audit_deck(root: Path, dest: Path) -> AuditResult:
         result.errors.append(
             "slide 1: do not set `themeConfig` colors — use brands/<id>/tokens.css"
         )
+    if head.frontmatter.get("colorSchema") not in ("light", "dark"):
+        result.warnings.append(
+            "slide 1 headmatter: set `colorSchema: light` (or dark); `auto` follows "
+            "the viewer's OS and half-switches the theme's element styles"
+        )
 
     theme = str(head.frontmatter.get("theme") or "default")
     layouts = discover_layouts(root, dest, theme)
@@ -653,6 +688,17 @@ def audit_deck(root: Path, dest: Path) -> AuditResult:
             )
 
     _check_style_imports(dest, result.errors, result.warnings)
+
+    # Client console errors are forwarded into the dev log by Vite, so a
+    # running preview's log is the cheapest view of what a browser hit.
+    log_path = dest / LOGFILE_NAME
+    if log_path.is_file():
+        try:
+            text = log_path.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            text = ""
+        for line in log_errors(text):
+            result.warnings.append(f"dev log: {line}")
     return result
 
 

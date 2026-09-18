@@ -6,5 +6,9 @@
   ],
   "engines": {
     "node": ">=22"
+  },
+  "//overrides": "floating-vue: @shikijs/vitepress-twoslash (pulled in by @slidev/client) patches VMenu.components.Popper at install time; floating-vue >= 5.3 dropped that entry and every page load then logs 'Failed to patch FloatingVue'. 5.2.2 still has it.",
+  "overrides": {
+    "floating-vue": "5.2.2"
   }
 }

@@ -8,6 +8,9 @@ transition: slide-left
 # aspectRatio and canvasWidth default from config.toml [presentation].
 aspectRatio: "{{ aspect_ratio }}"
 canvasWidth: {{ canvas_width }}
+# A branded deck has one designed scheme. `auto` would follow the viewer's OS
+# and half-switch the theme's element styles (dark code chips on white slides).
+colorSchema: light
 # Colours, fonts, and the logo all come from the shared token sheet, imported
 # by style.css. Do not add a `fonts:` block here: tokens.css already loads the
 # brand webfonts, and restating a family in the headmatter hardcodes a brand
@@ -260,15 +263,76 @@ layout: two-cols-header
 </div>
 
 ---
-layout: image-right
-image: https://cover.sli.dev
+layout: default
+class: ok-tight
 ---
 
-<!-- Image-right — replace the URL with a file under public/ or drop the slide. -->
+<!-- Figure — an image from public/ with a caption. Swap the file; keep the alt and caption. -->
+
+# Show The Evidence
+
+<figure class="ok-figure" style="--fig-h: 330px">
+  <img src="/figure-placeholder.svg" alt="Describe what the figure shows, for readers who cannot see it" />
+  <figcaption>Figure 1 — one sentence saying what to notice. Cite the source in the notes.</figcaption>
+</figure>
+
+---
+layout: default
+class: ok-tight
+---
+
+<!-- Chart — literal numbers from a results table, drawn by components/OkBars.vue. -->
+
+# Results At A Glance
+
+<OkBars
+  :groups="[
+    { label: 'Baseline', values: [42, 38] },
+    { label: 'Ours', values: [67, 61] },
+  ]"
+  :series="['Accuracy', 'Recall']"
+  unit="%"
+  :reference="50"
+  reference-label="Target"
+  aria-label="Accuracy and recall for baseline versus ours"
+/>
+
+---
+layout: default
+class: ok-tight
+---
+
+<!-- Split — figure beside copy. ok-split-1-1 / ok-split-2-3 change the ratio. -->
+
+# What The Figure Means
+
+<div class="ok-split">
+  <figure class="ok-figure" style="--fig-h: 300px">
+    <img src="/figure-placeholder.svg" alt="Describe the figure" />
+    <figcaption>Caption under the figure.</figcaption>
+  </figure>
+  <div>
+    <div class="ok-icon-line">
+      <lucide-search class="ok-icon" />
+      <p>What to look at first.</p>
+    </div>
+    <div class="ok-icon-line">
+      <lucide-trending-up class="ok-icon" />
+      <p>What it changes, in one sentence.</p>
+    </div>
+  </div>
+</div>
+
+---
+layout: image-right
+image: /figure-placeholder.svg
+---
+
+<!-- Image-right — full-bleed image from public/; keep alt text in the notes. -->
 
 # Show The Thing
 
-A short caption. Prefer a local asset in `public/` over a remote URL.
+A short caption. Use a file under `public/`, referenced as `/name.ext`.
 
 ---
 layout: section

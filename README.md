@@ -205,7 +205,7 @@ Operational defaults (templates, canvas size, preview ports, TTS flags, export d
 ## Directory layout
 
 ```
-.office-kit/
+office-kit/                # this repository (the plugin installs the same layout as .office-kit/ in a host repo)
 ├── brands/<id>/           # One identity per directory (default: officekit)
 ├── config.toml            # Operational defaults plus [brand] default
 ├── capabilities.yaml      # CAPA skills and subagents

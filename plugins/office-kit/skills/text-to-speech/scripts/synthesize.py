@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any, Sequence
 
 from tts_manifest import (
+    configure_console,
     LANG_CODE_PATTERN,
     ManifestError,
     build_manifest,
@@ -201,6 +202,7 @@ def synthesize_segment(
 
 
 def main(argv: Sequence[str] | None = None) -> int:
+    configure_console()
     args = _parser().parse_args(argv)
     if args.list_voices:
         sys.stdout.write(format_voice_list())

@@ -27,9 +27,8 @@ same working directory.
 | Where work lives | `projects/` in this clone | An isolated `office-kit/` folder created in the host repo |
 | Package | This git checkout | [`plugins/office-kit/`](plugins/office-kit/) ([Agent Plugins 1.0](https://agent-plugins.org/specification)) |
 
-Plugin skills are canonical under `plugins/office-kit/skills/`. The repository
-`skills/` path is a symlink to that tree, so CAPA and the plugin share one
-source.
+Plugin skills are canonical under `plugins/office-kit/skills/`; `capabilities.yaml`
+points CAPA at that same tree, so both install paths share one source.
 
 ## Install
 
@@ -211,7 +210,6 @@ office-kit/
 ├── config.toml            # Operational defaults plus [brand] default
 ├── capabilities.yaml      # CAPA skills and subagents
 ├── plugins/office-kit/    # Portable Agent Plugin; canonical skills live here
-├── skills/                # Symlink → plugins/office-kit/skills
 ├── WORKFLOW.md            # Orchestration contract (primary context)
 ├── .templates/
 │   ├── document-html/     # Standalone HTML document

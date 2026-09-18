@@ -185,7 +185,15 @@ class PluginManifestTests(unittest.TestCase):
             {path.name for path in payload_brands.iterdir() if path.is_dir()},
             {"officekit"},
         )
-        self.assertFalse(any(path.name in {"uv.lock", "package-lock.json"} for path in all_files))
+        # The Strudel renderer keeps its own npm lock so an offline render is
+        # reproducible; no other lock may enter the package.
+        strudel_lock = PLUGIN / "skills" / "strudel-offline" / "scripts" / "package-lock.json"
+        self.assertFalse(
+            any(
+                path.name in {"uv.lock", "package-lock.json"} and path != strudel_lock
+                for path in all_files
+            )
+        )
 
     def test_build_check_passes(self) -> None:
         code, output = capture_main(build, ["--check"])
@@ -212,13 +220,25 @@ class PluginManifestTests(unittest.TestCase):
         for name in ("WORKFLOW.md", "AGENTS.md", "CLAUDE.md"):
             self.assertEqual((payload / name).read_bytes(), portable_workflow)
 
-    def test_repo_skills_directory_links_to_plugin_canonical_source(self) -> None:
-        legacy = ROOT / "skills"
-        canonical = PLUGIN / "skills"
-        self.assertTrue(legacy.is_symlink(), legacy)
-        self.assertEqual(legacy.resolve(), canonical.resolve())
+    def test_capa_local_skills_resolve_into_the_plugin_tree(self) -> None:
+        """No repo-root ``skills`` symlink: git checks it out as a text file on
+        Windows (core.symlinks=false) and ``capa install`` then finds no
+        SKILL.md. capabilities.yaml names the canonical plugin paths directly."""
+        self.assertFalse((ROOT / "skills").exists(), "skills symlink must not return")
+        capabilities = yaml.safe_load(
+            (ROOT / "capabilities.yaml").read_text(encoding="utf-8")
+        )
+        local = {
+            skill["id"]: skill["def"]["path"]
+            for skill in capabilities["skills"]
+            if skill.get("type") == "local"
+        }
+        self.assertTrue(local)
+        for skill_id, path in local.items():
+            self.assertTrue(path.startswith("plugins/office-kit/skills/"), skill_id)
+            self.assertTrue((ROOT / path / "SKILL.md").is_file(), path)
         for name in build.SKILLS:
-            self.assertTrue((legacy / name / "SKILL.md").is_file(), name)
+            self.assertTrue((PLUGIN / "skills" / name / "SKILL.md").is_file(), name)
 
 
 class BootstrapTests(unittest.TestCase):

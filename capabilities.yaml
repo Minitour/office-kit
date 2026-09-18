@@ -29,7 +29,7 @@ skills:
   - id: init-brand
     type: local
     def:
-      path: skills/init-brand
+      path: plugins/office-kit/skills/init-brand
       description: >-
         The /init-brand command — create, migrate, or revise a brand
         identity under `brands/<id>/`: the canonical `brand.json` plus its
@@ -38,7 +38,7 @@ skills:
   - id: create-doc
     type: local
     def:
-      path: skills/create-doc
+      path: plugins/office-kit/skills/create-doc
       description: >-
         The /create-doc command — write a brand-styled, self-contained HTML
         document in one pass (scaffold → author → verify) for reports,
@@ -47,7 +47,7 @@ skills:
   - id: create-slides
     type: local
     def:
-      path: skills/create-slides
+      path: plugins/office-kit/skills/create-slides
       description: >-
         The /create-slides command — write a Slidev deck in primary context
         (plan → preview → author → review) for pitches, lectures, and talks.
@@ -56,7 +56,7 @@ skills:
   - id: create-video
     type: local
     def:
-      path: skills/create-video
+      path: plugins/office-kit/skills/create-video
       description: >-
         The /create-video command — write a HyperFrames video in primary
         context (plan → scenes → narration → music bed → review) with
@@ -65,7 +65,7 @@ skills:
   - id: text-to-speech
     type: local
     def:
-      path: skills/text-to-speech
+      path: plugins/office-kit/skills/text-to-speech
       description: >-
         Synthesize offline narration locally with Kokoro — one WAV clip per
         approved script segment — and build measured timing manifests for video
@@ -73,7 +73,7 @@ skills:
   - id: strudel-offline
     type: local
     def:
-      path: skills/strudel-offline
+      path: plugins/office-kit/skills/strudel-offline
       description: >-
         Supporting skill for create-video — render a Strudel music bed to WAV
         with Dough and place it under narration. Not a standalone music producer
@@ -188,12 +188,14 @@ options:
     - cli: uv
       description: >-
         uv runs the Python tooling — offline Kokoro narration and the narration
-        manifest utility in skills/text-to-speech/scripts. Install from
+        manifest utility in plugins/office-kit/skills/text-to-speech/scripts.
+        Install from
         https://docs.astral.sh/uv/getting-started/installation/
     - cli: ffmpeg
       description: >-
         ffmpeg muxes narration with rendered frames and encodes final video
-        deliverables. Install with `brew install ffmpeg`
+        deliverables. Install with `brew install ffmpeg` (macOS),
+        `winget install Gyan.FFmpeg` (Windows), or your distro package
 
 agents:
   base:

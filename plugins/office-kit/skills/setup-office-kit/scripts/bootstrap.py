@@ -166,8 +166,17 @@ def install_workspace(target: Path, *, force: bool, install: bool) -> None:
     )
     for command in commands:
         print(f"Running {' '.join(command)}")
+        # Windows resolves only .exe from PATH inside CreateProcess, and npm
+        # ships as npm.cmd; shutil.which honours PATHEXT and returns the path.
+        executable = shutil.which(command[0])
+        if executable is None:
+            raise BootstrapError(
+                f"{command[0]} is required but was not found on PATH"
+            )
         try:
-            result = subprocess.run(command, cwd=target, check=False)
+            result = subprocess.run(
+                [executable, *command[1:]], cwd=target, check=False
+            )
         except FileNotFoundError as exc:
             raise BootstrapError(
                 f"{command[0]} is required but was not found on PATH"
@@ -178,7 +187,20 @@ def install_workspace(target: Path, *, force: bool, install: bool) -> None:
             )
 
 
+def _configure_console() -> None:
+    """UTF-8 stdout/stderr so non-ASCII output survives a cp1252 console."""
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is None:
+            continue
+        try:
+            reconfigure(encoding="utf-8", errors="replace")
+        except (ValueError, OSError):  # pragma: no cover
+            pass
+
+
 def main(argv: list[str] | None = None) -> int:
+    _configure_console()
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--target",

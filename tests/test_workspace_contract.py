@@ -15,12 +15,12 @@ EXPECTED_AGENTS = {
 }
 ROUTERS = (
     ROOT / "WORKFLOW.md",
-    ROOT / "skills/create-doc/SKILL.md",
-    ROOT / "skills/create-slides/SKILL.md",
-    ROOT / "skills/create-video/SKILL.md",
-    ROOT / "skills/init-brand/SKILL.md",
+    ROOT / "plugins/office-kit/skills/create-doc/SKILL.md",
+    ROOT / "plugins/office-kit/skills/create-slides/SKILL.md",
+    ROOT / "plugins/office-kit/skills/create-video/SKILL.md",
+    ROOT / "plugins/office-kit/skills/init-brand/SKILL.md",
 )
-DOC_SKILL = ROOT / "skills/create-doc/SKILL.md"
+DOC_SKILL = ROOT / "plugins/office-kit/skills/create-doc/SKILL.md"
 DOC_TEMPLATE = ROOT / ".templates/document-html/document.html"
 
 
@@ -54,8 +54,8 @@ class WorkspaceContractTests(unittest.TestCase):
 
         for path in (
             ROOT / "WORKFLOW.md",
-            ROOT / "skills/create-slides/SKILL.md",
-            ROOT / "skills/create-video/SKILL.md",
+            ROOT / "plugins/office-kit/skills/create-slides/SKILL.md",
+            ROOT / "plugins/office-kit/skills/create-video/SKILL.md",
         ):
             text = read(path)
             self.assertNotIn("wait for explicit approval", text, path.name)
@@ -70,12 +70,12 @@ class WorkspaceContractTests(unittest.TestCase):
             ):
                 self.assertNotIn(retired, text, f"{path.name} still names {retired}")
 
-        slides = read(ROOT / "skills/create-slides/SKILL.md")
-        video = read(ROOT / "skills/create-video/SKILL.md")
+        slides = read(ROOT / "plugins/office-kit/skills/create-slides/SKILL.md")
+        video = read(ROOT / "plugins/office-kit/skills/create-video/SKILL.md")
         self.assertIn("Author in the\nmain agent", slides)
         self.assertIn("Author the\nvideo in the main agent", video)
         self.assertIn("Research claims directly", slides)
-        self.assertIn("Research factual claims\ndirectly", video)
+        self.assertIn("Research\nfactual claims directly", video)
         self.assertIn("two-cols-header", slides)
         self.assertIn("scripts/presentation/deck.py", slides)
         self.assertIn("scripts/video/video.py", video)
@@ -91,8 +91,8 @@ class WorkspaceContractTests(unittest.TestCase):
         self.assertIn("Approval gate", brand)
 
     def test_delivery_is_request_only(self) -> None:
-        slides = read(ROOT / "skills/create-slides/SKILL.md")
-        video = read(ROOT / "skills/create-video/SKILL.md")
+        slides = read(ROOT / "plugins/office-kit/skills/create-slides/SKILL.md")
+        video = read(ROOT / "plugins/office-kit/skills/create-video/SKILL.md")
         self.assertIn("Export only when requested", slides)
         self.assertIn("Render only when the user names", video)
 
@@ -230,7 +230,7 @@ class SkillInvocationContractTests(unittest.TestCase):
     """Skills run Python through the workspace uv env, never a bare interpreter."""
 
     def test_skills_invoke_python_through_uv(self) -> None:
-        for path in sorted((ROOT / "skills").glob("*/SKILL.md")):
+        for path in sorted((ROOT / "plugins" / "office-kit" / "skills").glob("*/SKILL.md")):
             hits = [
                 line.strip()
                 for line in read(path).splitlines()

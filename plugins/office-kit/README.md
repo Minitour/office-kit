@@ -21,8 +21,8 @@ HyperFrames videos. This package follows
 
 The root `plugin.json` is authoritative. `.claude-plugin/plugin.json` and
 `.codex-plugin/plugin.json` are metadata-only compatibility adapters.
-The skill implementations in this directory are canonical. The repository-root
-`skills/` path is a symlink to this tree.
+The skill implementations in this directory are canonical; the repository's
+`capabilities.yaml` points CAPA at this same tree.
 
 ## What is not included
 

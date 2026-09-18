@@ -70,18 +70,18 @@ class DocumentPackageTests(unittest.TestCase):
 
         (self.root / "brand" / "assets").mkdir(parents=True)
         (self.project / "assets").mkdir(parents=True)
-        (self.root / "config.toml").write_text("[document]\n", encoding="utf-8")
-        (self.root / "brand" / "tokens.css").write_text(TOKENS_CSS, encoding="utf-8")
+        (self.root / "config.toml").write_text("[document]\n", encoding="utf-8", newline="\n")
+        (self.root / "brand" / "tokens.css").write_text(TOKENS_CSS, encoding="utf-8", newline="\n")
         (self.root / "brand" / "assets" / "logo.svg").write_text(
-            LOGO_SVG, encoding="utf-8"
+            LOGO_SVG, encoding="utf-8", newline="\n"
         )
-        (self.project / "styles.css").write_text(STYLES_CSS, encoding="utf-8")
-        (self.project / "script.js").write_text(SCRIPT_JS, encoding="utf-8")
+        (self.project / "styles.css").write_text(STYLES_CSS, encoding="utf-8", newline="\n")
+        (self.project / "script.js").write_text(SCRIPT_JS, encoding="utf-8", newline="\n")
         (self.project / "assets" / "pic.png").write_bytes(PNG_BYTES)
 
     def write_index(self, body: str) -> Path:
         entry = self.project / "index.html"
-        entry.write_text(body, encoding="utf-8")
+        entry.write_text(body, encoding="utf-8", newline="\n")
         return entry
 
     def package(self, body: str) -> str:
@@ -149,10 +149,10 @@ class DocumentPackageTests(unittest.TestCase):
 
     def test_inlines_local_css_imports_and_rejects_cycles(self) -> None:
         (self.project / "partial.css").write_text(
-            ".partial { color: rebeccapurple; }\n", encoding="utf-8"
+            ".partial { color: rebeccapurple; }\n", encoding="utf-8", newline="\n"
         )
         (self.project / "styles.css").write_text(
-            '@import url("partial.css");\nbody { margin: 0; }\n', encoding="utf-8"
+            '@import url("partial.css");\nbody { margin: 0; }\n', encoding="utf-8", newline="\n"
         )
 
         packaged = self.package('<link rel="stylesheet" href="styles.css">')
@@ -160,7 +160,7 @@ class DocumentPackageTests(unittest.TestCase):
         self.assertNotIn('@import url("partial.css")', packaged)
 
         (self.project / "partial.css").write_text(
-            '@import url("styles.css");\n', encoding="utf-8"
+            '@import url("styles.css");\n', encoding="utf-8", newline="\n"
         )
         with self.assertRaisesRegex(document_package.PackageError, "cycle"):
             self.package('<link rel="stylesheet" href="styles.css">')
@@ -215,7 +215,7 @@ class DocumentPackageTests(unittest.TestCase):
 
     def test_missing_reference_inside_a_stylesheet_fails(self) -> None:
         (self.project / "styles.css").write_text(
-            '.mark { background-image: url("assets/gone.svg"); }\n', encoding="utf-8"
+            '.mark { background-image: url("assets/gone.svg"); }\n', encoding="utf-8", newline="\n"
         )
         with self.assertRaisesRegex(document_package.PackageError, "missing file"):
             self.package('<link rel="stylesheet" href="styles.css">')
@@ -223,7 +223,7 @@ class DocumentPackageTests(unittest.TestCase):
     def test_references_outside_the_workspace_are_rejected(self) -> None:
         outside = self.tmp / "outside"
         outside.mkdir()
-        (outside / "secret.css").write_text("body { color: red; }\n", encoding="utf-8")
+        (outside / "secret.css").write_text("body { color: red; }\n", encoding="utf-8", newline="\n")
         (outside / "pixel.png").write_bytes(PNG_BYTES)
 
         for body in (
@@ -259,7 +259,7 @@ class DocumentPackageTests(unittest.TestCase):
         stray = self.tmp / "stray"
         stray.mkdir()
         entry = stray / "index.html"
-        entry.write_text("<p>No workspace here.</p>", encoding="utf-8")
+        entry.write_text("<p>No workspace here.</p>", encoding="utf-8", newline="\n")
         with self.assertRaisesRegex(
             document_package.PackageError, "cannot find the workspace root"
         ):
@@ -333,7 +333,7 @@ class DocumentPackageTests(unittest.TestCase):
         self.assertEqual(code, 0)
         # styles.css, the logo it points at, and script.js.
         self.assertIn("Inlined 3 local file(s)", stdout.getvalue())
-        self.assertIn('console.log("demo-script-marker");', output.read_text())
+        self.assertIn('console.log("demo-script-marker");', output.read_text(encoding="utf-8"))
 
     def test_cli_reports_errors_without_writing(self) -> None:
         entry = self.write_index('<link rel="stylesheet" href="missing.css">')

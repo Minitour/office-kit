@@ -990,6 +990,7 @@ def _parser() -> argparse.ArgumentParser:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
+    _common.configure_console()
     args = _parser().parse_args(argv)
     try:
         return int(args.handler(args))

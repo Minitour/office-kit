@@ -16,6 +16,8 @@
   <a href="CHANGELOG.md"><img alt="Changelog" src="https://img.shields.io/badge/changelog-keep%20a%20changelog-orange" /></a>
 </p>
 
+https://github.com/user-attachments/assets/53dbfa3e-a1ae-475a-bbd1-5bef9061cdfd
+
 ---
 
 ## What you get

@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Motion reel</title>
+<!-- The project-local brand snapshot: palette, fonts, and marks. Refresh it
+     with `reel.py refresh`, never by hand. -->
+<link rel="stylesheet" href="./brand/tokens.css">
+<style>
+  html, body { margin: 0; overflow: hidden; background: var(--color-background, #fff); }
+  canvas { display: block; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script src="timeline.js"></script>
+<script>
+/*
+ * Everything is a pure function of t. No timers, no CSS transitions, no
+ * randomness, no state carried between frames: seek(812 / 60) paints frame
+ * 812 without visiting frames 0..811. That is what makes the render
+ * repeatable, lets `reel.py verify` prove it, and turns a fix into a one-line
+ * edit plus a re-render.
+ */
+const T = window.TL;
+document.title = T.title;
+
+// ---------- format ----------
+// One timeline, several layouts. Scenes read positions from L, never raw
+// pixels, so each format is re-laid out rather than cropped.
+const FORMAT = new URLSearchParams(location.search).get('format') || 'landscape';
+const V = FORMAT === 'vertical', SQ = FORMAT === 'square';
+const W = V || SQ ? T.height : T.width;
+const H = V ? T.width : T.height;
+const L = {
+  landscape: { markSize: 360, wordPx: 150, wordGap: 170, lockup: 'row' },
+  vertical:  { markSize: 340, wordPx: 118, wordGap: 140, lockup: 'stack' },
+  square:    { markSize: 300, wordPx: 112, wordGap: 132, lockup: 'stack' },
+}[FORMAT];
+
+const cv = document.getElementById('c');
+cv.width = W; cv.height = H;
+const ctx = cv.getContext('2d');
+
+// ---------- brand ----------
+// Every colour and face comes from brand/tokens.css, which is generated from
+// brands/<id>/brand.json. Never paste hex values or font names in here.
+const css = getComputedStyle(document.documentElement);
+const token = (name, fallback) => css.getPropertyValue(name).trim() || fallback;
+const PAPER = token('--color-background', '#FFFFFF');
+const INK = token('--color-foreground', '#111827');
+const BRAND = token('--color-primary', '#4338CA');
+const SECOND = token('--color-secondary', BRAND);
+const MUTED = token('--color-muted', '#64748B');
+const SOFT = token('--color-accent-soft', '#E5E7EB');
+const DISPLAY = token('--font-heading', 'system-ui, sans-serif');
+const BODY = token('--font-sans', 'system-ui, sans-serif');
+const MONO = token('--font-mono', 'ui-monospace, monospace');
+const HEAVY_WEIGHT = token('--font-weight-heading', '700');
+
+// Replace with the plan's copy. No em dashes: use a full stop or two lines.
+const WORDS = ['First line.', 'Second line.', 'The payoff.'];
+const TAGLINE = 'One sentence that says what it does.';
+
+// The brand mark as an image. To animate its pieces separately, rebuild it
+// from brand/assets/*.svg as canvas shapes instead (see the skill's craft
+// notes); an image can only move as one piece.
+const LOGO = new Image();
+
+// ---------- motion ----------
+
+/** Closed-form damped spring: 0 before t0, settles on 1. Pure in t. */
+function spring(t, t0, p) {
+  const x = t - t0;
+  if (x <= 0) return 0;
+  if (!Number.isFinite(x)) return 1; // spring(Infinity, ...) means "settled"
+  const { w, z } = p;
+  if (z < 1) {
+    const wd = w * Math.sqrt(1 - z * z);
+    return 1 - Math.exp(-z * w * x) * (Math.cos(wd * x) + (z * w / wd) * Math.sin(wd * x));
+  }
+  return 1 - Math.exp(-w * x) * (1 + w * x);
+}
+const SNAPPY = { w: 30, z: 0.78 }; // buttons, toggles, leading edges
+const DEF = { w: 17, z: 0.86 };    // cards, containers, camera
+const HEAVY = { w: 11, z: 1 };     // big type, logo lockups (no overshoot)
+const PLAY = { w: 22, z: 0.48 };   // mascots, stickers (visible overshoot)
+
+/**
+ * A value that changes target several times: one spring per change, summed,
+ * so motion stays continuous when a new target arrives mid-flight.
+ * changes: [{ t, to, p }]
+ */
+function track(t, v0, changes) {
+  let v = v0, prev = v0;
+  for (const c of changes) {
+    v += (c.to - prev) * spring(t, c.t, c.p || DEF);
+    prev = c.to;
+  }
+  return v;
+}
+
+const lerp = (a, b, p) => a + (b - a) * p;
+const clamp01 = (x) => Math.max(0, Math.min(1, x));
+const seg = (t, a, b) => clamp01((t - a) / (b - a));
+const smooth = (x) => x * x * (3 - 2 * x);
+
+// ---------- drawing helpers ----------
+
+function rr(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.roundRect(x, y, w, h, Math.max(0, Math.min(r, w / 2, h / 2)));
+}
+function card(rect, fill, alpha = 1, shadow = 0) {
+  if (alpha <= 0) return;
+  ctx.save();
+  ctx.globalAlpha *= alpha;
+  if (shadow > 0) {
+    ctx.shadowColor = `rgba(17, 24, 39, ${0.16 * shadow})`;
+    ctx.shadowBlur = 50 * shadow;
+    ctx.shadowOffsetY = 18 * shadow;
+  }
+  rr(rect.x, rect.y, rect.w, rect.h, rect.r || 0);
+  ctx.fillStyle = fill;
+  ctx.fill();
+  ctx.restore();
+}
+function text(str, x, y, font, color, alpha = 1, align = 'left', spacing = '0px') {
+  if (alpha <= 0 || !str) return;
+  ctx.save();
+  ctx.globalAlpha *= alpha;
+  ctx.font = font;
+  ctx.letterSpacing = spacing;
+  ctx.fillStyle = color;
+  ctx.textAlign = align;
+  ctx.textBaseline = 'alphabetic';
+  ctx.fillText(str, x, y);
+  ctx.restore();
+}
+function typed(str, t, start, dur) {
+  return str.slice(0, Math.floor(str.length * seg(t, start, start + dur)));
+}
+function logo(cx, cy, size, alpha = 1, scale = 1, rot = 0) {
+  if (alpha <= 0 || scale <= 0 || !LOGO.naturalWidth) return;
+  ctx.save();
+  ctx.globalAlpha *= alpha;
+  ctx.translate(cx, cy);
+  ctx.rotate(rot);
+  ctx.scale(scale, scale);
+  const aspect = LOGO.naturalWidth / LOGO.naturalHeight;
+  const w = aspect >= 1 ? size : size * aspect, h = aspect >= 1 ? size / aspect : size;
+  ctx.drawImage(LOGO, -w / 2, -h / 2, w, h);
+  ctx.restore();
+}
+
+// ---------- scenes ----------
+
+function background(t) {
+  // Paint the full ground first, every frame, or transitions flash.
+  ctx.fillStyle = PAPER;
+  ctx.fillRect(0, 0, W, H);
+  // A slow drifting dot grid: the frame is never fully static.
+  ctx.save();
+  ctx.fillStyle = INK;
+  ctx.globalAlpha = 0.06;
+  const off = (t * 6) % 40;
+  for (let y = -40 + off; y < H + 40; y += 40) for (let x = 0; x < W; x += 40) ctx.fillRect(x, y, 2, 2);
+  ctx.restore();
+}
+
+function seek(t) {
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.globalAlpha = 1;
+  background(t);
+
+  // Scene 1 -> 2: the mark lands, then lifts away as the words arrive.
+  if (t < T.lockup) {
+    const land = spring(t, T.markIn, PLAY);
+    const out = spring(t, T.words[0] - 0.1, HEAVY);
+    logo(W / 2, H / 2 - out * H * 0.6, L.markSize * (1 - 0.5 * out), clamp01(land * 2) * (1 - out),
+      0.6 + 0.4 * land, (1 - land) * -0.2);
+  }
+
+  // Scene 2: kinetic type, one line per bar; the stack recentres as it grows.
+  if (t >= T.words[0] && t < T.lockup) {
+    const shown = T.words.filter((w) => t >= w).length;
+    const leave = spring(t, T.lockup - 0.12, SNAPPY);
+    WORDS.slice(0, shown).forEach((str, i) => {
+      const p = spring(t, T.words[i], HEAVY);
+      const y = H / 2 + (i - (shown - 1) / 2) * L.wordGap + L.wordPx * 0.35;
+      const last = i === WORDS.length - 1;
+      text(str, W / 2, y + (1 - p) * 60 - leave * 80, `${HEAVY_WEIGHT} ${L.wordPx}px ${DISPLAY}`,
+        last ? BRAND : INK, clamp01(p * 1.4) * (1 - leave) * (i < shown - 1 ? 0.35 : 1), 'center', '-3px');
+    });
+  }
+
+  // Scene 3: lockup.
+  if (t >= T.lockup) {
+    const m = spring(t, T.lockup, HEAVY);
+    const tg = spring(t, T.tagline, DEF);
+    const reveal = smooth(seg(t, T.lockup + 0.12, T.lockup + 0.5));
+    if (L.lockup === 'row') {
+      const size = 200, cx = W / 2 - 440;
+      logo(lerp(W / 2, cx, m), H / 2, lerp(L.markSize, size, m));
+      ctx.save(); ctx.beginPath(); ctx.rect(cx + 130, 0, W * reveal, H); ctx.clip();
+      text(T.name, cx + 140 + (1 - reveal) * -60, H / 2 + 50, `${HEAVY_WEIGHT} 150px ${DISPLAY}`, INK, 1, 'left', '-4px');
+      ctx.restore();
+      text(TAGLINE, cx + 146, H / 2 + 130 + (1 - tg) * 24, `500 40px ${BODY}`, MUTED, clamp01(tg * 1.5));
+      text(T.url, cx + 146, H / 2 + 190 + (1 - tg) * 24, `500 30px ${MONO}`, BRAND, clamp01(tg * 1.5));
+    } else {
+      logo(W / 2, lerp(H / 2, H / 2 - 190, m), lerp(L.markSize, 240, m));
+      text(T.name, W / 2, H / 2 + 130 + (1 - reveal) * 40, `${HEAVY_WEIGHT} ${L.wordPx}px ${DISPLAY}`, INK, reveal, 'center', '-4px');
+      text(TAGLINE, W / 2, H / 2 + 210 + (1 - tg) * 24, `500 36px ${BODY}`, MUTED, clamp01(tg * 1.5), 'center');
+      text(T.url, W / 2, H / 2 + 268 + (1 - tg) * 24, `500 28px ${MONO}`, BRAND, clamp01(tg * 1.5), 'center');
+    }
+  }
+}
+
+window.seek = seek;
+window.ready = (async () => {
+  // Load every face actually used, or early frames paint a fallback font.
+  await Promise.all([
+    `${HEAVY_WEIGHT} 60px ${DISPLAY}`, `500 40px ${BODY}`, `400 40px ${BODY}`, `500 30px ${MONO}`,
+  ].map((f) => document.fonts.load(f, T.name).catch(() => [])));
+  await document.fonts.ready;
+  LOGO.src = T.logo;
+  await LOGO.decode().catch(() => console.error(`brand mark failed to load: ${T.logo}`));
+  seek(0);
+  return true;
+})();
+// Scrub from disk with ?t=seconds (and &format=vertical|square).
+const qt = new URLSearchParams(location.search).get('t');
+window.ready.then(() => { if (qt !== null) seek(parseFloat(qt)); });
+</script>
+</body>
+</html>

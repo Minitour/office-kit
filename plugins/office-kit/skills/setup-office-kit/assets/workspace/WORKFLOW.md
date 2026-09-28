@@ -10,6 +10,7 @@ agent; no external skill, MCP server, hook, or subagent is required.
 - Written document or standalone web document → `create-doc`
 - Presentation or deck → `create-slides`
 - Narrated motion/video → `create-video`
+- Short unnarrated brand, launch, or social reel → `create-motion-reel`
 - New or revised identity → `init-brand`
 - Offline narration → `text-to-speech`
 
@@ -20,6 +21,7 @@ Ask one routing question only when the requested medium is ambiguous.
 - Documents: `doc.py new` → author the HTML → `doc.py check`
 - Decks: `deck.py new` → `deck.py dev` → author → `deck.py audit`
 - Videos: `video.py new` → `video.py dev` → author → `video.py audit`
+- Motion reels: `reel.py new` → `reel.py stills` → author → `reel.py audit`
 
 The Python scripts own install, preview, audit, stop, and export. Never invoke
 Slidev, Vite, or HyperFrames directly when an OfficeKit wrapper exists.
@@ -31,6 +33,8 @@ Slidev, Vite, or HyperFrames directly when an OfficeKit wrapper exists.
   and project plan/reports.
 - Videos: edit composition source, project media/narration, and project
   plan/reports.
+- Motion reels: edit `index.html`, `timeline.js`, `score.mjs`, project media,
+  and project plan/reports.
 - Brands: edit canonical `brands/<id>/brand.json` and preserve assets; generate
   `BRAND.md`, `tokens.css`, and `frame.md` with the brand script.
 
@@ -48,7 +52,7 @@ decks, and videos do not have a plan approval gate.
 
 ## Durable state
 
-Documents keep the HTML plus a short `NOTES.md`. Decks and videos keep
+Documents keep the HTML plus a short `NOTES.md`. Decks, videos, and motion reels keep
 `plan/PLAN.md` plus `reports/build.md` and `reports/review.md`; add research or
 delivery reports only when those stages actually occur. Resume existing work
 instead of recreating it.

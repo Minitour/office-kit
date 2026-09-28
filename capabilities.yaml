@@ -62,6 +62,16 @@ skills:
         context (plan → scenes → narration → music bed → review) with
         per-segment offline narration and a Dough-rendered music bed. No
         authoring subagent; research-agent only when claims need checking
+  - id: create-motion-reel
+    type: local
+    def:
+      path: plugins/office-kit/skills/create-motion-reel
+      description: >-
+        The /create-motion-reel command: a short unnarrated brand, launch or
+        social reel drawn on a canvas in primary context (plan, style frames,
+        animatic, critique loop, formats) with a synthesized beat-locked score,
+        rendered frame by frame to MP4 in 16:9, 9:16 and 1:1. Narrated video
+        belongs to create-video
   - id: text-to-speech
     type: local
     def:

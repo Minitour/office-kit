@@ -25,9 +25,9 @@ UTF-8.
 | Path | What it is |
 |---|---|
 | `plugins/office-kit/skills/<name>/SKILL.md` | **Canonical** skill sources. `capabilities.yaml` points CAPA here, so there is no second copy to keep in sync. |
-| `scripts/` | Python CLIs: `document/doc.py`, `presentation/deck.py`, `video/video.py`, `brand/generate.py`, and shared `common.py`. |
+| `scripts/` | Python CLIs: `document/doc.py`, `presentation/deck.py`, `video/video.py`, `motion/reel.py`, `brand/generate.py`, and shared `common.py`. |
 | `scripts/presentation/render-audit.mjs` | Playwright render pass used by `deck.py audit`. |
-| `.templates/` | Scaffolds for documents, decks (Slidev), and video (HyperFrames). |
+| `.templates/` | Scaffolds for documents, decks (Slidev), video (HyperFrames), and motion reels (canvas). |
 | `brands/officekit/` | The default identity. `brand.json` is canonical; the rest is generated. |
 | `plugins/office-kit/skills/setup-office-kit/assets/workspace/` | **Generated** payload the plugin installs into a host repo. Never edit by hand. |
 | `tests/` | pytest suite. |

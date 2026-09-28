@@ -26,6 +26,7 @@ SKILLS = (
     "create-doc",
     "create-slides",
     "create-video",
+    "create-motion-reel",
     "text-to-speech",
     "strudel-offline",
 )
@@ -35,8 +36,9 @@ MANIFEST = {
     "name": "office-kit",
     "version": VERSION,
     "description": (
-        "Create branded standalone HTML documents, Slidev decks, and "
-        "HyperFrames videos in an isolated OfficeKit workspace."
+        "Create branded standalone HTML documents, Slidev decks, "
+        "HyperFrames videos, and code-drawn motion reels in an isolated "
+        "OfficeKit workspace."
     ),
     "author": {"name": "OfficeKit"},
     "homepage": "https://github.com/Minitour/office-kit",
@@ -46,6 +48,7 @@ MANIFEST = {
         "presentations",
         "slides",
         "video",
+        "motion",
         "branding",
         "office-kit",
     ],
@@ -143,6 +146,13 @@ WORKSPACE_FILES = (
     ".templates/video/media/.gitkeep",
     ".templates/video/narration/.gitkeep",
     ".templates/video/plan/.gitkeep",
+    ".templates/motion/index.html",
+    ".templates/motion/package.json.j2",
+    ".templates/motion/score.mjs",
+    ".templates/motion/timeline.js.j2",
+    ".templates/motion/brand/.gitkeep",
+    ".templates/motion/media/.gitkeep",
+    ".templates/motion/plan/.gitkeep",
     "brands/officekit/BRAND.md",
     "brands/officekit/brand.json",
     "brands/officekit/frame.md",
@@ -160,6 +170,8 @@ WORKSPACE_FILES = (
     "scripts/presentation/player/player.css",
     "scripts/presentation/player/player.js",
     "scripts/video/video.py",
+    "scripts/motion/reel.py",
+    "scripts/motion/render.mjs",
 )
 
 MANUAL_PLUGIN_FILES = (
@@ -170,6 +182,9 @@ MANUAL_PLUGIN_FILES = (
     "skills/create-doc/SKILL.md",
     "skills/create-slides/SKILL.md",
     "skills/create-video/SKILL.md",
+    "skills/create-motion-reel/SKILL.md",
+    "skills/create-motion-reel/references/craft.md",
+    "skills/create-motion-reel/references/plan.md",
     "skills/text-to-speech/SKILL.md",
     "skills/text-to-speech/scripts/synthesize.py",
     "skills/text-to-speech/scripts/tts_manifest.py",
@@ -205,6 +220,7 @@ EVAL_FILES = (
     "skills/create-video/evals/files/resume-approved-partial/narration/intro.wav",
     "skills/create-video/evals/files/resume-approved-partial/plan/PLAN.md",
     "skills/create-video/evals/files/resume-approved-partial/reports/build.md",
+    "skills/create-motion-reel/evals/evals.json",
     "skills/init-brand/evals/evals.json",
     "skills/init-brand/evals/files/stale-derivatives/brand.json",
     "skills/init-brand/evals/files/stale-derivatives/tokens.css",

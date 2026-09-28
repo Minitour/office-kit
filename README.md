@@ -27,6 +27,7 @@ https://github.com/user-attachments/assets/53dbfa3e-a1ae-475a-bbd1-5bef9061cdfd
 | **Documents** | Standalone HTML | One self-contained `.html` file (styles, brand tokens, marks, and images inlined). Opens straight from disk, prints to PDF from the browser. |
 | **Presentations** | [Slidev](https://sli.dev/) | A Markdown deck with a branded template, live preview, a render-based audit, and PDF / PPTX / PNG export on request. |
 | **Video** | [HyperFrames](https://hyperframes.heygen.com/) | A composition with **offline** narration ([Kokoro](https://github.com/hexgrad/kokoro)) and an optional **offline** music bed (Strudel / Dough). Nothing leaves your machine. |
+| **Motion reels** | Canvas + headless Chromium | A short, unnarrated brand or launch reel drawn in code, with a synthesized beat-locked score, rendered frame by frame to MP4 in 16:9, 9:16 and 1:1. |
 
 Every output is styled from one **brand catalog** (`brands/<id>/brand.json`), so a palette or logo change flows into documents, decks, and video alike.
 
@@ -100,8 +101,8 @@ your-repository/
 └── .office-kit/
     ├── brands/            # identities (officekit by default)
     ├── projects/          # one deliverable per directory
-    ├── scripts/           # doc.py, deck.py, video.py, brand generator
-    ├── .templates/        # document, presentation, video scaffolds
+    ├── scripts/           # doc.py, deck.py, video.py, reel.py, brand generator
+    ├── .templates/        # document, presentation, video, motion scaffolds
     ├── config.toml
     ├── package.json       # one shared node_modules
     └── pyproject.toml     # one shared .venv
@@ -137,6 +138,7 @@ Process is matched to the cost of the deliverable.
 | `create-doc` | Reports, proposals, memos, briefs, articles, letters, whitepapers |
 | `create-slides` | Pitches, lectures, talks, kickoffs, workshops |
 | `create-video` | Explainers, motion pieces, narrated walkthroughs |
+| `create-motion-reel` | Short unnarrated launch films, brand reels, social teasers |
 | `init-brand` | Create or revise an identity under `brands/<id>/` |
 | `setup-office-kit` | Install or update the `.office-kit/` workspace (plugin path only) |
 | `text-to-speech` | Offline Kokoro narration, one WAV per segment, measured timing manifest |
@@ -169,6 +171,14 @@ uv run python scripts/video/video.py dev <slug>
 uv run python scripts/video/video.py audit <slug>
 uv run python scripts/video/video.py refresh <slug>                # re-copy the brand snapshot
 uv run python scripts/video/video.py stop <slug>
+
+# Motion reels
+uv run python scripts/motion/reel.py new <slug> --title "…"       # scaffold + npm install
+uv run python scripts/motion/reel.py stills <slug>                # PNG stills + contact sheet for critique
+uv run python scripts/motion/reel.py animatic <slug>              # 12 fps timing draft with the score
+uv run python scripts/motion/reel.py audit <slug>                 # purity, score headroom, determinism
+uv run python scripts/motion/reel.py render <slug> [--format vertical]
+uv run python scripts/motion/reel.py refresh <slug>               # re-copy the brand snapshot
 
 # Brand
 uv run python scripts/brand/generate.py <id>                       # brand.json → BRAND.md, tokens.css, frame.md
@@ -207,7 +217,7 @@ The workspace can hold several identities. Each one is a directory:
 | `brands/<id>/assets/` | Supplied logos and marks, preserved byte-for-byte |
 | `config.toml` `[brand] default` | Identity used when a project does not name one |
 
-Change an identity by editing its `brand.json` (through `init-brand`) and regenerating. Never hand-edit a generated file and never copy colours or fonts into `config.toml` or a project. Two consumers hold generated copies and must be refreshed after a brand changes: documents (`doc.py refresh --all`; `doc.py check` fails on drift) and video projects (`video.py refresh`, because HyperFrames cannot serve files above the project root). Decks read `tokens.css` live.
+Change an identity by editing its `brand.json` (through `init-brand`) and regenerating. Never hand-edit a generated file and never copy colours or fonts into `config.toml` or a project. Three consumers hold generated copies and must be refreshed after a brand changes: documents (`doc.py refresh --all`; `doc.py check` fails on drift), video projects (`video.py refresh`), and motion reels (`reel.py refresh`); the last two because their pages cannot serve files above the project root. Decks read `tokens.css` live.
 
 Operational defaults (templates, canvas size, preview ports, TTS flags, export directories) live in `config.toml`; a project's plan may override them for that project only.
 
@@ -224,7 +234,8 @@ office-kit/                       # this repository; the plugin installs the sam
 ├── .templates/
 │   ├── document-html/            # standalone HTML document
 │   ├── presentation/             # Slidev: slides.md.j2, styles/brand.css, components/, layouts/, public/
-│   └── video/                    # HyperFrames
+│   ├── video/                    # HyperFrames
+│   └── motion/                   # canvas reel: index.html, timeline.js, score.mjs
 ├── scripts/
 │   ├── common.py                 # config, brand, Jinja, cross-platform process helpers
 │   ├── brand/                    # catalog + generator
@@ -232,6 +243,7 @@ office-kit/                       # this repository; the plugin installs the sam
 │   ├── presentation/deck.py      # new | dev | audit | export | stop
 │   ├── presentation/render-audit.mjs
 │   ├── video/video.py            # new | dev | audit | refresh | stop
+│   ├── motion/reel.py            # new | stills | animatic | audit | render | poster | refresh
 │   └── plugin/build.py           # regenerates the plugin payload and manifests
 ├── tests/
 ├── package.json                  # npm workspaces (projects/*), one root node_modules

@@ -14,6 +14,12 @@ All notable changes to OfficeKit are recorded here. The format follows
   and inlined images and fonts. It opens offline from disk and is verified
   after writing. `[presentation.export] html_embed_fonts` and `--link-fonts`
   control font embedding.
+- `create-motion-reel` skill with `scripts/motion/reel.py` and the
+  `.templates/motion` scaffold: short unnarrated brand and launch reels
+  drawn on a canvas as a pure function of time, a beat grid shared by picture
+  and a synthesized score, and headless frame-by-frame rendering to MP4 in
+  16:9, 9:16 and 1:1. `reel.py audit` checks score headroom and proves the
+  frames are deterministic. Configured by `config.toml` `[motion]`.
 
 ## [0.2.0] - 2026-09-18
 

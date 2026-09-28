@@ -78,6 +78,27 @@ target_dir = "brand"
 files = ["tokens.css", "frame.md"]
 directories = ["assets"]
 
+# ── Motion reels (code-drawn canvas) ─────────────────────────
+# Scaffold + install: uv run python scripts/motion/reel.py new <slug>
+# Stills + contact:    uv run python scripts/motion/reel.py stills <slug>
+# Audit:               uv run python scripts/motion/reel.py audit <slug>
+# Render MP4:          uv run python scripts/motion/reel.py render <slug>
+[motion]
+template = "motion"            # Directory under .templates/
+width = 1920                   # → timeline.js `width` (vertical swaps, square uses height)
+height = 1080                  # → timeline.js `height`
+fps = 60                       # → timeline.js `fps` / final render rate
+formats = ["landscape", "vertical"]  # landscape | vertical | square; stills, audit and render loop over these
+output_dir = "renders"         # → renders/<slug>[-<format>].mp4
+
+# The page is opened from disk, so it may only reach files inside the
+# project. Copy the generated brand files into the project-local target.
+[motion.brand_snapshot]
+source_dir = "brands"
+target_dir = "brand"
+files = ["tokens.css"]
+directories = ["assets"]
+
 # ── Audio (offline narration + music bed) ────────────────────
 # Narration is synthesised locally by the text-to-speech skill
 # (Kokoro). The music bed is rendered locally by strudel-offline

@@ -12,6 +12,7 @@ Usage:
     uv run python scripts/presentation/deck.py audit kickoff          # static + render if a preview runs
     uv run python scripts/presentation/deck.py audit kickoff --render # start a preview if needed
     uv run python scripts/presentation/deck.py export kickoff --format pdf
+    uv run python scripts/presentation/deck.py export kickoff --format html  # one-file player
     uv run python scripts/presentation/deck.py stop kickoff
 """
 
@@ -51,6 +52,10 @@ PIDFILE_NAME = ".slidev-dev.pid"
 LOGFILE_NAME = ".slidev-dev.log"
 RECLAIMABLE = ("slidev", "vite")
 RENDER_SCRIPT = Path(__file__).resolve().parent / "render-audit.mjs"
+EXPORT_HTML_SCRIPT = Path(__file__).resolve().parent / "export-html.mjs"
+EXPORT_FORMATS = ("pdf", "pptx", "png", "html")
+# Hosts that take a single HTML body often cap inline uploads around here.
+HTML_SIZE_WARN_BYTES = 4 * 1024 * 1024
 RENDER_DIR = Path("reports") / "render"
 ANSI_RE = re.compile(r"\x1b\[[0-9;]*[A-Za-z]")
 LOG_ERROR_MARKERS = ("console.error", "[vite] error", "internal server error", "error:")
@@ -329,6 +334,17 @@ def live_preview_url(dest: Path) -> str | None:
         return None
     url = f"http://localhost:{port}/"
     return url if _common.wait_http_ok(url, timeout_seconds=3.0) else None
+
+
+def ensure_preview(root: Path, dest: Path, slug: str, *, timeout: float) -> tuple[str, bool]:
+    """Return (url, started): the live preview, or a new one the caller must stop."""
+    url = live_preview_url(dest)
+    if url is not None:
+        return url, False
+    config = _common.load_config(root)
+    preferred = int((config.get("preview") or {}).get("presentation_port") or 3030)
+    _pid, _port, url, _log = start_preview(root, dest, slug, preferred=preferred, timeout=timeout)
+    return url, True
 
 
 def cmd_stop(args: argparse.Namespace) -> int:
@@ -981,18 +997,10 @@ def _render_pass(
     mode = getattr(args, "render", "auto")
     if mode == "off" or not result.visible_slides:
         return
-    url = live_preview_url(dest)
-    started = False
-    if url is None:
-        if mode != "on":
-            print("  note:  no preview running; `--render` starts one and checks every slide")
-            return
-        config = _common.load_config(root)
-        preferred = int((config.get("preview") or {}).get("presentation_port") or 3030)
-        _pid, _port, url, _log = start_preview(
-            root, dest, slug, preferred=preferred, timeout=float(args.timeout)
-        )
-        started = True
+    if mode != "on" and live_preview_url(dest) is None:
+        print("  note:  no preview running; `--render` starts one and checks every slide")
+        return
+    url, started = ensure_preview(root, dest, slug, timeout=float(args.timeout))
     out_dir = dest / Path(getattr(args, "render_dir", None) or RENDER_DIR)
     canvas = canvas_size(result.headmatter)
     try:
@@ -1066,9 +1074,15 @@ def cmd_export(args: argparse.Namespace) -> int:
     presentation = config.get("presentation") or {}
     export_cfg = presentation.get("export") or {}
     fmt = args.format or str(export_cfg.get("format") or "pdf")
+    if fmt not in EXPORT_FORMATS:
+        raise ScaffoldError(f"unknown export format {fmt!r}; use one of {', '.join(EXPORT_FORMATS)}")
     output_dir = args.output_dir or str(export_cfg.get("output_dir") or "dist")
     out_path = dest / output_dir / f"slides.{fmt}"
     out_path.parent.mkdir(parents=True, exist_ok=True)
+
+    if fmt == "html":
+        embed = export_cfg.get("html_embed_fonts", True) and not args.link_fonts
+        return export_html(root, dest, slug, out_path, embed_fonts=bool(embed), timeout=args.timeout)
 
     command = [
         _common.node_bin("npx"),
@@ -1092,6 +1106,69 @@ def cmd_export(args: argparse.Namespace) -> int:
     if result.returncode != 0:
         raise ScaffoldError(f"slidev export failed with exit {result.returncode}")
     print(f"  wrote: {_common.relative_to(out_path, root)}")
+    return 0
+
+
+def export_html(
+    root: Path,
+    dest: Path,
+    slug: str,
+    out_path: Path,
+    *,
+    embed_fonts: bool = True,
+    timeout: float = 45.0,
+) -> int:
+    """Capture the deck from a live preview into one self-contained HTML file."""
+    print(f"Exporting {slug} → {_common.relative_to(out_path, root)} (standalone HTML)")
+    url, started = ensure_preview(root, dest, slug, timeout=timeout)
+    command = [
+        _common.node_bin("node"),
+        str(EXPORT_HTML_SCRIPT),
+        "--base",
+        url,
+        "--out",
+        str(out_path),
+    ]
+    if not embed_fonts:
+        command.append("--no-embed-fonts")
+    try:
+        result = subprocess.run(command, cwd=dest, check=False, capture_output=True, text=True)
+    finally:
+        if started:
+            for note in _common.stop_pidfile(_pidfile(dest)):
+                print(f"  {note}")
+    data: dict[str, Any] = {}
+    lines = (result.stdout or "").strip().splitlines()
+    if lines:
+        try:
+            data = json.loads(lines[-1])
+        except json.JSONDecodeError:
+            data = {}
+    if result.returncode == 3:
+        raise ScaffoldError(
+            f"{data.get('error') or 'playwright-chromium is missing'}; install it with "
+            f"`npm install -w {_common.relative_to(dest, root)} playwright-chromium` "
+            "from the workspace root"
+        )
+    if result.returncode != 0 or data.get("error") or not data.get("out"):
+        detail = data.get("error") or (result.stderr or "").strip().splitlines()[-1:]
+        raise ScaffoldError(f"HTML export failed: {detail or f'exit {result.returncode}'}")
+    size = int(data.get("bytes") or 0)
+    print(
+        f"  slides: {data.get('slides')} ({data.get('steps')} click step(s)), "
+        f"canvas {data.get('width')}x{data.get('height')}, "
+        f"{data.get('fontsEmbedded', 0)} font face(s) embedded"
+    )
+    for href in data.get("externalStylesheets") or []:
+        print(f"  note:  linked, not embedded: {href}")
+    for message in data.get("warnings") or []:
+        print(f"  warn:  {message}")
+    if size > HTML_SIZE_WARN_BYTES:
+        print(
+            f"  warn:  {size / 1048576:.1f} MB; hosts that take one inline HTML body "
+            "often cap near 4 MB — shrink images under public/ or use --link-fonts"
+        )
+    print(f"  wrote: {_common.relative_to(out_path, root)} ({size / 1024:.0f} KB)")
     return 0
 
 
@@ -1188,18 +1265,32 @@ def _parser() -> argparse.ArgumentParser:
     )
     audit.set_defaults(handler=cmd_audit)
 
-    export = sub.add_parser("export", parents=[common], help="export PDF/PPTX/PNG")
+    export = sub.add_parser(
+        "export", parents=[common], help="export PDF/PPTX/PNG or standalone HTML"
+    )
     export.add_argument("slug", help="project slug or path under projects/")
     export.add_argument(
         "--format",
-        choices=("pdf", "pptx", "png"),
+        choices=EXPORT_FORMATS,
         default=None,
-        help="override config.toml [presentation.export] format",
+        help="override config.toml [presentation.export] format; html writes one "
+        "self-contained player file (steps, overview, #n links) with no Slidev server",
     )
     export.add_argument(
         "--output-dir",
         default=None,
         help="directory under the project (default: dist)",
+    )
+    export.add_argument(
+        "--link-fonts",
+        action="store_true",
+        help="html: link web fonts instead of embedding them (smaller, needs network)",
+    )
+    export.add_argument(
+        "--timeout",
+        type=float,
+        default=45.0,
+        help="html: seconds to wait for a preview started for the capture",
     )
     export.set_defaults(handler=cmd_export)
     return parser

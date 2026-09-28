@@ -96,8 +96,16 @@ Export only when requested:
 
 ```bash
 uv run python scripts/presentation/deck.py export <slug> \
-  [--format pdf|pptx|png]
+  [--format pdf|pptx|png|html]
 ```
+
+`html` writes `dist/slides.html`: one self-contained file with a built-in
+player (present mode with click steps, a browse mode that stacks slides for
+reading and commenting, overview, `#n` slide links, fullscreen) and no Slidev
+server. Use it when the deck must be shared as a link, opened from disk, or
+published to a store that takes a single HTML body. Keep click-driven
+content to `v-click`/`v-clicks`/`v-after`, because `v-if`/`v-switch` export in
+their final state. Read the warnings it prints.
 
 Record delivered paths in `reports/delivery.md`. A preview or stale `dist/`
 file is not a delivery.

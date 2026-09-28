@@ -1,0 +1,384 @@
+/*
+ * OfficeKit standalone deck player. Inlined into dist/slides.html by
+ * export-html.mjs. Without JavaScript the slides stack as a scrolling page
+ * (every step revealed, `#n` anchors still jump); player.js adds
+ * html.ok-js plus a mode class: html.ok-present (one slide at a time) or
+ * html.ok-browse (every slide stacked, scaled to the width, fully revealed).
+ */
+:root {
+  --ok-player-bg: #0b0b0f;
+  --ok-player-fg: #f4f4f5;
+  --ok-player-muted: rgba(244, 244, 245, 0.62);
+  --ok-player-chip: rgba(24, 24, 27, 0.82);
+  --ok-player-ring: #a78bfa;
+  --slidev-slide-scale: 1;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--ok-player-bg);
+}
+
+/* Slidev's app CSS pins html/body to the viewport with overflow hidden; the
+   stacked fallback and browse mode are a normal scrolling page. */
+html:not(.ok-present),
+html:not(.ok-present) body {
+  height: auto !important;
+  min-height: 100%;
+  overflow: visible !important;
+}
+
+html:not(.ok-present) {
+  overflow-y: auto !important;
+}
+
+/* ── Stacked fallback (no JavaScript) ─────────────────────────────────── */
+
+#ok-deck {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  padding: 24px 0;
+}
+
+.ok-slide {
+  position: relative;
+  max-width: 100%;
+  overflow: hidden;
+  scroll-margin-top: 24px;
+}
+
+.ok-canvas {
+  position: relative;
+  overflow: hidden;
+  transform-origin: 0 0;
+}
+
+.ok-canvas > #slide-content {
+  position: relative;
+  transform: none !important;
+}
+
+.ok-bar,
+.ok-progress,
+.ok-overview {
+  display: none;
+}
+
+/* ── Present mode (html.ok-present) ───────────────────────────────────── */
+
+html.ok-present,
+html.ok-present body {
+  height: 100%;
+  overflow: hidden;
+}
+
+html.ok-present #ok-deck {
+  position: fixed;
+  inset: 0;
+  display: block;
+  padding: 0;
+}
+
+html.ok-present .ok-slide {
+  position: absolute;
+  inset: 0;
+  max-width: none;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+html.ok-present .ok-slide.ok-active {
+  visibility: visible;
+  pointer-events: auto;
+}
+
+html.ok-present .ok-canvas {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+html.ok-present .ok-slide.ok-enter-fwd .ok-canvas-anim {
+  animation: ok-in-fwd 0.32s ease both;
+}
+
+html.ok-present .ok-slide.ok-enter-back .ok-canvas-anim {
+  animation: ok-in-back 0.32s ease both;
+}
+
+/* ── Browse mode (html.ok-browse) ─────────────────────────────────────── */
+
+html.ok-browse #ok-deck {
+  gap: 28px;
+  padding: 36px 16px 96px;
+}
+
+html.ok-browse .ok-slide {
+  max-width: none;
+  overflow: visible;
+  border-radius: 4px;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 8px 24px rgba(0, 0, 0, 0.35);
+  scroll-margin-top: 36px;
+}
+
+/* Slide number above each slide, from the id — no text added to the DOM. */
+html.ok-browse .ok-slide::before {
+  content: attr(id);
+  position: absolute;
+  left: 0;
+  top: -22px;
+  color: var(--ok-player-muted);
+  font: 600 12px/1 system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+
+html.ok-browse .ok-canvas {
+  position: absolute;
+  left: 0;
+  top: 0;
+  border-radius: 4px;
+}
+
+html.ok-browse .ok-bar {
+  opacity: 1;
+}
+
+.ok-canvas-anim {
+  position: absolute;
+  inset: 0;
+}
+
+@keyframes ok-in-fwd {
+  from { opacity: 0; transform: translateX(3%); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes ok-in-back {
+  from { opacity: 0; transform: translateX(-3%); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.ok-present .ok-slide .ok-canvas-anim { animation: none !important; }
+}
+
+html.ok-js .ok-progress {
+  display: block;
+  position: fixed;
+  left: 0;
+  top: 0;
+  height: 3px;
+  width: 0;
+  background: var(--ok-player-ring);
+  transition: width 0.25s ease;
+  z-index: 20;
+}
+
+html.ok-js .ok-bar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  position: fixed;
+  left: 12px;
+  bottom: 12px;
+  padding: 4px;
+  border-radius: 10px;
+  background: var(--ok-player-chip);
+  color: var(--ok-player-fg);
+  font: 500 13px/1 system-ui, -apple-system, "Segoe UI", sans-serif;
+  z-index: 30;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  backdrop-filter: blur(6px);
+}
+
+html.ok-js .ok-bar.ok-show,
+html.ok-js .ok-bar:hover,
+html.ok-js .ok-bar:focus-within {
+  opacity: 1;
+}
+
+.ok-bar button {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.ok-bar button:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.ok-bar button:focus-visible,
+.ok-tile:focus-visible {
+  outline: 2px solid var(--ok-player-ring);
+  outline-offset: 2px;
+}
+
+.ok-bar button[disabled] {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.ok-bar svg {
+  width: 18px;
+  height: 18px;
+}
+
+.ok-count {
+  min-width: 64px;
+  padding: 0 8px;
+  text-align: center;
+  color: var(--ok-player-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.ok-sep {
+  width: 1px;
+  height: 20px;
+  margin: 0 4px;
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.ok-bar button.ok-mode {
+  width: auto;
+  gap: 6px;
+  padding: 0 10px 0 8px;
+  grid-auto-flow: column;
+  font: inherit;
+}
+
+/* ── Overview ─────────────────────────────────────────────────────────── */
+
+html.ok-js .ok-overview.ok-open {
+  display: block;
+  position: fixed;
+  inset: 0;
+  overflow-y: auto;
+  padding: 32px 24px 80px;
+  background: var(--ok-player-bg);
+  z-index: 25;
+  box-sizing: border-box;
+}
+
+.ok-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--ok-tile-w, 240px), 1fr));
+  gap: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.ok-tile {
+  display: block;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ok-player-fg);
+  text-align: left;
+  cursor: pointer;
+  font: 500 13px/1.3 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+.ok-thumb {
+  position: relative;
+  overflow: hidden;
+  border-radius: 6px;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.12);
+  pointer-events: none;
+}
+
+.ok-tile:hover .ok-thumb {
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.4);
+}
+
+.ok-tile.ok-current .ok-thumb {
+  box-shadow: 0 0 0 3px var(--ok-player-ring);
+}
+
+.ok-thumb .ok-canvas {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+.ok-label {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  color: var(--ok-player-muted);
+}
+
+.ok-label b {
+  color: var(--ok-player-fg);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Print: every slide, every step, one page each ────────────────────── */
+
+@media print {
+  html.ok-js,
+  html.ok-js body {
+    height: auto;
+    overflow: visible;
+  }
+
+  body {
+    background: none;
+  }
+
+  #ok-deck,
+  html.ok-js #ok-deck {
+    position: static;
+    display: block;
+    padding: 0;
+  }
+
+  .ok-slide,
+  html.ok-js .ok-slide {
+    position: relative;
+    inset: auto;
+    visibility: visible;
+    break-after: page;
+    overflow: hidden;
+    width: auto !important;
+    height: auto !important;
+    box-shadow: none;
+  }
+
+  html.ok-browse .ok-slide::before {
+    content: none;
+  }
+
+  .ok-canvas,
+  html.ok-js .ok-canvas {
+    position: relative;
+    transform: none !important;
+  }
+
+  .ok-canvas-anim {
+    animation: none !important;
+  }
+
+  .ok-bar,
+  .ok-progress,
+  .ok-overview,
+  html.ok-js .ok-bar,
+  html.ok-js .ok-progress,
+  html.ok-js .ok-overview.ok-open {
+    display: none;
+  }
+}

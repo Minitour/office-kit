@@ -5,10 +5,12 @@ import importlib.util
 import io
 import json
 import shutil
+import subprocess
 import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
 MODULE_PATH = ROOT / "scripts" / "presentation" / "deck.py"
@@ -635,6 +637,91 @@ layout: end
         self.assertEqual(slides[1].frontmatter, {})
         self.assertIn("# Two", slides[1].body)
         self.assertEqual(slides[2].frontmatter.get("layout"), "end")
+
+
+class DeckHtmlExportTests(unittest.TestCase):
+    """`export --format html` drives export-html.mjs against a preview."""
+
+    def setUp(self) -> None:
+        self._tmp = tempfile.TemporaryDirectory()
+        self.root = Path(self._tmp.name)
+        self.addCleanup(self._tmp.cleanup)
+        shutil.copy(ROOT / "config.toml", self.root / "config.toml")
+        (self.root / "brands").mkdir()
+        self.dest = self.root / "projects" / "html-deck"
+        self.dest.mkdir(parents=True)
+        (self.dest / "slides.md").write_text("---\ntheme: default\n---\n\n# Hi\n", encoding="utf-8")
+
+    def _export(self, payload: dict, *extra: str, started: bool = False, returncode: int = 0):
+        calls: list[list[str]] = []
+        stopped: list[Path] = []
+
+        def fake_run(command, **kwargs):
+            calls.append(list(command))
+            return subprocess.CompletedProcess(command, returncode, json.dumps(payload) + "\n", "")
+
+        with mock.patch.object(deck, "ensure_preview", return_value=("http://localhost:3999/", started)), \
+                mock.patch.object(deck.subprocess, "run", side_effect=fake_run), \
+                mock.patch.object(deck._common, "stop_pidfile", side_effect=lambda p: stopped.append(p) or ["stopped"]):
+            code, output = run(
+                "export", "html-deck", "--format", "html", "--workspace-root", str(self.root), *extra
+            )
+        return code, output, calls, stopped
+
+    def test_html_export_runs_the_capture_script(self) -> None:
+        out = str(self.dest / "dist" / "slides.html")
+        payload = {
+            "out": out, "bytes": 200_000, "slides": 9, "steps": 14, "width": 980, "height": 552,
+            "fontsEmbedded": 4, "externalStylesheets": [],
+            "warnings": ["slide 3: content is added or removed by clicks (v-if / v-switch); the export shows its final state"],
+        }
+        code, output, calls, stopped = self._export(payload)
+        self.assertEqual(code, 0, output)
+        self.assertEqual(len(calls), 1)
+        command = calls[0]
+        self.assertTrue(command[1].endswith("export-html.mjs"))
+        self.assertEqual(command[command.index("--base") + 1], "http://localhost:3999/")
+        self.assertEqual(Path(command[command.index("--out") + 1]).resolve(), (self.dest / "dist" / "slides.html").resolve())
+        self.assertNotIn("--no-embed-fonts", command)
+        self.assertIn("slides: 9 (14 click step(s))", output)
+        self.assertIn("warn:  slide 3", output)
+        self.assertIn("(195 KB)", output)
+        self.assertEqual(stopped, [], "a preview that was already running stays up")
+
+    def test_html_export_links_fonts_and_stops_its_own_preview(self) -> None:
+        payload = {"out": "x", "bytes": 5 * 1024 * 1024, "slides": 1, "steps": 0, "warnings": []}
+        code, output, calls, stopped = self._export(payload, "--link-fonts", started=True)
+        self.assertEqual(code, 0, output)
+        self.assertIn("--no-embed-fonts", calls[0])
+        self.assertEqual(len(stopped), 1)
+        self.assertIn("5.0 MB", output)
+
+    def test_html_export_failure_is_an_error(self) -> None:
+        code, output, _calls, stopped = self._export(
+            {"error": "no Slidev deck answered at http://localhost:3999"}, started=True, returncode=1
+        )
+        self.assertEqual(code, 2)
+        self.assertIn("HTML export failed: no Slidev deck answered", output)
+        self.assertEqual(len(stopped), 1)
+
+    def test_player_and_capture_script_ship_together(self) -> None:
+        here = ROOT / "scripts" / "presentation"
+        script = (here / "export-html.mjs").read_text(encoding="utf-8")
+        player = (here / "player" / "player.js").read_text(encoding="utf-8")
+        css = (here / "player" / "player.css").read_text(encoding="utf-8")
+        self.assertIn("player/player.js", script.replace("'player', 'player.js'", "player/player.js"))
+        self.assertIn("__slidev__", script)
+        for needle in ("hashchange", "'o'", "requestFullscreen", "beforeprint", "ok-steps", "ok-browse", "let mode = 'browse'"):
+            self.assertIn(needle, player)
+        self.assertIn("html.ok-present", css)
+        self.assertIn("html.ok-browse", css)
+        self.assertIn("html:not(.ok-present)", css)
+        self.assertIn("@media print", css)
+        node = shutil.which("node")
+        if node:
+            for path in (here / "export-html.mjs", here / "player" / "player.js"):
+                result = subprocess.run([node, "--check", str(path)], capture_output=True, text=True)
+                self.assertEqual(result.returncode, 0, result.stderr)
 
 
 if __name__ == "__main__":

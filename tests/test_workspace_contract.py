@@ -18,6 +18,7 @@ ROUTERS = (
     ROOT / "plugins/office-kit/skills/create-doc/SKILL.md",
     ROOT / "plugins/office-kit/skills/create-slides/SKILL.md",
     ROOT / "plugins/office-kit/skills/create-video/SKILL.md",
+    ROOT / "plugins/office-kit/skills/create-motion-reel/SKILL.md",
     ROOT / "plugins/office-kit/skills/init-brand/SKILL.md",
 )
 DOC_SKILL = ROOT / "plugins/office-kit/skills/create-doc/SKILL.md"

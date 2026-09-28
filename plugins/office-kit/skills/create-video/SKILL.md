@@ -11,7 +11,8 @@ metadata:
 
 Work in `.office-kit/`. Use `setup-office-kit` first when absent. Author the
 video in the main agent. HyperFrames is an external runtime dependency; this
-plugin does not bundle its source or skills.
+plugin does not bundle its source or skills. A short, unnarrated brand or
+launch reel whose picture carries the message belongs to `create-motion-reel`.
 
 ## Boundary
 

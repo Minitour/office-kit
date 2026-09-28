@@ -1,0 +1,43 @@
+{
+  "skill_name": "create-motion-reel",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "We're launching OfficeKit's new HTML export next week. Make me a punchy 10 second launch reel for the announcement post, no voiceover, just music. Landscape is fine for now.",
+      "expected_output": "Treats this as create-motion-reel. Writes projects/<slug>/plan/PLAN.md with a one-line film idea, beat sheet on the grid, and verbatim copy, scaffolds with `uv run python scripts/motion/reel.py new <slug> --duration 10`, takes style-frame stills, replaces the starter scenes, runs the stills critique loop, keys the synthesized score to timeline events, and runs `reel.py audit` until it exits 0. Colours, fonts, and the mark come from the brand snapshot. Does not render the MP4 until the user asks for the final file.",
+      "files": [],
+      "expectations": [
+        "Routes to create-motion-reel, not create-video, because the reel has no narration",
+        "Writes plan/PLAN.md before code and does not stop for a plan approval gate",
+        "Scaffolds with scripts/motion/reel.py rather than writing its own render loop or calling Playwright or ffmpeg for frames",
+        "Reads colours and fonts from brand/tokens.css and the mark from brand/assets instead of pasting hex values or font names",
+        "Critiques contact sheets from reel.py stills and records the worst problems in reports/build.md",
+        "Runs reel.py audit and treats a non-zero exit as unfinished",
+        "Uses no em dashes in on-screen copy and shows only features that exist"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "The launch reel in projects/html-export-reel looks great. Can you make a vertical version for phones, and change the last line to say 'One file. Opens anywhere.'?",
+      "expected_output": "Resumes the existing project instead of scaffolding a new one. Updates PLAN.md copy, changes every occurrence of the last line together, re-lays out the vertical format through the layout object L (bigger type, stacked lockup) rather than cropping, runs `reel.py stills <slug> --format vertical` and critiques it, then `reel.py audit`. Renders `renders/html-export-reel-vertical.mp4` with `reel.py render <slug> --format vertical` only because the user asked for the vertical version as a deliverable.",
+      "files": [],
+      "expectations": [
+        "Edits the existing project in place and keeps the slug",
+        "Changes the copy everywhere it appears and updates plan/PLAN.md",
+        "Re-lays out vertical through the format layout object instead of cropping the landscape frames",
+        "Checks vertical stills for type size and empty bands before rendering",
+        "Renders with reel.py render --format vertical and reports the path"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Turn our onboarding doc into a 60 second narrated walkthrough video with a calm voice explaining each step.",
+      "expected_output": "Recognises that narration drives the timing and routes to create-video (HyperFrames with text-to-speech) instead of create-motion-reel. Does not scaffold with reel.py.",
+      "files": [],
+      "expectations": [
+        "Routes to create-video because the piece is narrated and explains step by step",
+        "Does not scaffold a motion reel with scripts/motion/reel.py"
+      ]
+    }
+  ]
+}

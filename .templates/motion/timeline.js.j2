@@ -1,0 +1,41 @@
+// One timeline for picture and sound. The page reads it as window.TL and
+// score.mjs requires it, so a cut and its hit can never drift apart.
+// Write every event on the beat grid with b(n); never hard-code seconds.
+(function () {
+  const BPM = 120;
+  const BEAT = 60 / BPM;
+  const b = (n) => n * BEAT;
+
+  const TL = {
+    // Canvas and rate from config.toml [motion]. Vertical swaps width and
+    // height; square uses height for both.
+    fps: {{ fps }},
+    width: {{ width }},
+    height: {{ height }},
+    duration: {{ duration }},
+    bpm: BPM,
+    beat: BEAT,
+
+    // Words on screen. Replace with the plan's copy.
+    title: {{ title | tojson }},
+    name: {{ brand_name | tojson }},
+    url: {{ brand_url | tojson }},
+    logo: {{ ("brand/" ~ logo_rel) | tojson }},
+
+    // Scene 1: the mark lands.
+    markIn: b(0.25),
+    // Scene 2: kinetic type, one line per bar.
+    words: [b(4), b(5.5), b(7)],
+    // Scene 3: lockup.
+    lockup: b(9),
+    tagline: b(10),
+
+    // Sound design hooks (score.mjs reads these).
+    pops: [],
+    whooshes: [b(4), b(9)],
+  };
+  TL.pops = [TL.markIn];
+
+  if (typeof module !== 'undefined') module.exports = TL;
+  else window.TL = TL;
+})();

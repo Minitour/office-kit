@@ -50,6 +50,7 @@ cd .office-kit
 uv run python scripts/document/doc.py --help
 uv run python scripts/presentation/deck.py --help
 uv run python scripts/video/video.py --help
+uv run python scripts/motion/reel.py --help
 ```
 
 Report the workspace path and any missing runtime prerequisite. Never claim

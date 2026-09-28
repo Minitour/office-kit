@@ -11,6 +11,7 @@ follow-up requests.
 - Written document or standalone web document → `create-doc`
 - Presentation or deck → `create-slides`
 - Narrated motion/video → `create-video`
+- Short unnarrated brand, launch, or social reel → `create-motion-reel`
 - New or revised visual identity → `init-brand`
 - Ambiguous modality → ask one routing question; do not start production
 
@@ -48,6 +49,8 @@ request is the start signal.
   plus `components/`, `layouts/`, `public/` when needed).
 - Videos: follow HyperFrames guidelines; edit the composition and project
   media only.
+- Motion reels: edit `index.html`, `timeline.js`, `score.mjs`, and project
+  media only; `reel.py` owns stills, audit, and render.
 
 Never read, write, patch, or inspect `node_modules/`. Never touch
 `package-lock.json`. Never run `npx slidev` or `npx hyperframes` by hand —

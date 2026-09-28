@@ -5,8 +5,8 @@ Skills, with no CAPA, subagents, or MCP. If you are working *in the
 office-kit git checkout* itself, use [CAPA](https://github.com/infragate/capa)
 on that repository instead — see the [root README](../../README.md#install).
 
-OfficeKit creates branded standalone HTML documents, Slidev decks, and
-HyperFrames videos. This package follows
+OfficeKit creates branded standalone HTML documents, Slidev decks,
+HyperFrames videos, and code-drawn motion reels. This package follows
 [Agent Plugins 1.0](https://agent-plugins.org/specification).
 
 ## What is included
@@ -16,6 +16,7 @@ HyperFrames videos. This package follows
 - `create-doc` — author and audit one-file HTML documents
 - `create-slides` — scaffold, preview, author, audit, and export Slidev decks
 - `create-video` — scaffold, preview, author, and audit HyperFrames videos
+- `create-motion-reel`: draw, critique, score, and render short unnarrated canvas reels
 - `text-to-speech` — local segmented Kokoro narration (used by create-video)
 - `strudel-offline` — local Dough music bed under narration (used by create-video; **AGPL-3.0-or-later**, see that skill's `LICENSE`)
 
@@ -30,7 +31,7 @@ The package intentionally contains no third-party skills, MCP servers, agents,
 hooks, `capabilities.yaml`, extra brand identities, dependencies,
 `node_modules`, virtual environments, model weights, or generated locks.
 
-Slidev, Lucide, HyperFrames, Jinja, PyYAML, Kokoro, SoundFile, and their
+Slidev, Lucide, HyperFrames, Playwright, Jinja, PyYAML, Kokoro, SoundFile, and their
 transitive packages are external runtime dependencies. They are resolved into
 the generated workspace by npm and uv; their source is not bundled here.
 

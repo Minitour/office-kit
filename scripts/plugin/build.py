@@ -156,6 +156,9 @@ WORKSPACE_FILES = (
     "scripts/document/package.py",
     "scripts/presentation/deck.py",
     "scripts/presentation/render-audit.mjs",
+    "scripts/presentation/export-html.mjs",
+    "scripts/presentation/player/player.css",
+    "scripts/presentation/player/player.js",
     "scripts/video/video.py",
 )
 

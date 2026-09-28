@@ -46,7 +46,8 @@ aspect_ratio = "16/9"          # → headmatter `aspectRatio`
 canvas_width = 980             # → headmatter `canvasWidth`, in px
 
 [presentation.export]
-format = "pdf"                 # pdf | pptx | png
+format = "pdf"                 # pdf | pptx | png | html (one-file player)
+html_embed_fonts = true        # html: inline web fonts as data URIs (works offline)
 with_clicks = true             # → `slidev export --with-clicks`
 dark = false                   # → `slidev export --dark`
 output_dir = "dist"

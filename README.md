@@ -160,7 +160,7 @@ uv run python scripts/document/doc.py refresh --all        # re-apply brand + te
 uv run python scripts/presentation/deck.py new <slug> --title "…"   # scaffold + npm install
 uv run python scripts/presentation/deck.py dev <slug>              # live preview, health-checked
 uv run python scripts/presentation/deck.py audit <slug>            # static + render pass (see below)
-uv run python scripts/presentation/deck.py export <slug> --format pdf|pptx|png
+uv run python scripts/presentation/deck.py export <slug> --format pdf|pptx|png|html
 uv run python scripts/presentation/deck.py stop <slug>
 
 # Video
@@ -183,6 +183,16 @@ uv run python scripts/brand/generate.py <id>                       # brand.json 
 - Every `src="/…"` and `image: /…` resolves under `public/`; every `<img>` has `alt`.
 - **Render pass**: with the preview running, every slide is loaded at the canvas size in Chromium; content past the slide box or an image that failed to load is an error, and one PNG per slide lands in `reports/render/`. `--render` starts a preview if none is running, `--no-render` skips the pass, `--dark` adds a `prefers-color-scheme: dark` run.
 - Distinct console errors from the preview log, so a component error is not buried in plugin noise.
+
+### Standalone HTML export
+
+`deck.py export <slug> --format html` writes `dist/slides.html`: one self-contained file that plays the deck without Slidev. It opens from disk, from any static host, or from a document store that takes a single HTML body.
+
+- **How:** the exporter drives the live preview in Chromium, starting one if needed. It steps through every click of every slide and captures each slide as real DOM, so the text stays selectable and commentable. It keeps only the CSS those slides use and inlines images and web fonts as data URIs (`--link-fonts` links the fonts instead).
+- **Steps:** everything a click changes through a class or style replays: `v-click`, `v-after`, `v-clicks`, `.hide`, and code line highlights. Content that a click mounts or unmounts (`v-if`, `v-switch`) shows in its final state, with a warning.
+- **Two modes:** *present* shows one slide at a time: ← → / Space / click step through the reveals and ↑ ↓ move by slide. *Browse* stacks every slide, fully revealed, in a scrolling page where clicks never navigate, so text can be selected and commented on. Every open starts in browse; `p` / `b` or the mode button switch.
+- **Player:** `o` or the grid button for the overview, `f` for fullscreen, `#n` in the URL for slide *n* in either mode (Slidev `<Link to="n">` becomes `#n`). Printing prints every slide fully revealed. Without JavaScript the slides stack as a scrolling page.
+- **Checked:** after writing, the exporter reopens the file offline and walks every slide by `#n` in both modes. It warns on player errors, outside requests, or a file above 4 MB.
 
 ## Brand contract
 

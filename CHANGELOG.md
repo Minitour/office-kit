@@ -6,6 +6,15 @@ All notable changes to OfficeKit are recorded here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- `deck.py export --format html`: a self-contained `dist/slides.html` with
+  its own player (present and browse modes, click steps, overview grid, `#n` slide anchors, keyboard,
+  touch, fullscreen, print), captured from the live preview with pruned CSS
+  and inlined images and fonts. It opens offline from disk and is verified
+  after writing. `[presentation.export] html_embed_fonts` and `--link-fonts`
+  control font embedding.
+
 ## [0.2.0] - 2026-09-18
 
 ### Added
